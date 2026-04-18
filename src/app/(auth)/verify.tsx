@@ -34,7 +34,7 @@ export default function VerifyScreen() {
 
       <Pressable
         className="h-12 items-center justify-center rounded-md bg-teal-700"
-        onPress={() => router.replace('/home')}>
+        onPress={() => router.replace('/(tabs)/home')}>
         <Text className="text-base font-bold text-slate-50">Verify and continue</Text>
       </Pressable>
 
