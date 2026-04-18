@@ -2,17 +2,12 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import AuthScaffold from '~/components/AuthScaffold';
-
 export default function VerifyScreen() {
   const router = useRouter();
   const [code, setCode] = useState('');
 
   return (
-    <AuthScaffold
-      badge="VERIFICATION"
-      title="Confirm your access"
-      subtitle="Enter the six-digit code. This is UI only, so any input can continue to the home screen.">
+    <>
       <Text className="mb-2 text-sm font-semibold text-slate-700">Verification code</Text>
       <TextInput
         value={code}
@@ -52,6 +47,6 @@ export default function VerifyScreen() {
       <Text className="mt-3.5 text-center text-[13px] leading-5 text-slate-500">
         Didn&apos;t receive anything? Resend code in 00:21.
       </Text>
-    </AuthScaffold>
+    </>
   );
 }

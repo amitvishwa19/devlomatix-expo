@@ -1,6 +1,7 @@
-import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BrandLogo from '~/components/BrandLogo';
 

@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import AuthScaffold from '~/components/AuthScaffold';
-
 const inputClassName =
   'mb-4 h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-900';
 
@@ -12,10 +10,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
 
   return (
-    <AuthScaffold
-      badge="RECOVERY"
-      title="Reset your password"
-      subtitle="Enter your email and we will move you into the verification step for password recovery.">
+    <>
       <Text className="mb-2 text-sm font-semibold text-slate-700">Email address</Text>
       <TextInput
         value={email}
@@ -45,6 +40,6 @@ export default function ForgotPasswordScreen() {
         onPress={() => router.replace('./login')}>
         <Text className="text-base font-bold text-slate-900">Back to sign in</Text>
       </Pressable>
-    </AuthScaffold>
+    </>
   );
 }

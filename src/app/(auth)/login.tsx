@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import AuthScaffold from '~/components/AuthScaffold';
-
 const inputClassName =
   'mb-4 h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-900';
 
@@ -13,9 +11,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   return (
-    <AuthScaffold
-      title="Welcome back"
-      subtitle="Sign in to access your workspace, projects, and product delivery dashboard.">
+    <>
       <Text className="mb-2 text-sm font-semibold text-slate-700">Email</Text>
       <TextInput
         value={email}
@@ -58,6 +54,6 @@ export default function LoginScreen() {
           UI only for now. Primary login flow goes to Home.
         </Text>
       </View>
-    </AuthScaffold>
+    </>
   );
 }

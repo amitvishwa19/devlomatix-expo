@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import AuthScaffold from '~/components/AuthScaffold';
-
 const inputClassName =
   'mb-4 h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-900';
 
@@ -14,10 +12,7 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
 
   return (
-    <AuthScaffold
-      badge="CREATE ACCOUNT"
-      title="Launch your workspace"
-      subtitle="Set up your team identity and continue into the onboarding and verification flow.">
+    <>
       <Text className="mb-2 text-sm font-semibold text-slate-700">Full name</Text>
       <TextInput
         value={fullName}
@@ -65,6 +60,6 @@ export default function SignupScreen() {
           Next step is verification UI only. No account is created yet.
         </Text>
       </View>
-    </AuthScaffold>
+    </>
   );
 }
