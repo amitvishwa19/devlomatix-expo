@@ -1,37 +1,46 @@
 import { Image, View } from 'react-native';
 
-const logoVariants = {
-  auth: {
-    shell: 'h-28 w-28 rounded-[31px]',
-    image: 'h-[92px] w-[92px]',
-  },
-  home: {
-    shell: 'h-[72px] w-[72px] rounded-[20px]',
-    image: 'h-[54px] w-[54px]',
-  },
-  profile: {
-    shell: 'h-[68px] w-[68px] rounded-[19px]',
-    image: 'h-[50px] w-[50px]',
-  },
-  default: {
-    shell: 'h-24 w-24 rounded-[27px]',
-    image: 'h-[68px] w-[68px]',
-  },
-} as const;
+import logo from '../assets/images/logos/devlomatix_logo.png';
+
+type BrandLogoVariant = 'auth' | 'home' | 'profile';
 
 type BrandLogoProps = {
-  variant?: keyof typeof logoVariants;
+  size?: number;
+  variant?: BrandLogoVariant;
 };
 
-export default function BrandLogo({ variant = 'default' }: BrandLogoProps) {
-  const selectedVariant = logoVariants[variant];
+const variantShellStyles: Record<BrandLogoVariant, { width: number; height: number; borderRadius: number }> = {
+  auth: { width: 156, height: 156, borderRadius: 44 },
+  home: { width: 72, height: 72, borderRadius: 22 },
+  profile: { width: 72, height: 72, borderRadius: 22 },
+};
+
+const variantImageStyles: Record<BrandLogoVariant, { width: number; height: number }> = {
+  auth: { width: 68, height: 68 },
+  home: { width: 38, height: 38 },
+  profile: { width: 38, height: 38 },
+};
+
+export default function BrandLogo({ size, variant = 'auth' }: BrandLogoProps) {
+  if (size !== undefined) {
+    return (
+      <Image
+        source={logo}
+        className="shrink-0"
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+      />
+    );
+  }
 
   return (
     <View
-      className={`items-center justify-center bg-white shadow-lg shadow-slate-900/10 ${selectedVariant.shell}`}>
+      className="items-center justify-center bg-white shadow-lg shadow-slate-900/10"
+      style={variantShellStyles[variant]}>
       <Image
-        source={require('../assets/images/logos/devlomatix_logo.png')}
-        className={selectedVariant.image}
+        source={logo}
+        className="shrink-0"
+        style={variantImageStyles[variant]}
         resizeMode="contain"
       />
     </View>
