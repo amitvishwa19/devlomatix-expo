@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import CustomButton from './CustomButton';
 
 export default function VerifyScreen() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function VerifyScreen() {
         className="h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-center text-xl font-semibold text-slate-900" />
       
 
+      
+
       <View className="mb-5 mt-4 flex-row justify-between">
         {[0, 1, 2, 3, 4, 5].map((index) => {
           const char = code[index] ?? '';
@@ -32,17 +35,16 @@ export default function VerifyScreen() {
         })}
       </View>
 
-      <Pressable
-        className="h-12 items-center justify-center rounded-md bg-teal-700"
-        onPress={() => router.replace('/(tabs)/home')}>
-        <Text className="text-base font-bold text-slate-50">Verify and continue</Text>
-      </Pressable>
+      <CustomButton
+        title="Verify and continue"
+        variant="primary"
+        onPress={() => router.replace('/(tabs)/home')} />
 
-      <Pressable
-        className="mt-3 h-12 items-center justify-center rounded-md border border-slate-300 bg-slate-50"
-        onPress={() => router.replace('./login')}>
-        <Text className="text-base font-bold text-slate-900">Use another method</Text>
-      </Pressable>
+      <CustomButton
+        title="Use another method"
+        variant="secondary"
+        className="mt-3"
+        onPress={() => router.replace('./login')} />
 
       <Text className="mt-3.5 text-center text-[13px] leading-5 text-slate-500">
         Didn&apos;t receive anything? Resend code in 00:21.

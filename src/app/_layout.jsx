@@ -9,6 +9,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { AppThemeProvider, useAppTheme } from '~/theme/AppTheme';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '~/components/CustomToast';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -63,6 +65,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
+      <Toast config={toastConfig} topOffset={60} />
     </ThemeProvider>);
 
 }

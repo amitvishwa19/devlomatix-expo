@@ -1,59 +1,67 @@
-import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-const inputClassName =
-'mb-4 h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-900';
+import CustomButton from './CustomButton';
+import CustomInput from './CustomInput';
 
 export default function LoginScreen() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+    const router = useRouter();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-  return (
-    <>
-      <Text className="mb-2 text-sm font-semibold text-slate-700">Email</Text>
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="name@company.com"
-        placeholderTextColor="#94a3b8"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        className={inputClassName} />
-      
+    return (
+        <>
+            <CustomInput
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="name@company.com"
+                keyboardType="email-address"
+                autoCapitalize="none" />
 
-      <Text className="mb-2 text-sm font-semibold text-slate-700">Password</Text>
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Enter your password"
-        placeholderTextColor="#94a3b8"
-        secureTextEntry
-        className={inputClassName} />
-      
+            <CustomInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your password"
+                secureTextEntry />
 
-      <Pressable className="mb-4 self-end" onPress={() => router.push('./forgot-password')}>
-        <Text className="text-sm font-semibold text-teal-700">Forgot password?</Text>
-      </Pressable>
 
-      <Pressable
-        className="h-12 items-center justify-center rounded-md bg-teal-700"
-        onPress={() => router.replace('/(tabs)/home')}>
-        <Text className="text-base font-bold text-slate-50">Sign In</Text>
-      </Pressable>
+            <Pressable className="mb-4 self-end" onPress={() => router.push('./forgot-password')}>
+                <Text className="text-sm font-semibold text-teal-700">Forgot password?</Text>
+            </Pressable>
 
-      <Pressable
-        className="mt-3 h-12 items-center justify-center rounded-md border border-slate-300 bg-slate-50"
-        onPress={() => router.push('./signup')}>
-        <Text className="text-base font-bold text-slate-900">Create new account</Text>
-      </Pressable>
+            <CustomButton
+                title="Sign In"
+                variant="primary"
+                onPress={() => router.replace('/(tabs)/home')}
+                className='mb-4' />
 
-      <View className="mt-3.5">
-        <Text className="text-center text-[13px] leading-5 text-slate-500">
-          UI only for now. Primary login flow goes to Home.
-        </Text>
-      </View>
-    </>);
+            <View className="mb-4 flex-row items-center">
+                <View className="h-[1px] flex-1 bg-slate-200" />
+                <Text className="mx-4 text-xs font-bold text-slate-400">OR</Text>
+                <View className="h-[1px] flex-1 bg-slate-200" />
+            </View>
+
+            <CustomButton
+                title="Continue with Google"
+                variant="secondary"
+                icon={<FontAwesome name="google" size={18} color="#0f172a" />}
+                onPress={() => console.log('Google Sign in')}
+                className="mb-4" />
+
+            <CustomButton
+                title="Create new account"
+                variant="secondary"
+                onPress={() => router.push('./signup')} />
+
+            <View className="mt-3.5">
+                <Text className="text-center text-[13px] leading-5 text-slate-500">
+                    UI only for now. Primary login flow goes to Home.
+                </Text>
+            </View>
+        </>);
 
 }

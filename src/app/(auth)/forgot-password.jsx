@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const inputClassName =
-'mb-4 h-12 rounded-md border border-slate-200 bg-slate-50 px-4 text-[15px] text-slate-900';
+import CustomInput from './CustomInput';
+import CustomButton from './CustomButton';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -11,15 +11,13 @@ export default function ForgotPasswordScreen() {
 
   return (
     <>
-      <Text className="mb-2 text-sm font-semibold text-slate-700">Email address</Text>
-      <TextInput
+      <CustomInput
+        label="Email address"
         value={email}
         onChangeText={setEmail}
         placeholder="name@company.com"
-        placeholderTextColor="#94a3b8"
         keyboardType="email-address"
-        autoCapitalize="none"
-        className={inputClassName} />
+        autoCapitalize="none" />
       
 
       <View className="mb-4 rounded-[18px] bg-sky-50 p-4">
@@ -29,17 +27,16 @@ export default function ForgotPasswordScreen() {
         </Text>
       </View>
 
-      <Pressable
-        className="h-12 items-center justify-center rounded-md bg-teal-700"
-        onPress={() => router.push('./verify')}>
-        <Text className="text-base font-bold text-slate-50">Send code</Text>
-      </Pressable>
+      <CustomButton
+        title="Send code"
+        variant="primary"
+        onPress={() => router.push('./verify')} />
 
-      <Pressable
-        className="mt-3 h-12 items-center justify-center rounded-md border border-slate-300 bg-slate-50"
-        onPress={() => router.replace('./login')}>
-        <Text className="text-base font-bold text-slate-900">Back to sign in</Text>
-      </Pressable>
+      <CustomButton
+        title="Back to sign in"
+        variant="secondary"
+        className="mt-3"
+        onPress={() => router.replace('./login')} />
     </>);
 
 }
