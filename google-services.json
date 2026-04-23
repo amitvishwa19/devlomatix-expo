@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "580846317760",
+    "project_id": "devlomatix-b5c81",
+    "storage_bucket": "devlomatix-b5c81.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580846317760:android:04bc4e4765c1a682ed7d25",
+        "android_client_info": {
+          "package_name": "com.devlomatixsolutions.devlomatix"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "580846317760-cs45jdt61od0d51r0bnmg56kuvtu91n0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.devlomatixsolutions.devlomatix",
+            "certificate_hash": "6e0545cda6b18b15688a72a1688be57cfdde5e27"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpxuTZXWatoknU-6DFAr1Lq_RUYLbhYZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

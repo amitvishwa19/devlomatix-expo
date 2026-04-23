@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import CustomButton from './CustomButton';
+import CustomButton from '../../components/CustomButton';
 
 export default function VerifyScreen() {
   const router = useRouter();

@@ -1,15 +1,187 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 
-import CustomButton from './CustomButton';
-import CustomInput from './CustomInput';
+import CustomButton from '../../components/CustomButton';
+import CustomInput from '../../components/CustomInput';
+import { apiUrls } from '../../utils/api';
+import { saveSession } from '../../utils/authStorage';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('founder@devlomatix.com');
+    const [password, setPassword] = useState('111111');
+    const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            iosClientId: googleIosClientId || undefined,
+            webClientId: googleWebClientId || undefined,
+        });
+    }, []);
+
+    const handleLogin = async () => {
+        if (!email || !password) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Please enter email and password',
+            });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(apiUrls.login, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            console.log('Login response',data)
+
+            const isSuccessfulLogin = response.ok && data?.status === 200 && data?.user;
+
+            if (isSuccessfulLogin) {
+                await saveSession(data.user);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: 'Login successful',
+                });
+                router.replace('/(tabs)/home');
+            } else {
+                if (data?.status === 401) {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Unauthorized',
+                        text2: data?.message || 'Account not found. Please check your credentials.',
+                    });
+                    router.replace('/(auth)/signup');
+                    return;
+                }
+
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login Failed',
+                    text2: data.message || 'Invalid credentials',
+                });
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Network error. Please try again.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        if (Constants.appOwnership === 'expo') {
+            Toast.show({
+                type: 'info',
+                text1: 'Development Build Required',
+                text2: 'Native Google sign-in does not work inside Expo Go.',
+            });
+            return;
+        }
+
+        setGoogleLoading(true);
+
+        try {
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+            const signInResult = await GoogleSignin.signIn();
+            const googleUser = signInResult.data?.user;
+            const googleIdToken = signInResult.data?.idToken;
+
+            if (!googleUser?.email) {
+                throw new Error('Google profile data is missing');
+            }
+
+            console.log('Google sign-in success payload', {
+                email: googleUser.email,
+                hasIdToken: Boolean(googleIdToken),
+            });
+
+            const backendResponse = await fetch(apiUrls.googleLogin, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uid: googleUser.id,
+                    email: googleUser.email,
+                    provider: 'google',
+                    displayName: googleUser.name,
+                    avatar: googleUser.photo,
+                }),
+            });
+
+            const backendData = await backendResponse.json();
+            const isSuccessfulGoogleLogin = backendResponse.ok && backendData?.status === 200 && backendData?.user;
+
+            if (!isSuccessfulGoogleLogin) {
+                throw new Error(backendData?.message || 'Backend Google login failed');
+            }
+
+            await saveSession(backendData.user);
+
+            Toast.show({
+                type: 'success',
+                text1: 'Success',
+                text2: 'Google login successful',
+            });
+            router.replace('/(tabs)/home');
+        } catch (error) {
+            if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
+                return;
+            }
+
+            if (isErrorWithCode(error) && error.code === statusCodes.IN_PROGRESS) {
+                Toast.show({
+                    type: 'info',
+                    text1: 'Google Sign-In',
+                    text2: 'A Google sign-in request is already in progress.',
+                });
+                return;
+            }
+
+            if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Google Play Services',
+                    text2: 'Google Play Services is not available on this device.',
+                });
+                return;
+            }
+
+            const errorMessage = isErrorWithCode(error)
+                ? `${error.code}: ${error.message}`
+                : error?.message || 'Unable to complete native Google sign-in.';
+
+            Toast.show({
+                type: 'error',
+                text1: 'Google Sign-In Failed',
+                text2: errorMessage,
+            });
+            console.log('Google sign-in error', error);
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
 
     return (
         <>
@@ -34,9 +206,10 @@ export default function LoginScreen() {
             </Pressable>
 
             <CustomButton
-                title="Sign In"
+                title={loading ? 'Signing in...' : 'Sign In'}
                 variant="primary"
-                onPress={() => router.replace('/(tabs)/home')}
+                onPress={handleLogin}
+                disabled={loading}
                 className='mb-4' />
 
             <View className="mb-4 flex-row items-center">
@@ -46,10 +219,11 @@ export default function LoginScreen() {
             </View>
 
             <CustomButton
-                title="Continue with Google"
+                title={googleLoading ? "Connecting Google..." : "Continue with Google"}
                 variant="secondary"
                 icon={<FontAwesome name="google" size={18} color="#0f172a" />}
-                onPress={() => console.log('Google Sign in')}
+                onPress={handleGoogleLogin}
+                disabled={googleLoading || loading}
                 className="mb-4" />
 
             <CustomButton

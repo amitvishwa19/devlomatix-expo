@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import CustomInput from './CustomInput';
-import CustomButton from './CustomButton';
+import CustomInput from '../../components/CustomInput';
+import CustomButton from '../../components/CustomButton';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();

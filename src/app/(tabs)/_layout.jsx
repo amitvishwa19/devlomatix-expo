@@ -2,14 +2,49 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { Tabs } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/theme/AppTheme';
+import { getSession } from '~/utils/authStorage';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function TabLayout() {
+  const router = useRouter();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      const session = await getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!session?.isLoggedIn) {
+        router.replace('/(auth)/login');
+        return;
+      }
+
+      setIsReady(true);
+    };
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
       <Tabs.Screen name="home" options={{ title: 'Home' }} />

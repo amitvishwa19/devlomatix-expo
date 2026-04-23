@@ -1,10 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BrandLogo from '~/components/BrandLogo';
 import { useAppTheme } from '~/theme/AppTheme';
+import { clearSession, getSession } from '~/utils/authStorage';
 
 const settingsGroups = [
 { title: 'Workspace email', value: 'hello@devlomatix.com' },
@@ -16,6 +18,32 @@ const settingsGroups = [
 export default function AccountScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      const session = await getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setUser(session?.user ?? null);
+    };
+
+    loadSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await clearSession();
+    router.replace('/(auth)/login');
+  };
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
@@ -26,8 +54,12 @@ export default function AccountScreen() {
             <View className="flex-row items-center">
               <BrandLogo variant="profile" />
               <View className="ml-3.5 flex-1">
-                <Text className="text-xl font-bold" style={{ color: palette.textColor }}>Amit Verma</Text>
-                <Text className="mt-1 text-sm" style={{ color: palette.textMutedColor }}>Founder - Product Engineering</Text>
+                <Text className="text-xl font-bold" style={{ color: palette.textColor }}>
+                  {user?.displayName || user?.email || 'Account'}
+                </Text>
+                <Text className="mt-1 text-sm" style={{ color: palette.textMutedColor }}>
+                  {user?.email || 'Signed in user'}
+                </Text>
               </View>
             </View>
 
@@ -64,7 +96,7 @@ export default function AccountScreen() {
             <Pressable
               className="mt-3 h-14 items-center justify-center rounded-2xl border"
               style={{ borderColor: palette.secondaryButtonBorderColor, backgroundColor: palette.colors.secondaryButton }}
-              onPress={() => router.replace('/(auth)/login')}>
+              onPress={handleSignOut}>
               <Text className="text-base font-bold" style={{ color: palette.secondaryButtonTextColor }}>Sign out</Text>
             </Pressable>
           </View>

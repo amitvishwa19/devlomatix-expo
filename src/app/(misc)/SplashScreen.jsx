@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import BrandLogo from '~/components/BrandLogo';
+import { getSession } from '~/utils/authStorage';
 
 const SPLASH_DURATION_MS = 2200;
 
@@ -27,8 +28,10 @@ export default function SplashScreen() {
     })]
     ).start();
 
-    const timer = setTimeout(() => {
-      router.replace('/(auth)/login');
+    const timer = setTimeout(async () => {
+      const session = await getSession();
+      const nextRoute = session?.isLoggedIn ? '/(tabs)/home' : '/(auth)/login';
+      router.replace(nextRoute);
     }, SPLASH_DURATION_MS);
 
     return () => clearTimeout(timer);

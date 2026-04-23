@@ -8,14 +8,14 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { AppThemeProvider, useAppTheme } from '~/theme/AppTheme';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '~/components/CustomToast';
+import { AppThemeProvider, useAppTheme } from '~/theme/AppTheme';
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary } from
-'expo-router';
+  ErrorBoundary
+} from 'expo-router';
 
 export const unstable_settings = {
   // Ensure that reloading on deeper routes keeps a back button present.
@@ -65,7 +65,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
-      <Toast config={toastConfig} topOffset={60} />
+      <Toast config={toastConfig} topOffset={34} />
     </ThemeProvider>);
 
 }
