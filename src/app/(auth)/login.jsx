@@ -1,15 +1,15 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import Constants from 'expo-constants';
+import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
 import { saveSession } from '../../utils/authStorage';
+
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -17,15 +17,20 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('111111');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
     const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
     useEffect(() => {
+        const shouldUseWebClientId =
+            googleWebClientId && googleWebClientId !== googleAndroidClientId;
+
         GoogleSignin.configure({
             iosClientId: googleIosClientId || undefined,
-            webClientId: googleWebClientId || undefined,
+            webClientId: shouldUseWebClientId ? googleWebClientId : undefined,
+            profileImageSize: 120,
         });
-    }, []);
+    }, [googleAndroidClientId, googleIosClientId, googleWebClientId]);
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -90,30 +95,19 @@ export default function LoginScreen() {
     };
 
     const handleGoogleLogin = async () => {
-        if (Constants.appOwnership === 'expo') {
-            Toast.show({
-                type: 'info',
-                text1: 'Development Build Required',
-                text2: 'Native Google sign-in does not work inside Expo Go.',
-            });
-            return;
-        }
-
         setGoogleLoading(true);
-
         try {
             await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
             const signInResult = await GoogleSignin.signIn();
             const googleUser = signInResult.data?.user;
-            const googleIdToken = signInResult.data?.idToken;
 
             if (!googleUser?.email) {
                 throw new Error('Google profile data is missing');
             }
 
+            console.log('Google sign-in user', googleUser);
             console.log('Google sign-in success payload', {
                 email: googleUser.email,
-                hasIdToken: Boolean(googleIdToken),
             });
 
             const backendResponse = await fetch(apiUrls.googleLogin, {
@@ -130,11 +124,29 @@ export default function LoginScreen() {
                 }),
             });
 
-            const backendData = await backendResponse.json();
+            const backendText = await backendResponse.text();
+            let backendData = null;
+
+            try {
+                backendData = backendText ? JSON.parse(backendText) : null;
+            } catch {
+                backendData = null;
+            }
+
+            console.log('Google backend response', {
+                status: backendResponse.status,
+                ok: backendResponse.ok,
+                body: backendData ?? backendText,
+            });
+
             const isSuccessfulGoogleLogin = backendResponse.ok && backendData?.status === 200 && backendData?.user;
 
             if (!isSuccessfulGoogleLogin) {
-                throw new Error(backendData?.message || 'Backend Google login failed');
+                throw new Error(
+                    backendData?.message ||
+                    backendText ||
+                    `Backend Google login failed with status ${backendResponse.status}`
+                );
             }
 
             await saveSession(backendData.user);
@@ -168,13 +180,14 @@ export default function LoginScreen() {
                 return;
             }
 
-            const errorMessage = isErrorWithCode(error)
+            const isGoogleSdkError = isErrorWithCode(error);
+            const errorMessage = isGoogleSdkError
                 ? `${error.code}: ${error.message}`
-                : error?.message || 'Unable to complete native Google sign-in.';
+                : error?.message || 'Unable to complete login.';
 
             Toast.show({
                 type: 'error',
-                text1: 'Google Sign-In Failed',
+                text1: isGoogleSdkError ? 'Google Sign-In Failed' : 'Google Login Failed',
                 text2: errorMessage,
             });
             console.log('Google sign-in error', error);
