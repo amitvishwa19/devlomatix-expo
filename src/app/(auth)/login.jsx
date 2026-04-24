@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import { useApp } from '~/contexts/AppContext';
+import { useAuth } from '~/contexts/AuthContext';
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
@@ -17,6 +19,8 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('111111');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const { location } = useApp()
+    const { emailLogin, googleLogin } = useAuth()
     const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
     const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
@@ -54,7 +58,7 @@ export default function LoginScreen() {
 
             const data = await response.json();
 
-            console.log('Login response',data)
+            console.log('Login response', data)
 
             const isSuccessfulLogin = response.ok && data?.status === 200 && data?.user;
 
@@ -98,65 +102,27 @@ export default function LoginScreen() {
         setGoogleLoading(true);
         try {
             await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-            const signInResult = await GoogleSignin.signIn();
-            const googleUser = signInResult.data?.user;
+            const signInResult = await GoogleSignin.signIn()
+            const user = signInResult.data?.user
 
-            if (!googleUser?.email) {
-                throw new Error('Google profile data is missing');
+            //Here the firebase authentication with google credential is optional, you can directly use the google user data to create a session in your backend and proceed with login without using firebase at all, its up to you, but if you want to use firebase then you can use the below code to authenticate with firebase using google credential
+            //const googleCredential = GoogleAuthProvider.credential(signInResult.data.idToken);
+            //signInWithCredential(getAuth(), googleCredential);
+
+            const googleUser = {
+                uid: user?.id,
+                email: user?.email,
+                provider: 'google-firebase',
+                displayName: user?.name,
+                avatar: user?.photo,
             }
 
-            console.log('Google sign-in user', googleUser);
-            console.log('Google sign-in success payload', {
-                email: googleUser.email,
-            });
+            const result = await googleLogin({ ...googleUser, location })
 
-            const backendResponse = await fetch(apiUrls.googleLogin, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    uid: googleUser.id,
-                    email: googleUser.email,
-                    provider: 'google',
-                    displayName: googleUser.name,
-                    avatar: googleUser.photo,
-                }),
-            });
+            console.log('Google sign in in expo', googleUser)
 
-            const backendText = await backendResponse.text();
-            let backendData = null;
 
-            try {
-                backendData = backendText ? JSON.parse(backendText) : null;
-            } catch {
-                backendData = null;
-            }
-
-            console.log('Google backend response', {
-                status: backendResponse.status,
-                ok: backendResponse.ok,
-                body: backendData ?? backendText,
-            });
-
-            const isSuccessfulGoogleLogin = backendResponse.ok && backendData?.status === 200 && backendData?.user;
-
-            if (!isSuccessfulGoogleLogin) {
-                throw new Error(
-                    backendData?.message ||
-                    backendText ||
-                    `Backend Google login failed with status ${backendResponse.status}`
-                );
-            }
-
-            await saveSession(backendData.user);
-
-            Toast.show({
-                type: 'success',
-                text1: 'Success',
-                text2: 'Google login successful',
-            });
-            router.replace('/(tabs)/home');
+            //router.replace('/(tabs)/home');
         } catch (error) {
             if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
                 return;
@@ -193,6 +159,7 @@ export default function LoginScreen() {
             console.log('Google sign-in error', error);
         } finally {
             setGoogleLoading(false);
+            await GoogleSignin.signOut();
         }
     };
 
