@@ -5,3 +5,7 @@ export const vars = {
   text: '#0F172A',
   whats_app_number: '+917069564450',
 };
+
+export default function SolarBrightConstantsRoute() {
+  return null;
+}

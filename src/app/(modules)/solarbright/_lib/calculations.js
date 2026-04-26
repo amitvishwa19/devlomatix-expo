@@ -16,3 +16,7 @@ export function applianceShare(appliance, totalUnits) {
 export function totalApplianceUnits(appliances) {
   return appliances.reduce((sum, appliance) => sum + appliance.monthlyUnits, 0);
 }
+
+export default function SolarBrightCalculationsRoute() {
+  return null;
+}

@@ -102,3 +102,7 @@ export const insights = [
   detail: 'Always-on appliances like the refrigerator and router are behaving consistently this month.',
   tone: 'neutral'
 }];
+
+export default function SolarBrightMockDataRoute() {
+  return null;
+}

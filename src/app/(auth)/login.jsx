@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { useApp } from '~/contexts/AppContext';
-import { useAuth } from '~/contexts/AuthContext';
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
@@ -19,22 +17,37 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('111111');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
-    const { location } = useApp()
-    const { emailLogin, googleLogin } = useAuth()
     const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
     const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    const location = null;
 
     useEffect(() => {
-        const shouldUseWebClientId =
-            googleWebClientId && googleWebClientId !== googleAndroidClientId;
-
         GoogleSignin.configure({
             iosClientId: googleIosClientId || undefined,
-            webClientId: shouldUseWebClientId ? googleWebClientId : undefined,
+            webClientId: googleWebClientId || googleAndroidClientId || undefined,
             profileImageSize: 120,
         });
     }, [googleAndroidClientId, googleIosClientId, googleWebClientId]);
+
+    const handleAuthSuccess = async (user, successMessage) => {
+        await saveSession(user);
+        Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: successMessage,
+        });
+        router.replace('/(tabs)/home');
+    };
+
+    const getErrorMessage = async (response) => {
+        try {
+            const data = await response.json();
+            return { data, message: data?.message || 'Unable to complete login.' };
+        } catch {
+            return { data: null, message: 'Unable to complete login.' };
+        }
+    };
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -53,23 +66,15 @@ export default function LoginScreen() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, location }),
             });
 
-            const data = await response.json();
-
-            console.log('Login response', data)
+            const { data, message } = await getErrorMessage(response);
 
             const isSuccessfulLogin = response.ok && data?.status === 200 && data?.user;
 
             if (isSuccessfulLogin) {
-                await saveSession(data.user);
-                Toast.show({
-                    type: 'success',
-                    text1: 'Success',
-                    text2: 'Login successful',
-                });
-                router.replace('/(tabs)/home');
+                await handleAuthSuccess(data.user, 'Login successful');
             } else {
                 if (data?.status === 401) {
                     Toast.show({
@@ -84,7 +89,7 @@ export default function LoginScreen() {
                 Toast.show({
                     type: 'error',
                     text1: 'Login Failed',
-                    text2: data.message || 'Invalid credentials',
+                    text2: message,
                 });
             }
         } catch (error) {
@@ -115,14 +120,28 @@ export default function LoginScreen() {
                 provider: 'google-firebase',
                 displayName: user?.name,
                 avatar: user?.photo,
+            };
+
+            const response = await fetch(apiUrls.googleLogin, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...googleUser, location }),
+            });
+
+            const { data, message } = await getErrorMessage(response);
+
+            if (response.ok && data?.status === 200 && data?.user) {
+                await handleAuthSuccess(data.user, 'Google login successful');
+                return;
             }
 
-            const result = await googleLogin({ ...googleUser, location })
-
-            console.log('Google sign in in expo', googleUser)
-
-
-            //router.replace('/(tabs)/home');
+            Toast.show({
+                type: 'error',
+                text1: 'Google Login Failed',
+                text2: message,
+            });
         } catch (error) {
             if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
                 return;
@@ -159,7 +178,11 @@ export default function LoginScreen() {
             console.log('Google sign-in error', error);
         } finally {
             setGoogleLoading(false);
-            await GoogleSignin.signOut();
+            try {
+                await GoogleSignin.signOut();
+            } catch {
+                // Ignore SDK sign-out failures after the backend session has been established.
+            }
         }
     };
 

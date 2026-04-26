@@ -19,13 +19,8 @@ export const apiUrls = {
     userfromtoken: baseApi + '/auth/userfromtoken',  //POST
     userFromId: baseApi + '/auth/user',  //POST
 
-
-
-    //Transactions
-    transaction: baseApi + '/payment/transaction',  // GET
-    transaction: baseApi + '/payment/transaction',  // Post
-    transactionsDelete: baseApi + '/payment/transaction',  // delete
-
+    //Agent tab
+    agent: baseApi + '/agent',
 
     //Payment
     //Razorpay

@@ -30,7 +30,7 @@ export default function ProductScreen() {
     <SafeAreaView className={`flex-1 ${palette.page}`}>
       <StatusBar style={palette.statusBar} />
       <ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}>
-        <View className="px-5 pb-8 pt-5">
+        <View className="px-5 pb-28 pt-5">
           <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
             <Text className={`text-[12px] font-bold uppercase tracking-[1.8px] ${palette.accentText}`}>
               PRODUCT
@@ -72,6 +72,38 @@ export default function ProductScreen() {
             </View>
             <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
               Explore the SolarBright concept screen for a clean-energy product workflow.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
+            onPress={() => router.push('/(modules)/curexa')}>
+            <View className="flex-row items-center justify-between">
+              <Text className={`text-[18px] font-bold ${palette.text}`}>Curexa</Text>
+              <View className="rounded-full border border-emerald-700/20 bg-emerald-600 px-3 py-1.5">
+                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
+                  Hospital Platform
+                </Text>
+              </View>
+            </View>
+            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
+              Complete Hospital Management System with AI powered CRM.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
+            onPress={() => router.push('/(modules)/konnectx')}>
+            <View className="flex-row items-center justify-between">
+              <Text className={`text-[18px] font-bold ${palette.text}`}>KonnectX</Text>
+              <View className="rounded-full border border-sky-700/20 bg-sky-600 px-3 py-1.5">
+                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
+                  WhatsApp Platform
+                </Text>
+              </View>
+            </View>
+            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
+              WhatsApp Cloud API management app.
             </Text>
           </Pressable>
         </View>
