@@ -15,11 +15,7 @@ const productCards = [
   stage: 'Research',
   accentClassName: 'bg-orange-500'
 },
-{
-  title: 'Client onboarding',
-  stage: 'Ready for QA',
-  accentClassName: 'bg-sky-600'
-}];
+ ];
 
 
 export default function ProductScreen() {

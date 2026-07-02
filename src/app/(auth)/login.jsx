@@ -1,13 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
-import { apiUrls } from '../../utils/api';
 import { saveSession } from '../../utils/authStorage';
 
 
@@ -17,18 +15,6 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('111111');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
-    const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-    const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-    const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-    const location = null;
-
-    useEffect(() => {
-        GoogleSignin.configure({
-            iosClientId: googleIosClientId || undefined,
-            webClientId: googleWebClientId || googleAndroidClientId || undefined,
-            profileImageSize: 120,
-        });
-    }, [googleAndroidClientId, googleIosClientId, googleWebClientId]);
 
     const handleAuthSuccess = async (user, successMessage) => {
         await saveSession(user);
@@ -38,15 +24,6 @@ export default function LoginScreen() {
             text2: successMessage,
         });
         router.replace('/(tabs)/home');
-    };
-
-    const getErrorMessage = async (response) => {
-        try {
-            const data = await response.json();
-            return { data, message: data?.message || 'Unable to complete login.' };
-        } catch {
-            return { data: null, message: 'Unable to complete login.' };
-        }
     };
 
     const handleLogin = async () => {
@@ -61,42 +38,19 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
-            const response = await fetch(apiUrls.login, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password, location }),
-            });
-
-            const { data, message } = await getErrorMessage(response);
-
-            const isSuccessfulLogin = response.ok && data?.status === 200 && data?.user;
-
-            if (isSuccessfulLogin) {
-                await handleAuthSuccess(data.user, 'Login successful');
-            } else {
-                if (data?.status === 401) {
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Unauthorized',
-                        text2: data?.message || 'Account not found. Please check your credentials.',
-                    });
-                    router.replace('/(auth)/signup');
-                    return;
-                }
-
-                Toast.show({
-                    type: 'error',
-                    text1: 'Login Failed',
-                    text2: message,
-                });
-            }
+            const mockUser = {
+                id: 'mock-user-id',
+                email,
+                displayName: email.split('@')[0],
+                accessToken: 'mock-access-token',
+                refreshToken: 'mock-refresh-token',
+            };
+            await handleAuthSuccess(mockUser, 'Login successful');
         } catch (error) {
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Network error. Please try again.',
+                text2: 'Something went wrong. Please try again.',
             });
         } finally {
             setLoading(false);
@@ -106,83 +60,23 @@ export default function LoginScreen() {
     const handleGoogleLogin = async () => {
         setGoogleLoading(true);
         try {
-            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-            const signInResult = await GoogleSignin.signIn()
-            const user = signInResult.data?.user
-
-            //Here the firebase authentication with google credential is optional, you can directly use the google user data to create a session in your backend and proceed with login without using firebase at all, its up to you, but if you want to use firebase then you can use the below code to authenticate with firebase using google credential
-            //const googleCredential = GoogleAuthProvider.credential(signInResult.data.idToken);
-            //signInWithCredential(getAuth(), googleCredential);
-
-            const googleUser = {
-                uid: user?.id,
-                email: user?.email,
-                provider: 'google-firebase',
-                displayName: user?.name,
-                avatar: user?.photo,
+            const mockUser = {
+                id: 'mock-google-user-id',
+                email: 'google.user@gmail.com',
+                displayName: 'Google User',
+                avatar: null,
+                accessToken: 'mock-google-access-token',
+                refreshToken: 'mock-google-refresh-token',
             };
-
-            const response = await fetch(apiUrls.googleLogin, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ ...googleUser, location }),
-            });
-
-            const { data, message } = await getErrorMessage(response);
-
-            if (response.ok && data?.status === 200 && data?.user) {
-                await handleAuthSuccess(data.user, 'Google login successful');
-                return;
-            }
-
-            Toast.show({
-                type: 'error',
-                text1: 'Google Login Failed',
-                text2: message,
-            });
+            await handleAuthSuccess(mockUser, 'Google login successful');
         } catch (error) {
-            if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
-                return;
-            }
-
-            if (isErrorWithCode(error) && error.code === statusCodes.IN_PROGRESS) {
-                Toast.show({
-                    type: 'info',
-                    text1: 'Google Sign-In',
-                    text2: 'A Google sign-in request is already in progress.',
-                });
-                return;
-            }
-
-            if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Google Play Services',
-                    text2: 'Google Play Services is not available on this device.',
-                });
-                return;
-            }
-
-            const isGoogleSdkError = isErrorWithCode(error);
-            const errorMessage = isGoogleSdkError
-                ? `${error.code}: ${error.message}`
-                : error?.message || 'Unable to complete login.';
-
             Toast.show({
                 type: 'error',
-                text1: isGoogleSdkError ? 'Google Sign-In Failed' : 'Google Login Failed',
-                text2: errorMessage,
+                text1: 'Error',
+                text2: 'Something went wrong. Please try again.',
             });
-            console.log('Google sign-in error', error);
         } finally {
             setGoogleLoading(false);
-            try {
-                await GoogleSignin.signOut();
-            } catch {
-                // Ignore SDK sign-out failures after the backend session has been established.
-            }
         }
     };
 

@@ -1,8 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-import { Tabs } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
@@ -82,14 +81,14 @@ function CustomTabBar({ state, descriptors, navigation }) {
   return (
     <View
       pointerEvents="box-none"
-      className="absolute bottom-0 left-0 right-0 items-center"
+      className="absolute bottom-2 left-0 right-0 items-center"
       style={{
         paddingBottom: Math.max(insets.bottom, 10),
         zIndex: 100,
         elevation: 20
       }}>
       <Animated.View
-        className="w-[95%] flex-row items-center justify-around rounded-3xl px-2 py-4"
+        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-4"
         style={{
           backgroundColor: palette.colors.tabBar,
           zIndex: 100,

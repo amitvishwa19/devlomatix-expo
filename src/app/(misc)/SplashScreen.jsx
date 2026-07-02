@@ -39,7 +39,7 @@ export default function SplashScreen() {
 
   return (
     <View className="flex-1 items-center justify-center bg-slate-50 px-6">
-      <StatusBar style="dark" />
+      <StatusBar hidden />
       <View className="absolute -right-16 -top-28 h-72 w-72 rounded-full bg-teal-700/10" />
       <View className="absolute -bottom-36 -left-24 h-80 w-80 rounded-full bg-sky-500/10" />
 
