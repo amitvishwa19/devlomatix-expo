@@ -4,23 +4,25 @@ import { Animated, View } from 'react-native';
 import { useAppTheme } from '~/theme/AppTheme';
 
 function SkeletonBlock({ width, height, style }) {
-  const { palette } = useAppTheme();
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  const { palette, isDark } = useAppTheme();
+  const opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true })
+        Animated.timing(opacity, { toValue: 0.4, duration: 800, useNativeDriver: true })
       ])
     );
     animation.start();
     return () => animation.stop();
   }, [opacity]);
 
+  const skeletonBgColor = isDark ? '#334155' : '#e2e8f0';
+
   return (
     <Animated.View
-      style={[{ width: width ?? '100%', height: height ?? 20, borderRadius: 8, backgroundColor: palette.colors.surfaceAlt, opacity }, style]}
+      style={[{ width: width ?? '100%', height: height ?? 20, borderRadius: 8, backgroundColor: skeletonBgColor, opacity }, style]}
     />
   );
 }

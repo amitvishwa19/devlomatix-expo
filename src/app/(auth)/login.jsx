@@ -1,11 +1,14 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import axios from 'axios';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
+import { apiUrls } from '../../utils/api';
 import { saveSession } from '../../utils/authStorage';
 
 
@@ -15,6 +18,13 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('111111');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '580846317760-8gg8m94idkk1og5uan7vu7c1big3hpfb.apps.googleusercontent.com',
+            offlineAccess: true,
+        });
+    }, []);
 
     const handleAuthSuccess = async (user, successMessage) => {
         await saveSession(user);
@@ -38,19 +48,27 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
-            const mockUser = {
-                id: 'mock-user-id',
+            const res = await axios.post(apiUrls.login, {
                 email,
-                displayName: email.split('@')[0],
-                accessToken: 'mock-access-token',
-                refreshToken: 'mock-refresh-token',
-            };
-            await handleAuthSuccess(mockUser, 'Login successful');
+                password,
+            });
+
+            if (res.data?.status === 200 && res.data?.user) {
+                //console.log('User', res.data?.user)
+                await handleAuthSuccess(res.data.user, 'Login successful');
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: res.data?.message || 'Invalid credentials',
+                });
+            }
         } catch (error) {
+            console.error('Login error:', error);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Something went wrong. Please try again.',
+                text2: error?.response?.data?.message || error.message || 'Something went wrong. Please try again.',
             });
         } finally {
             setLoading(false);
@@ -60,20 +78,36 @@ export default function LoginScreen() {
     const handleGoogleLogin = async () => {
         setGoogleLoading(true);
         try {
-            const mockUser = {
-                id: 'mock-google-user-id',
-                email: 'google.user@gmail.com',
-                displayName: 'Google User',
-                avatar: null,
-                accessToken: 'mock-google-access-token',
-                refreshToken: 'mock-google-refresh-token',
-            };
-            await handleAuthSuccess(mockUser, 'Google login successful');
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            const res = await axios.post(apiUrls.googleLogin, {
+                uid: userInfo.user.id,
+                email: userInfo.user.email,
+                displayName: userInfo.user.name,
+                avatar: userInfo.user.photo,
+                provider: 'google',
+            });
+
+            if (res.data?.status === 200 && res.data?.user) {
+                await handleAuthSuccess(res.data.user, 'Google login successful');
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Google login failed',
+                    text2: res.data?.message || 'Verification failed on server',
+                });
+            }
         } catch (error) {
+            console.error('Google Sign In error:', error);
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                // user cancelled the login flow
+                return;
+            }
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Something went wrong. Please try again.',
+                text2: error?.response?.data?.message || error.message || 'Something went wrong. Please try again.',
             });
         } finally {
             setGoogleLoading(false);

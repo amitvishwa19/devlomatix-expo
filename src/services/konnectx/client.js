@@ -13,7 +13,7 @@ const konnectxClient = axios.create({
 konnectxClient.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync(storageKey.ACCESSTOKEN);
   if (token) {
-    config.headers.Authorization = token;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

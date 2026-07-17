@@ -25,7 +25,7 @@ const STATUS_BADGES = {
 export default function KonnectXDashboardScreen() {
   const { palette } = useAppTheme();
   const router = useRouter();
-  const { selectedCredential, credentials, setSelectedCredential, refreshCredentials } = useKonnectx();
+  const { userId, selectedCredential, credentials, setSelectedCredential, refreshCredentials } = useKonnectx();
 
   const [stats, setStats] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
@@ -37,11 +37,12 @@ export default function KonnectXDashboardScreen() {
   const [newCampaignName, setNewCampaignName] = useState('');
 
   const fetchData = useCallback(async () => {
+    if (!userId) return;
     try {
       const [statsData, campaignsData, activitiesData] = await Promise.all([
-        analyticsService.getStats().catch(() => null),
-        campaignsService.getCampaigns().catch(() => []),
-        analyticsService.getActivities().catch(() => ({ activities: [] }))
+        analyticsService.getStats(userId).catch(() => null),
+        campaignsService.getCampaigns(userId).catch(() => []),
+        analyticsService.getActivities(userId).catch(() => ({ activities: [] }))
       ]);
       setStats(statsData?.stats ?? statsData);
       setCampaigns(Array.isArray(campaignsData) ? campaignsData : campaignsData?.campaigns ?? []);
@@ -49,11 +50,13 @@ export default function KonnectXDashboardScreen() {
     } catch { } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (userId) {
+      fetchData();
+    }
+  }, [userId, fetchData]);
 
   useEffect(() => {
     try {

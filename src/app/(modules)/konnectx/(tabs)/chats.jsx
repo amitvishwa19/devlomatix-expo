@@ -8,9 +8,11 @@ import { useAppTheme } from '~/theme/AppTheme';
 
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import * as chatsService from '~/services/konnectx/chats';
+import { useKonnectx } from '~/providers/KonnectxProvider';
 
 export default function KonnectXChatsScreen() {
   const { palette } = useAppTheme();
+  const { userId } = useKonnectx();
 
   const MOCK_CONVERSATIONS = [
     { jid: '918765432109@s.whatsapp.net', name: 'Rahul Sharma', lastMessage: 'Sure, I\'ll check the campaign metrics.', timestamp: Date.now() / 1000 - 120, unread: 2 },
@@ -47,8 +49,9 @@ export default function KonnectXChatsScreen() {
   const pollRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
+    if (!userId) return;
     try {
-      const data = await chatsService.getConversations(null);
+      const data = await chatsService.getConversations(userId);
       const list = Array.isArray(data) ? data : data?.conversations ?? [];
       setConversations(list.length > 0 ? list : MOCK_CONVERSATIONS);
     } catch {
@@ -56,22 +59,24 @@ export default function KonnectXChatsScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const fetchMessages = useCallback(async (jid) => {
-    if (!jid) return;
+    if (!jid || !userId) return;
     try {
-      const data = await chatsService.getMessages(null, jid);
+      const data = await chatsService.getMessages(userId, jid);
       const msgs = Array.isArray(data) ? data : data?.messages ?? [];
       setMessages(msgs.length > 0 ? msgs : MOCK_MESSAGES[jid] || []);
     } catch {
       setMessages(MOCK_MESSAGES[jid] || []);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    if (userId) {
+      fetchConversations();
+    }
+  }, [userId, fetchConversations]);
 
   useEffect(() => {
     if (selectedJid) {
@@ -82,11 +87,12 @@ export default function KonnectXChatsScreen() {
   }, [selectedJid, fetchMessages]);
 
   const onRefresh = useCallback(async () => {
+    if (!userId) return;
     setRefreshing(true);
     await fetchConversations();
     if (selectedJid) await fetchMessages(selectedJid);
     setRefreshing(false);
-  }, [fetchConversations, fetchMessages, selectedJid]);
+  }, [userId, fetchConversations, fetchMessages, selectedJid]);
 
   const selectConversation = (jid) => {
     setSelectedJid(jid);
@@ -102,7 +108,7 @@ export default function KonnectXChatsScreen() {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      await chatsService.sendMessage(null, { to: selectedJid.replace('@s.whatsapp.net', ''), type: 'text', body: text });
+      await chatsService.sendMessage(userId, { to: selectedJid.replace('@s.whatsapp.net', ''), type: 'text', body: text });
       setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? { ...m, status: 'SENT' } : m)));
       fetchMessages(selectedJid);
     } catch (err) {
@@ -113,7 +119,7 @@ export default function KonnectXChatsScreen() {
 
   const deleteConversation = async (jid) => {
     try {
-      await chatsService.deleteConversation(null, jid);
+      await chatsService.deleteConversation(userId, jid);
       if (selectedJid === jid) {
         setSelectedJid(null);
         setMessages([]);

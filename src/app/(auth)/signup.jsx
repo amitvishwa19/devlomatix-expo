@@ -33,7 +33,7 @@ export default function SignupScreen() {
             return;
         }
 
-       
+
 
         setIsLoading(true);
         try {
@@ -45,31 +45,30 @@ export default function SignupScreen() {
             const data = await response.json();
 
 
-            console.log('register',data)
+            console.log('register', data)
 
-            if (response.ok) {
+            if (response.status === 409 || data.status === 409) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Account exists',
+                    text2: 'An account with this email already exists. Please log in.'
+                });
+                router.replace('./login');
+                return;
+            }
 
-                if(data.status === 409){
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Account exists',
-                        text2: 'An account with this email already exists. Please log in.'
-                    });
-                    router.replace('./login');
-                    return;
-                }
-                
+            if (response.ok && (data.status === 200 || !data.status)) {
                 Toast.show({
                     type: 'success',
                     text1: 'Account Created',
-                    text2: 'Welcome aboard! Redirecting to verification.'
+                    text2: 'Welcome aboard! Redirecting to login.'
                 });
-                //router.push('./verify');
+                router.replace('./login');
             } else {
                 Toast.show({
                     type: 'error',
                     text1: 'Registration failed',
-                    text2: data.message || 'An unknown error occurred on the server.'
+                    text2: data.error || data.message || 'An unknown error occurred on the server.'
                 });
             }
         } catch (err) {
@@ -115,6 +114,7 @@ export default function SignupScreen() {
                 title={isLoading ? "Creating account..." : "Create account"}
                 variant="primary"
                 className="mt-1"
+                disabled={isLoading}
                 onPress={handleRegister} />
 
             <CustomButton

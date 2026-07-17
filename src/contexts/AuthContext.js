@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }) => {
 
                 setUser(res.data?.user)
                 await SecureStore.setItemAsync(storageKey.ACCESSTOKEN, res?.data?.user?.accessToken)
-                const resp = axios.defaults.headers.common['Authorization'] = `${res?.data?.user?.accessToken}`
+                const resp = axios.defaults.headers.common['Authorization'] = `Bearer ${res?.data?.user?.accessToken}`
 
                 return res.data
             }
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
                     user: res?.data?.user,
                 })
                 setUser(res?.data?.user)
-                axios.defaults.headers.common['Authorization'] = `${res?.data?.user?.accessToken}`
+                axios.defaults.headers.common['Authorization'] = `Bearer ${res?.data?.user?.accessToken}`
                 await SecureStore.setItemAsync(storageKey.ACCESSTOKEN, res?.data?.user?.accessToken)
 
                 return res.data
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }) => {
 
 
             if (accessToken) {
-                axios.defaults.headers.common['Authorization'] = `${accessToken}`
+                axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
                 const res = await axios.post(apiUrls.userfromtoken)
 
 

@@ -16,7 +16,6 @@ export default function KonnectXTabsLayout() {
       <Tabs.Screen name="chats" options={{ title: 'Chats' }} />
       <Tabs.Screen name="campaigns" options={{ title: 'Campaigns' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>
   );
 }
@@ -36,8 +35,6 @@ function KonnectXTabBar({ state, descriptors, navigation }) {
         return <Ionicons size={size} name="megaphone-outline" color={iconColor} />;
       case 'contacts':
         return <Ionicons size={size} name="people-outline" color={iconColor} />;
-      case 'settings':
-        return <FontAwesome size={size} name="sliders" color={iconColor} />;
       default:
         return <FontAwesome size={size} name="circle" color={iconColor} />;
     }

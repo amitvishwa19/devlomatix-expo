@@ -4,7 +4,7 @@
     "slug": "devlomatix",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/logos/logo.png",
+    "icon": "./src/assets/images/app-icon.png",
     "scheme": "devlomatix",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/logos/logo.png",
+        "foregroundImage": "./src/assets/images/app-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,

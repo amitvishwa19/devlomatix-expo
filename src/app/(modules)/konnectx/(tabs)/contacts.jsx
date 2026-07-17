@@ -7,9 +7,13 @@ import { useAppTheme } from '~/theme/AppTheme';
 
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import * as contactsService from '~/services/konnectx/contacts';
+import { useKonnectx } from '~/providers/KonnectxProvider';
+import SwipeableRow from '~/components/konnectx/SwipeableRow';
+import * as Contacts from 'expo-contacts';
 
 export default function KonnectXContactsScreen() {
     const { palette } = useAppTheme();
+    const { userId } = useKonnectx();
     const [contacts, setContacts] = useState([]);
     const [groups, setGroups] = useState([]);
     const [search, setSearch] = useState('');
@@ -21,17 +25,19 @@ export default function KonnectXContactsScreen() {
     const [contactToDelete, setContactToDelete] = useState(null);
     const [editContact, setEditContact] = useState(null);
 
-    const [form, setForm] = useState({ name: '', phone: '', email: '', type: 'CONTACT', tags: '' });
+    const [form, setForm] = useState({ name: '', phone: '', email: '', type: 'CONTACT', tags: '', category: '' });
     const [saving, setSaving] = useState(false);
+    const [openRowId, setOpenRowId] = useState(null);
 
     const fetchContacts = useCallback(async () => {
+        if (!userId) return;
         try {
-            const data = await contactsService.getContacts(null, { search, page: 1, limit: 100 });
+            const data = await contactsService.getContacts(userId, { search, page: 1, limit: 100 });
             setContacts(data?.data ?? data?.contacts ?? []);
         } catch { } finally {
             setLoading(false);
         }
-    }, [search]);
+    }, [userId, search]);
 
     const fetchGroups = useCallback(async () => {
         try {
@@ -41,33 +47,35 @@ export default function KonnectXContactsScreen() {
     }, []);
 
     useEffect(() => {
-        fetchContacts();
+        if (userId) {
+            fetchContacts();
+        }
         fetchGroups();
-    }, [fetchContacts, fetchGroups]);
+    }, [userId, fetchContacts, fetchGroups]);
 
     const onRefresh = useCallback(async () => {
+        if (!userId) return;
         setRefreshing(true);
         await fetchContacts();
         await fetchGroups();
         setRefreshing(false);
-    }, [fetchContacts, fetchGroups]);
+    }, [userId, fetchContacts, fetchGroups]);
 
     const pickFromPhoneContacts = async () => {
         try {
-            const Contacts = await import('expo-contacts');
             const { status } = await Contacts.requestPermissionsAsync();
             if (status !== 'granted') {
                 Toast.show({ type: 'error', text1: 'Permission denied', text2: 'Contacts access is required.' });
                 return;
             }
             const result = await Contacts.presentContactPickerAsync();
-            if (!result?.data) return;
-            const picked = result.data;
+            if (!result) return;
+            const picked = result;
             const name = picked.name || '';
             const phone = picked.phoneNumbers?.[0]?.number || '';
             const email = picked.emails?.[0]?.email || '';
             setEditContact(null);
-            setForm({ name, phone, email, type: 'CONTACT', tags: '' });
+            setForm({ name, phone, email, type: 'CONTACT', tags: '', category: '' });
             setShowAddModal(true);
         } catch (err) {
             if (err?.code === 'ERR_CANCELED') return;
@@ -77,7 +85,7 @@ export default function KonnectXContactsScreen() {
 
     const openAdd = () => {
         setEditContact(null);
-        setForm({ name: '', phone: '', email: '', type: 'CONTACT', tags: '' });
+        setForm({ name: '', phone: '', email: '', type: 'CONTACT', tags: '', category: '' });
         setShowAddModal(true);
     };
 
@@ -88,7 +96,8 @@ export default function KonnectXContactsScreen() {
             phone: contact.phone || '',
             email: contact.email || '',
             type: contact.type || 'CONTACT',
-            tags: Array.isArray(contact.tags) ? contact.tags.join(', ') : contact.tags || ''
+            tags: Array.isArray(contact.tags) ? contact.tags.join(', ') : contact.tags || '',
+            category: contact.category || ''
         });
         setShowAddModal(true);
     };
@@ -105,13 +114,14 @@ export default function KonnectXContactsScreen() {
                 phone: form.phone.trim(),
                 email: form.email.trim() || undefined,
                 type: form.type,
-                tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined
+                tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined,
+                category: form.category.trim() || null
             };
             if (editContact) {
-                await contactsService.updateContact(null, editContact.id, body);
+                await contactsService.updateContact(userId, editContact.id, body);
                 Toast.show({ type: 'success', text1: 'Updated' });
             } else {
-                await contactsService.saveContact(null, body);
+                await contactsService.saveContact(userId, body);
                 Toast.show({ type: 'success', text1: 'Contact added' });
             }
             setShowAddModal(false);
@@ -131,7 +141,7 @@ export default function KonnectXContactsScreen() {
     const handleDelete = async () => {
         if (!contactToDelete) return;
         try {
-            await contactsService.deleteContact(null, contactToDelete.id);
+            await contactsService.deleteContact(userId, contactToDelete.id);
             setContacts((prev) => prev.filter((c) => c.id !== contactToDelete.id));
             Toast.show({ type: 'success', text1: 'Deleted' });
             setShowDeleteAlert(false);
@@ -151,39 +161,57 @@ export default function KonnectXContactsScreen() {
         const groupList = item.groups || item.groupIds || [];
 
         return (
-            <TouchableOpacity
-                onLongPress={() => confirmDelete(item)}
+            <SwipeableRow
+                isOpen={openRowId === item.id}
+                onSwipeOpen={() => setOpenRowId(item.id)}
+                onSwipeClose={() => {
+                    if (openRowId === item.id) {
+                        setOpenRowId(null);
+                    }
+                }}
+                onDelete={() => confirmDelete(item)}
                 onPress={() => openEdit(item)}
-                className="mb-2 flex-row items-center gap-3 rounded-[20px] border p-4"
-                style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
-                <View className="h-12 w-12 items-center justify-center rounded-full bg-sky-500/20">
-                    <Text className="text-[16px] font-bold text-sky-600">
-                        {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
-                    </Text>
-                </View>
-                <View className="flex-1">
-                    <Text className={`text-[15px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
-                    <Text className={`mt-0.5 text-[13px] ${palette.textSoft}`}>{item.phone}</Text>
-                    {item.email ? <Text className={`text-[11px] ${palette.textMuted}`}>{item.email}</Text> : null}
-                    {hasGroups ? (
+                onLongPress={() => confirmDelete(item)}
+            >
+                <View
+                    className="flex-row items-center gap-3 rounded-[20px] border p-4"
+                    style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                    <View className="h-12 w-12 items-center justify-center rounded-full bg-sky-500/20">
+                        <Text className="text-[16px] font-bold text-sky-600">
+                            {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
+                        </Text>
+                    </View>
+                    <View className="flex-1">
+                        <Text className={`text-[15px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
+                        <Text className={`mt-0.5 text-[13px] ${palette.textSoft}`}>{item.phone}</Text>
+                        {item.email ? <Text className={`text-[11px] ${palette.textMuted}`}>{item.email}</Text> : null}
+                        {hasGroups ? (
+                            <View className="mt-1 flex-row flex-wrap gap-1">
+                                {groupList.map((g) => (
+                                    <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-2 py-0.5">
+                                        <Text className="text-[9px] font-semibold text-sky-600">
+                                            {typeof g === 'string' ? getGroupName(g) : g.name}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : null}
                         <View className="mt-1 flex-row flex-wrap gap-1">
-                            {groupList.map((g) => (
-                                <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-2 py-0.5">
-                                    <Text className="text-[9px] font-semibold text-sky-600">
-                                        {typeof g === 'string' ? getGroupName(g) : g.name}
-                                    </Text>
+                            {item.type && item.type !== 'CONTACT' ? (
+                                <View className="rounded-full bg-amber-500/10 px-2 py-0.5">
+                                    <Text className="text-[9px] font-bold text-amber-600">{item.type}</Text>
                                 </View>
-                            ))}
+                            ) : null}
+                            {item.category ? (
+                                <View className="rounded-full bg-purple-500/10 px-2 py-0.5">
+                                    <Text className="text-[9px] font-bold text-purple-600">{item.category}</Text>
+                                </View>
+                            ) : null}
                         </View>
-                    ) : null}
-                    {item.type && item.type !== 'CONTACT' ? (
-                        <View className="mt-1 self-start rounded-full bg-amber-500/10 px-2 py-0.5">
-                            <Text className="text-[9px] font-bold text-amber-600">{item.type}</Text>
-                        </View>
-                    ) : null}
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={palette.textMutedColor} />
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={palette.textMutedColor} />
-            </TouchableOpacity>
+            </SwipeableRow>
         );
     };
 
@@ -279,6 +307,12 @@ export default function KonnectXContactsScreen() {
                             placeholder="john@example.com" placeholderTextColor={palette.textMutedColor}
                             value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" />
 
+                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Category</Text>
+                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+                            style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
+                            placeholder="e.g. Lead, Customer, VIP" placeholderTextColor={palette.textMutedColor}
+                            value={form.category} onChangeText={(v) => setForm({ ...form, category: v })} />
+
                         <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Tags (comma separated)</Text>
                         <TextInput className="mb-6 rounded-xl border px-4 py-3 text-[15px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
@@ -286,11 +320,21 @@ export default function KonnectXContactsScreen() {
                             value={form.tags} onChangeText={(v) => setForm({ ...form, tags: v })} />
 
                         <TouchableOpacity onPress={handleSave} disabled={saving}
-                            className="items-center rounded-xl bg-sky-600 py-4 shadow-lg">
+                            className={`items-center rounded-xl bg-sky-600 py-4 shadow-lg ${editContact ? 'mb-3' : ''}`}>
                             <Text className="text-[16px] font-bold text-white">
                                 {saving ? 'Saving...' : editContact ? 'Save Changes' : 'Add Contact'}
                             </Text>
                         </TouchableOpacity>
+
+                        {editContact ? (
+                            <TouchableOpacity onPress={() => {
+                                setShowAddModal(false);
+                                confirmDelete(editContact);
+                            }}
+                                className="items-center rounded-xl border border-red-500 py-4">
+                                <Text className="text-[16px] font-bold text-red-500">Delete Contact</Text>
+                            </TouchableOpacity>
+                        ) : null}
                     </View>
                 </SafeAreaView>
             </Modal>

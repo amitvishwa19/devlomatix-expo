@@ -49,7 +49,6 @@ export default function TabLayout() {
       <Tabs.Screen name="home" options={{ title: 'Home' }} />
       <Tabs.Screen name="product" options={{ title: 'Product' }} />
       <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
-      <Tabs.Screen name="account" options={{ title: 'Profile' }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>);
 
@@ -69,8 +68,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
         return <FontAwesome size={size} name="cube" color={iconColor} />;
       case 'apps':
         return <Ionicons size={size} name="grid-outline" color={iconColor} />;
-      case 'account':
-        return <FontAwesome size={size} name="user" color={iconColor} />;
       case 'settings':
         return <Ionicons size={size} name="settings-outline" color={iconColor} />;
       default:
