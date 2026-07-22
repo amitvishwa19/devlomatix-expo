@@ -14,15 +14,17 @@ import { saveSession } from '../../utils/authStorage';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('founder@devlomatix.com');
-    const [password, setPassword] = useState('111111');
+    const [email, setEmail] = useState('amitvishwa19@gmail.com');
+    const [password, setPassword] = useState('password');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
 
+    //webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '120757819823-iiq1pjeq9mpu8mom6vqvpi845pgb0dvs.apps.googleusercontent.com',
+
     useEffect(() => {
         GoogleSignin.configure({
-            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '580846317760-8gg8m94idkk1og5uan7vu7c1big3hpfb.apps.googleusercontent.com',
-            offlineAccess: true,
+            webClientId:'136382697765-cqi0qhbf663cue34uhcmbol7uamg6605.apps.googleusercontent.com',
+            offlineAccess: false,
         });
     }, []);
 

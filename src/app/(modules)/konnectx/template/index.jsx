@@ -25,7 +25,7 @@ const STATUS_COLORS = {
 export default function TemplatesScreen() {
     const { palette } = useAppTheme();
     const router = useRouter();
-    const { userId } = useKonnectx();
+    const { userId, selectedCredential } = useKonnectx();
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -150,7 +150,7 @@ export default function TemplatesScreen() {
 
     const handleSubmit = async (id) => {
         try {
-            await templatesService.submitTemplate(userId, id);
+            await templatesService.submitTemplate(userId, id, selectedCredential?.wabaId);
             Toast.show({ type: 'success', text1: 'Submitted', text2: 'Template sent for review' });
             fetchTemplates();
         } catch (err) {
@@ -207,7 +207,10 @@ export default function TemplatesScreen() {
             await chatsService.sendMessage(userId, {
                 to: sendPhone.trim(),
                 type: 'template',
-                template: sendTemplate?.name,
+                template: {
+                    name: sendTemplate?.name,
+                    language: sendTemplate?.language || 'en_US'
+                },
                 body: sendTemplate?.body || ''
             });
             Toast.show({ type: 'success', text1: 'Sent', text2: `Template sent to ${sendPhone.trim()}` });
@@ -264,25 +267,6 @@ export default function TemplatesScreen() {
                         className="flex-1 items-center rounded-xl bg-sky-600 py-2.5">
                         <Text className="text-[12px] font-bold text-white">Send</Text>
                     </TouchableOpacity>
-                    {item.status === 'DRAFT' || item.status === 'APPROVED' ? (
-                        <TouchableOpacity onPress={() => handleSubmit(item.id)}
-                            className="items-center rounded-xl border px-4 py-2.5" style={{ borderColor: palette.colors.border }}>
-                            <Ionicons name="paper-plane-outline" size={16} color={palette.textMutedColor} />
-                        </TouchableOpacity>
-                    ) : null}
-                    {item.status === 'PENDING_APPROVAL' ? (
-                        <TouchableOpacity onPress={async () => {
-                            try {
-                                await templatesService.checkTemplateStatus(userId, item.id);
-                                Toast.show({ type: 'success', text1: 'Status checked' });
-                                fetchTemplates();
-                            } catch (err) {
-                                Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
-                            }
-                        }} className="items-center rounded-xl border px-4 py-2.5" style={{ borderColor: palette.colors.border }}>
-                            <Ionicons name="sync-outline" size={16} color={palette.textMutedColor} />
-                        </TouchableOpacity>
-                    ) : null}
                     <TouchableOpacity onPress={() => handleDelete(item.id)}
                         className="items-center rounded-xl border border-red-500/20 px-4 py-2.5"
                         style={{ backgroundColor: 'rgba(220,38,38,0.05)' }}>
@@ -310,7 +294,7 @@ export default function TemplatesScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <View className="mb-4 flex-row items-center rounded-[20px] border px-4 py-3"
+                <View className="mb-4 flex-row items-center rounded-full border px-4 py-2"
                     style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
                     <Ionicons name="search" size={18} color={palette.textMutedColor} />
                     <TextInput className="ml-2 flex-1 text-[14px]" style={{ color: palette.textColor }}

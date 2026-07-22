@@ -25,13 +25,13 @@ export async function syncTemplates(userId) {
   return data;
 }
 
-export async function submitTemplate(userId, id) {
-  const { data } = await konnectxClient.post(`/templates/${id}/submit`, {}, { params: { userId } });
+export async function submitTemplate(userId, id, wabaId) {
+  const { data } = await konnectxClient.post(`/templates/${id}/submit`, { wabaId }, { params: { userId } });
   return data;
 }
 
-export async function checkTemplateStatus(userId, id) {
-  const { data } = await konnectxClient.post(`/templates/${id}/check-status`, {}, { params: { userId } });
+export async function checkTemplateStatus(userId, id, wabaId) {
+  const { data } = await konnectxClient.post(`/templates/${id}/check-status`, { wabaId }, { params: { userId } });
   return data;
 }
 
