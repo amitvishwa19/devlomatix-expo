@@ -116,7 +116,7 @@ export default function ChatbotScreen() {
                 <View className="flex-1 flex-row items-center gap-3">
                   <View className="h-12 w-12 items-center justify-center rounded-full"
                     style={{ backgroundColor: item.active ? 'rgba(22,163,74,0.1)' : 'rgba(107,114,128,0.1)' }}>
-                    <Ionicons name="robot" size={22} color={item.active ? '#16a34a' : '#6b7280'} />
+                    <Ionicons name="hardware-chip-outline" size={22} color={item.active ? '#16a34a' : '#6b7280'} />
                   </View>
                   <View className="flex-1">
                     <Text className={`text-[16px] font-bold ${palette.text}`}>{item.name}</Text>

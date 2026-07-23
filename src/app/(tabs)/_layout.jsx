@@ -47,8 +47,10 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
       <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="product" options={{ title: 'Product' }} />
       <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
+      <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
+      <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>);
 
@@ -64,10 +66,14 @@ function CustomTabBar({ state, descriptors, navigation }) {
     switch (routeName) {
       case 'home':
         return <FontAwesome size={size} name="home" color={iconColor} />;
-      case 'product':
-        return <FontAwesome size={size} name="cube" color={iconColor} />;
+      case 'messages':
+        return <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />;
+      case 'tasks':
+        return <Ionicons size={size} name="checkbox-outline" color={iconColor} />;
       case 'apps':
         return <Ionicons size={size} name="grid-outline" color={iconColor} />;
+      case 'activity':
+        return <Ionicons size={size} name="pulse-outline" color={iconColor} />;
       case 'settings':
         return <Ionicons size={size} name="settings-outline" color={iconColor} />;
       default:

@@ -39,3 +39,23 @@ export async function getTemplateAiSuggestion(userId, body) {
   const { data } = await konnectxClient.post('/templates/ai-suggestion', body, { params: { userId } });
   return data;
 }
+
+export async function cloneTemplate(userId, id) {
+  const { data } = await konnectxClient.post(`/templates/${id}/clone`, {}, { params: { userId } });
+  return data;
+}
+
+export async function shareTemplate(userId, templateId, email) {
+  const { data } = await konnectxClient.post(`/templates/${templateId}/share`, { email }, { params: { userId } });
+  return data;
+}
+
+export async function removeTemplateShare(userId, templateId, sharedWithUserId) {
+  const { data } = await konnectxClient.post(`/templates/${templateId}/remove-share`, { sharedWithUserId }, { params: { userId } });
+  return data;
+}
+
+export async function searchUsers(userId, workspaceId, query) {
+  const { data } = await konnectxClient.get('/templates/search-users', { params: { userId, workspaceId, query } });
+  return data.data ?? data;
+}

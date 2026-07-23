@@ -2,7 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -10,6 +10,10 @@ import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
 import { saveSession } from '../../utils/authStorage';
+import { registerForPushNotificationsAsync } from '~/utils/notification';
+import * as SecureStore from 'expo-secure-store';
+import { storageKey } from '~/utils/constants';
+import { getMessaging, getToken } from '@react-native-firebase/messaging';
 
 
 export default function LoginScreen() {
@@ -23,9 +27,18 @@ export default function LoginScreen() {
 
     useEffect(() => {
         GoogleSignin.configure({
-            webClientId:'136382697765-cqi0qhbf663cue34uhcmbol7uamg6605.apps.googleusercontent.com',
+            webClientId:'245235062421-rugl7hdlgdfqieia79tjeqar9m1j2tvf.apps.googleusercontent.com',
             offlineAccess: false,
         });
+    }, []);
+
+    const getTokens = useCallback(async () => {
+        let expoPushToken, fcmToken;
+        try { expoPushToken = await registerForPushNotificationsAsync(); } catch {}
+        try { fcmToken = await getToken(getMessaging()); } catch {}
+        console.log('Expo push token:', expoPushToken);
+        console.log('FCM device token:', fcmToken);
+        return { expoPushToken, fcmToken };
     }, []);
 
     const handleAuthSuccess = async (user, successMessage) => {
@@ -50,9 +63,12 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
+            const { expoPushToken, fcmToken } = await getTokens();
             const res = await axios.post(apiUrls.login, {
                 email,
                 password,
+                deviceToken: fcmToken,
+                expoPushToken,
             });
 
             if (res.data?.status === 200 && res.data?.user) {
@@ -83,13 +99,29 @@ export default function LoginScreen() {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
+
+        //console.log('user info',userInfo?.data?.user)
+
+        const user = userInfo?.data?.user;
+
+            if (!user) {
+              console.error('Google sign-in returned no user:', JSON.stringify(userInfo));
+              Toast.show({ type: 'error', text1: 'Google sign-in failed', text2: 'Could not retrieve user profile. Try reconfiguring the app.' });
+              return;
+            }
+
+            const { expoPushToken, fcmToken } = await getTokens();
             const res = await axios.post(apiUrls.googleLogin, {
-                uid: userInfo.user.id,
-                email: userInfo.user.email,
-                displayName: userInfo.user.name,
-                avatar: userInfo.user.photo,
+                uid: user.id,
+                email: user.email,
+                displayName: user.name,
+                avatar: user.photo,
                 provider: 'google',
+                deviceToken: fcmToken,
+                expoPushToken,
             });
+
+            console.log('res',res.data.status)
 
             if (res.data?.status === 200 && res.data?.user) {
                 await handleAuthSuccess(res.data.user, 'Google login successful');

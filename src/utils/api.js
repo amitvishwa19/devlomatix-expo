@@ -39,6 +39,16 @@ export const apiUrls = {
 
   chats: baseApi + "/konnectx/chats", // GET/PUT/DELETE /contacts/:id
 
+  //Kanban
+  kanban: baseApi + "/kanban", // GET
+  kanbanTasks: baseApi + "/kanban/tasks", // POST
+  kanbanTaskById: baseApi + "/kanban/tasks", // PATCH/DELETE /tasks/:id
+  kanbanColumns: baseApi + "/kanban/columns", // POST
+  kanbanColumnById: baseApi + "/kanban/columns", // DELETE /columns/:id
+  kanbanChecklists: baseApi + "/kanban/tasks", // POST /tasks/:id/checklists
+  kanbanChecklistItem: baseApi + "/kanban/tasks", // PATCH/DELETE /tasks/:id/checklists/:itemId
+  kanbanAiDescription: baseApi + "/kanban/ai/generate-description", // POST
+
   //Energy OCR
   extractOcr: function (workspaceId) {
     return (

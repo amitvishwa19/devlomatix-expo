@@ -2,7 +2,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '~/theme/AppTheme';
@@ -73,11 +73,15 @@ export default function SettingsScreen() {
         <View className="px-5 pt-5">
           {/* User Profile Header Card */}
           <View className="mb-4 rounded-3xl p-5 shadow-xl flex-row items-center gap-4" style={{ backgroundColor: palette.colors.surface, shadowColor: palette.colors.shadow }}>
-            <View className="h-16 w-16 items-center justify-center rounded-full bg-teal-700">
-              <Text className="text-[24px] font-bold text-white">
-                {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-              </Text>
-            </View>
+            {user?.avatar || user?.photo ? (
+              <Image source={{ uri: user.avatar || user.photo }} className="h-16 w-16 rounded-full" />
+            ) : (
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-teal-700">
+                <Text className="text-[24px] font-bold text-white">
+                  {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
             <View className="flex-1">
               <Text className="text-xl font-bold" style={{ color: palette.textColor }}>
                 {user?.displayName || 'User'}
