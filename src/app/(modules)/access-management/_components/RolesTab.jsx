@@ -1,26 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Dimensions, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PRESET_COLORS = ['#0d9488', '#0284c7', '#7c3aed', '#16a34a', '#d97706', '#dc2626', '#6b7280'];
 
-export default function RolesTab({ palette, search, setSearch, roles, allPermissions = [], onSave, onDelete, offline }) {
+export default function RolesTab({ palette, search, setSearch, roles, allPermissions = [], rolePermsMap = {}, onSave, onDelete, offline }) {
   const insets = useSafeAreaInsets();
-
-  const permLookup = useMemo(() => {
-    const map = new Map();
-    allPermissions.forEach((p) => {
-      const mod = p.module || p.title || p.name;
-      if (mod) {
-        const entry = { module: mod, color: p.color || '#6b7280', category: p.category, id: p.id };
-        if (p.category) map.set(p.category, entry);
-        if (p.id) map.set(p.id, entry);
-        map.set(mod, entry);
-      }
-    });
-    return map;
-  }, [allPermissions]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [form, setForm] = useState({ title: '', description: '', color: '#0d9488' });
@@ -142,27 +128,16 @@ export default function RolesTab({ palette, search, setSearch, roles, allPermiss
             <Text className={`mt-1.5 text-[13px] leading-[18px] ${palette.textSoft}`}>
               {role.description}
             </Text>
-            {role.permissions && role.permissions.length > 0 && (() => {
-              const seen = new Set();
-              const badges = [];
-              role.permissions.forEach((p) => {
-                const name = typeof p === 'object' && p ? (p.module || p.title || p.name) : p;
-                const color = typeof p === 'object' && p ? (p.color || '#6b7280') : (permLookup.get(p)?.color || '#6b7280');
-                if (name && !seen.has(name)) {
-                  seen.add(name);
-                  badges.push({ name, color });
-                }
-              });
-              return badges.length > 0 ? (
-                <View className="mt-2 flex-row flex-wrap gap-1.5">
-                  {badges.map((b) => (
-                    <View key={b.name} className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${b.color}20` }}>
-                      <Text className="text-[10px] font-bold" style={{ color: b.color }}>{b.name}</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null;
-            })()}
+            {/* <Text>{JSON.stringify(role,null,2)}</Text> */}
+            {rolePermsMap[role.id] && rolePermsMap[role.id].length > 0 && (
+              <View className="mt-2 flex-row flex-wrap gap-1.5">
+                {rolePermsMap[role.id].map((item) => (
+                  <View key={item.name} className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${item.color}20` }}>
+                    <Text className="text-[10px] font-bold" style={{ color: item.color }}>{item.name}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             <View className={`mt-3 h-px ${palette.border}`} />
             <View className="mt-3 flex-row items-center justify-between">
               <View className="flex-row items-center gap-1.5">
