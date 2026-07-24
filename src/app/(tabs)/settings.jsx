@@ -258,7 +258,7 @@ export default function SettingsScreen() {
 
           {/* Logout */}
           <Pressable
-            className="h-12 flex-row items-center justify-center rounded-lg bg-rose-600"
+            className="h-12 flex-row items-center justify-center rounded-2xl bg-rose-600"
             onPress={handleSignOut}>
             <Text className="text-base font-bold text-slate-50">Logout</Text>
           </Pressable>
