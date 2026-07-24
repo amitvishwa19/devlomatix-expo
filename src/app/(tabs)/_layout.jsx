@@ -3,9 +3,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
 
@@ -47,7 +48,7 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
       <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="apps" options={{ title: 'Apps' }} />
+      <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
@@ -60,6 +61,8 @@ function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { palette } = useAppTheme();
 
+  const { unreadCount } = useNotificationStore();
+
   const icon = (routeName, iconColor) => {
     const size = 20;
 
@@ -67,11 +70,22 @@ function CustomTabBar({ state, descriptors, navigation }) {
       case 'home':
         return <FontAwesome size={size} name="home" color={iconColor} />;
       case 'messages':
-        return <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />;
+        return (
+          <View>
+            <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />
+            {unreadCount > 0 && (
+              <View className="absolute -right-2.5 -top-2 h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1">
+                <Text className="text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        );
       case 'tasks':
-        return <Ionicons size={size} name="checkbox-outline" color={iconColor} />;
+        return <Ionicons size={size} name="layers-outline" color={iconColor} />;
       case 'apps':
-        return <Ionicons size={size} name="grid-outline" color={iconColor} />;
+        return <Ionicons size={size} name="briefcase-outline" color={iconColor} />;
       case 'activity':
         return <Ionicons size={size} name="pulse-outline" color={iconColor} />;
       case 'settings':

@@ -1,23 +1,62 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/theme/AppTheme';
 
-const productCards = [
-  // {
-  //   title: 'Studio website',
-  //   stage: 'In build',
-  //   accentClassName: 'bg-teal-600'
-  // },
-  // {
-  //   title: 'Founder portal',
-  //   stage: 'Research',
-  //   accentClassName: 'bg-orange-500'
-  // },
+const tools = [
+  {
+    id: 'notes',
+    name: 'Quick Notes',
+    icon: 'document-text-outline',
+    color: '#0284c7',
+    bg: 'bg-sky-500/15',
+    description: 'Capture ideas, meeting notes, and to-dos on the fly.',
+  },
+  {
+    id: 'timer',
+    name: 'Pomodoro Timer',
+    icon: 'timer-outline',
+    color: '#16a34a',
+    bg: 'bg-emerald-500/15',
+    description: 'Stay focused with 25-minute work sprints and breaks.',
+  },
+  {
+    id: 'habit',
+    name: 'Habit Tracker',
+    icon: 'analytics-outline',
+    color: '#9333ea',
+    bg: 'bg-purple-500/15',
+    description: 'Track daily habits and build consistent routines.',
+  },
+  {
+    id: 'calendar',
+    name: 'Daily Planner',
+    icon: 'calendar-outline',
+    color: '#d97706',
+    bg: 'bg-amber-500/15',
+    description: 'Plan your day with time-blocked scheduling.',
+  },
+  {
+    id: 'mood',
+    name: 'Mood Diary',
+    icon: 'happy-outline',
+    color: '#ec4899',
+    bg: 'bg-pink-500/15',
+    description: 'Log your mood and spot patterns over time.',
+  },
+  {
+    id: 'focus',
+    name: 'Focus Music',
+    icon: 'musical-notes-outline',
+    color: '#14b8a6',
+    bg: 'bg-teal-500/15',
+    description: 'Ambient sounds and lo-fi beats for deep work.',
+  },
 ];
 
-export default function AppsScreen() {
+export default function ProductivityScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
 
@@ -28,95 +67,37 @@ export default function AppsScreen() {
         <View className="px-5 pb-28 pt-5">
           <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
             <Text className={`text-[12px] font-bold uppercase tracking-[1.8px] ${palette.accentText}`}>
-              APPS
+              PRODUCTIVITY
             </Text>
             <Text className={`mt-2.5 text-3xl font-bold leading-[38px] ${palette.text}`}>
-              Product roadmap
+              Tools & utilities
             </Text>
             <Text className={`mt-2.5 text-[15px] leading-6 ${palette.textSoft}`}>
-              Track active product work, release state, and current delivery momentum.
+              A growing set of productivity tools to help you work better.
             </Text>
           </View>
 
-          {productCards.map((item) =>
-            <View key={item.title} className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}>
-              <View className="flex-row items-center justify-between">
-                <Text className={`text-[18px] font-bold ${palette.text}`}>{item.title}</Text>
-                <View className={`rounded-full px-3 py-1.5 ${item.accentClassName}`}>
-                  <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                    {item.stage}
+          <View className="mb-4 flex-row flex-wrap gap-3">
+            {tools.map((tool) => (
+              <Pressable
+                key={tool.id}
+                className={`w-[48%] rounded-[20px] border p-4 ${palette.surface} ${palette.border}`}
+              >
+                <View className={`mb-3 h-12 w-12 items-center justify-center rounded-2xl ${tool.bg}`}>
+                  <Ionicons name={tool.icon} size={22} color={tool.color} />
+                </View>
+                <Text className={`text-[15px] font-bold ${palette.text}`}>{tool.name}</Text>
+                <Text className={`mt-1 text-[12px] leading-4 ${palette.textSoft}`}>
+                  {tool.description}
+                </Text>
+                <View className="mt-3 self-start rounded-full border px-3 py-1" style={{ borderColor: tool.color }}>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px]" style={{ color: tool.color }}>
+                    Coming soon
                   </Text>
                 </View>
-              </View>
-              <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
-                Clear scope, visible milestones, and tighter handoff across design, build, and QA.
-              </Text>
-            </View>
-          )}
-
-          <Pressable
-            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
-            onPress={() => router.push('../solarbright')}>
-            <View className="flex-row items-center justify-between">
-              <Text className={`text-[18px] font-bold ${palette.text}`}>SolarBright</Text>
-              <View className="rounded-full bg-amber-500 px-3 py-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                  Explore SolarBright
-                </Text>
-              </View>
-            </View>
-            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
-              Explore the SolarBright concept screen for a clean-energy product workflow.
-            </Text>
-          </Pressable>
-
-          <Pressable
-            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
-            onPress={() => router.push('/(modules)/curexa')}>
-            <View className="flex-row items-center justify-between">
-              <Text className={`text-[18px] font-bold ${palette.text}`}>Curexa</Text>
-              <View className="rounded-full border border-emerald-700/20 bg-emerald-600 px-3 py-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                  Hospital Platform
-                </Text>
-              </View>
-            </View>
-            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
-              Complete Hospital Management System with AI powered CRM.
-            </Text>
-          </Pressable>
-
-          <Pressable
-            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
-            onPress={() => router.push('/(modules)/konnectx')}>
-            <View className="flex-row items-center justify-between">
-              <Text className={`text-[18px] font-bold ${palette.text}`}>KonnectX</Text>
-              <View className="rounded-full border border-sky-700/20 bg-sky-600 px-3 py-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                  WhatsApp Platform
-                </Text>
-              </View>
-            </View>
-            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
-              WhatsApp Cloud API management app.
-            </Text>
-          </Pressable>
-
-          <Pressable
-            className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
-            onPress={() => router.push('/(modules)/crystalaura')}>
-            <View className="flex-row items-center justify-between">
-              <Text className={`text-[18px] font-bold ${palette.text}`}>CrystalAura</Text>
-              <View className="rounded-full border border-purple-700/20 bg-purple-600 px-3 py-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                  E-Commerce Admin
-                </Text>
-              </View>
-            </View>
-            <Text className={`mt-3 text-[14px] leading-6 ${palette.textSoft}`}>
-              Manage products, orders, and connected stores for your CrystalAura e-commerce store.
-            </Text>
-          </Pressable>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -8,11 +8,6 @@
     "scheme": "devlomatix",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./src/assets/images/logos/devlomatix_logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -45,6 +40,14 @@
       "@react-native-google-signin/google-signin",
       "expo-font",
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./src/assets/images/splashscreen-light.png",
+          "resizeMode": "cover"
+        }
+      ],
+      [
         "expo-screen-orientation",
         {
           "initialOrientation": "DEFAULT"
@@ -63,6 +66,7 @@
           "isAndroidBackgroundLocationEnabled": "Allow App to use your location in the background"
         }
       ],
+
       "@react-native-firebase/messaging",
       "@react-native-firebase/app"
     ],

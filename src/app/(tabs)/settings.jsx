@@ -169,14 +169,93 @@ export default function SettingsScreen() {
             </View>
           ))}
 
-          {/* Logout Option */}
-          <View className="mt-2 rounded-3xl px-5 py-1" style={{ backgroundColor: palette.colors.surface }}>
-            <Pressable
-              className="flex-row items-center justify-between py-4"
-              onPress={handleSignOut}>
-              <Text className="text-base font-bold text-red-600">Logout</Text>
-            </Pressable>
-          </View>
+          {/* Access Management */}
+          <Pressable
+            className="mb-4 rounded-3xl px-5 py-2"
+            style={{ backgroundColor: palette.colors.surface }}
+            onPress={() => router.push('/(modules)/access-management')}
+          >
+            <Text className="py-4 text-sm font-bold uppercase tracking-[0.3px]" style={{ color: palette.textColor }}>
+              Access Management
+            </Text>
+
+            <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
+              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                Roles
+              </Text>
+              <View className="mt-2 flex-row flex-wrap gap-2">
+                {(user?.roles?.length ? user.roles : [{ title: 'Admin' }]).map((role) => {
+                  const label = typeof role === 'string' ? role : role.title || role.name || 'User';
+                  return (
+                    <View key={label} className="rounded-full bg-teal-600 px-3 py-1.5">
+                      <Text className="text-[12px] font-bold text-white">{label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
+              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                App Access
+              </Text>
+              {[
+                { name: 'SolarBright', key: 'solarbright', color: '#d97706' },
+                { name: 'Curexa', key: 'curexa', color: '#059669' },
+                { name: 'KonnectX', key: 'konnectx', color: '#0284c7' },
+                { name: 'CrystalAura', key: 'crystalaura', color: '#9333ea' },
+              ].map((app) => {
+                const permValues = (user?.permissions || []).map((p) => typeof p === 'string' ? p : p.key || p.action || p.title || p.name);
+                const hasAccess = !user?.permissions || permValues.includes(app.key) || permValues.includes('*');
+                return (
+                  <View key={app.key} className="flex-row items-center justify-between py-3">
+                    <View className="flex-row items-center gap-2.5">
+                      <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: app.color }} />
+                      <Text className="text-base font-bold" style={{ color: palette.textColor }}>{app.name}</Text>
+                    </View>
+                    {hasAccess ? (
+                      <View className="rounded-full bg-emerald-500/20 px-3 py-0.5">
+                        <Text className="text-[11px] font-bold text-emerald-600">Granted</Text>
+                      </View>
+                    ) : (
+                      <View className="rounded-full bg-rose-500/20 px-3 py-0.5">
+                        <Text className="text-[11px] font-bold text-rose-500">Restricted</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+
+            <View className="py-4">
+              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                Permissions
+              </Text>
+              {user?.permissions?.length ? (
+                <View className="mt-2 flex-row flex-wrap gap-1.5">
+                  {user.permissions.map((perm) => {
+                    const label = typeof perm === 'string' ? perm : perm.title || perm.name || perm.key || perm.action || '—';
+                    return (
+                      <View key={label} className="rounded-lg px-2.5 py-1" style={{ backgroundColor: palette.colors.surfaceAlt }}>
+                        <Text className="text-[12px]" style={{ color: palette.textMutedColor }}>{label}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text className="mt-2 text-sm leading-5" style={{ color: palette.textMutedColor }}>
+                  Full access to all modules and features.
+                </Text>
+              )}
+            </View>
+          </Pressable>
+
+          {/* Logout */}
+          <Pressable
+            className="h-12 flex-row items-center justify-center rounded-lg bg-rose-600"
+            onPress={handleSignOut}>
+            <Text className="text-base font-bold text-slate-50">Logout</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

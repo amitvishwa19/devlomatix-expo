@@ -55,4 +55,13 @@ export const apiUrls = {
       "http://10.0.2.2:3000/api/workspace/" + workspaceId + "/energy/ai/ocr"
     );
   },
+
+  //Access Management
+  accessManagement: baseApi + "/auth/access-management", // GET
+  accessUser: baseApi + "/auth/access-management/user", // POST (upsert)
+  accessUserById: baseApi + "/auth/access-management/user", // DELETE /user/:id
+  accessRole: baseApi + "/auth/access-management/role", // POST (upsert)
+  accessRoleById: baseApi + "/auth/access-management/role", // DELETE /role/:id
+  accessPermission: baseApi + "/auth/access-management/permission", // POST (bulk upsert)
+  accessPermissionById: baseApi + "/auth/access-management/permission", // DELETE /permission/:id
 };

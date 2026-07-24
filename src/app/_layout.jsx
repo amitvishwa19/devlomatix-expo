@@ -16,6 +16,8 @@ import { setNotificationHandler } from "expo-notifications";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "~/components/CustomToast";
 import { NotificationProvider } from "~/contexts/NotificationContext";
+import { NotificationStoreProvider } from "~/contexts/NotificationStore";
+import { WidgetProvider } from "~/contexts/WidgetContext";
 import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
 setNotificationHandler({
@@ -37,7 +39,6 @@ export const unstable_settings = {
     initialRouteName: "index",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -45,7 +46,6 @@ export default function RootLayout() {
         ...FontAwesome.font,
     });
 
-    // Expo Router uses Error Boundaries to catch errors in the navigation tree.
     useEffect(() => {
         if (error) throw error;
     }, [error]);
@@ -75,6 +75,8 @@ function RootLayoutNav() {
             value={palette.navigation === "dark" ? DarkTheme : DefaultTheme}
         >
             <NotificationProvider>
+                <NotificationStoreProvider>
+                <WidgetProvider>
                 <Stack>
                     <Stack.Screen name="index" options={{ headerShown: false }} />
                     <Stack.Screen name="(misc)" options={{ headerShown: false }} />
@@ -85,6 +87,8 @@ function RootLayoutNav() {
                 </Stack>
                 {/* <GlobalChatbot bottom={-10} right={20} /> */}
                 <Toast config={toastConfig} topOffset={34} />
+                </WidgetProvider>
+                </NotificationStoreProvider>
             </NotificationProvider>
         </ThemeProvider>
     );
