@@ -1,9 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useWidgets } from '~/contexts/WidgetContext';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -91,13 +90,12 @@ export default function HomeScreen() {
   const allEnabled = enabledKeys.length === Object.keys(widgets).length;
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
-      <View className={`flex-1 ${palette.page}`}>
-        <View className="absolute -right-16 -top-28 h-72 w-72 rounded-full bg-teal-700/10" />
-        <View className="absolute -bottom-36 -left-24 h-80 w-80 rounded-full bg-sky-500/10" />
+    <AppScreen>
+      <View className="flex-1">
+        {/* <View className="absolute -right-16 -top-28 h-72 w-72 rounded-full bg-teal-700/10" />
+        <View className="absolute -bottom-36 -left-24 h-80 w-80 rounded-full bg-sky-500/10" /> */}
 
-        <ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="px-5 pb-8 pt-5">
             <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
               <View className="flex-row items-center justify-between">
@@ -277,6 +275,6 @@ export default function HomeScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

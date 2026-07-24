@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useColorScheme } from '~/components/useColorScheme';
+import { pageBackground } from '~/utils/constants';
 
 
 const THEME_STORAGE_KEY = 'devlomatix.theme-mode';
@@ -77,6 +78,7 @@ export function useAppTheme() {
       statusBar: 'light',
       navigation: 'dark',
       page: 'bg-slate-950',
+      pageBackground,
       pageAlt: 'bg-slate-900',
       surface: 'bg-slate-900',
       surfaceAlt: 'bg-slate-800',
@@ -141,6 +143,7 @@ export function useAppTheme() {
       statusBar: 'dark',
       navigation: 'light',
       page: 'bg-slate-50',
+      pageBackground,
       pageAlt: 'bg-white',
       surface: 'bg-white',
       surfaceAlt: 'bg-white',

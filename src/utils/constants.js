@@ -53,7 +53,7 @@ export const globalKeys = {
   mapApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAP_KEY,
 };
 
-export const pageBackground = require("../assets/images/splashscreen-light.png");
+export const pageBackground = require("../assets/images/page-background.png");
 
 export const openAiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 export const aiMlApiKey = process.env.EXPO_PUBLIC_AIML_API_KEY;
