@@ -78,7 +78,6 @@ export default function AccessManagementScreen() {
     try {
       setError(null);
       const res = await fetchAccessData();
-      console.log('[ACCESS_MGMT] API response:', JSON.stringify(res));
       const body = res?.data || res;
       if (!body.users && !body.roles && !body.permissions) {
         throw new Error('Unexpected response format: ' + JSON.stringify(res).slice(0, 200));
@@ -109,7 +108,6 @@ export default function AccessManagementScreen() {
       setRolePermsMap((prev) => ({ ...prev, ...permMap }));
       setOffline(false);
     } catch (e) {
-      console.log('[ACCESS_MGMT] Error:', e.message);
       setError(e.message || 'Failed to load');
       if (isInitial) {
         setData(FALLBACK_DATA);
@@ -156,7 +154,6 @@ export default function AccessManagementScreen() {
       await upsertUser({ id: payload.id, name: payload.name, email: payload.email, roles: roleIds, status: payload.status });
       await loadData();
     } catch (e) {
-      console.warn('[ACCESS_MGMT] User save succeeded locally but API failed:', e.message);
     }
   };
 
@@ -173,7 +170,6 @@ export default function AccessManagementScreen() {
       await deleteUser(userId);
       await loadData();
     } catch (e) {
-      console.warn('[ACCESS_MGMT] User delete succeeded locally but API failed:', e.message);
     }
   };
 
@@ -226,7 +222,6 @@ export default function AccessManagementScreen() {
       await upsertRole({ ...roleFields, permissions: permissionIds });
       await loadData();
     } catch (e) {
-      console.warn('[ACCESS_MGMT] Role save succeeded locally but API failed:', e.message);
     }
   };
 
@@ -243,7 +238,6 @@ export default function AccessManagementScreen() {
       await deleteRole(roleId);
       await loadData();
     } catch (e) {
-      console.warn('[ACCESS_MGMT] Role delete succeeded locally but API failed:', e.message);
     }
   };
 
