@@ -54,14 +54,14 @@ export const hospitalDefaultSettings = {
 export const onboardingScreen = 'onboardingScreen'
 
 export const globalKeys = {
-    mapApiKey: 'ENV_GOOGLE_MAP_KEY'
+    mapApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAP_KEY
 }
 
 
 
-export const openAiApiKey = 'ENV_OPENAI_API_KEY'
-export const aiMlApiKey = 'ENV_AIML_API_KEY'
-export const googleGemeniApiKey = 'ENV_GOOGLE_GEMENI_API_KEY'
+export const openAiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY
+export const aiMlApiKey = process.env.EXPO_PUBLIC_AIML_API_KEY
+export const googleGemeniApiKey = process.env.EXPO_PUBLIC_GOOGLE_GEMENI_API_KEY
 export const aiApiKey = aiMlApiKey
 
 
