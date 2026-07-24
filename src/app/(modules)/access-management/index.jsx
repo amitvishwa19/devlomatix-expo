@@ -26,21 +26,21 @@ const FALLBACK_DATA = {
     { id: '3', name: 'Rahul Kumar', email: 'rahul@devlomatix.com', roles: ['Manager', 'Editor'], status: 'active', color: '#7c3aed' },
   ],
   roles: [
-    { id: '1', title: 'Super Admin', description: 'Full system access with all permissions.', color: '#0d9488', permissionCount: 48, userCount: 1 },
-    { id: '2', title: 'Admin', description: 'Administrative access to manage workspace.', color: '#0284c7', permissionCount: 36, userCount: 1 },
-    { id: '3', title: 'Manager', description: 'Can manage content and moderate users.', color: '#7c3aed', permissionCount: 24, userCount: 2 },
-    { id: '4', title: 'Editor', description: 'Can create and edit content.', color: '#16a34a', permissionCount: 18, userCount: 2 },
-    { id: '5', title: 'Viewer', description: 'Read-only access to approved modules.', color: '#d97706', permissionCount: 8, userCount: 1 },
+    { id: '1', title: 'Super Admin', description: 'Full system access with all permissions.', color: '#0d9488', permissionCount: 48, userCount: 1, permissions: ['dashboard', 'users', 'roles', 'permissions', 'solarbright', 'curexa', 'konnectx', 'crystalaura'] },
+    { id: '2', title: 'Admin', description: 'Administrative access to manage workspace.', color: '#0284c7', permissionCount: 36, userCount: 1, permissions: ['dashboard', 'users', 'roles', 'permissions', 'konnectx', 'crystalaura'] },
+    { id: '3', title: 'Manager', description: 'Can manage content and moderate users.', color: '#7c3aed', permissionCount: 24, userCount: 2, permissions: ['dashboard', 'users', 'curexa', 'konnectx'] },
+    { id: '4', title: 'Editor', description: 'Can create and edit content.', color: '#16a34a', permissionCount: 18, userCount: 2, permissions: ['dashboard', 'curexa', 'konnectx'] },
+    { id: '5', title: 'Viewer', description: 'Read-only access to approved modules.', color: '#d97706', permissionCount: 8, userCount: 1, permissions: ['dashboard', 'solarbright'] },
   ],
   permissions: [
-    { module: 'Dashboard', category: 'dashboard', color: '#0d9488', actions: { view: true, create: false, edit: false, delete: false, manage: false } },
-    { module: 'Users', category: 'users', color: '#0284c7', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
-    { module: 'Roles', category: 'roles', color: '#7c3aed', actions: { view: true, create: true, edit: true, delete: true, manage: false } },
-    { module: 'Permissions', category: 'permissions', color: '#dc2626', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
-    { module: 'SolarBright', category: 'solarbright', color: '#d97706', actions: { view: true, create: false, edit: false, delete: false, manage: false } },
-    { module: 'Curexa', category: 'curexa', color: '#059669', actions: { view: true, create: true, edit: true, delete: false, manage: false } },
-    { module: 'KonnectX', category: 'konnectx', color: '#0284c7', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
-    { module: 'CrystalAura', category: 'crystalaura', color: '#9333ea', actions: { view: true, create: true, edit: true, delete: true, manage: false } },
+    { id: 'perm-dashboard', module: 'Dashboard', category: 'dashboard', color: '#0d9488', actions: { view: true, create: false, edit: false, delete: false, manage: false } },
+    { id: 'perm-users', module: 'Users', category: 'users', color: '#0284c7', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
+    { id: 'perm-roles', module: 'Roles', category: 'roles', color: '#7c3aed', actions: { view: true, create: true, edit: true, delete: true, manage: false } },
+    { id: 'perm-permissions', module: 'Permissions', category: 'permissions', color: '#dc2626', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
+    { id: 'perm-solarbright', module: 'SolarBright', category: 'solarbright', color: '#d97706', actions: { view: true, create: false, edit: false, delete: false, manage: false } },
+    { id: 'perm-curexa', module: 'Curexa', category: 'curexa', color: '#059669', actions: { view: true, create: true, edit: true, delete: false, manage: false } },
+    { id: 'perm-konnectx', module: 'KonnectX', category: 'konnectx', color: '#0284c7', actions: { view: true, create: true, edit: true, delete: true, manage: true } },
+    { id: 'perm-crystalaura', module: 'CrystalAura', category: 'crystalaura', color: '#9333ea', actions: { view: true, create: true, edit: true, delete: true, manage: false } },
   ],
   stats: { totalUsers: 3, totalRoles: 5, totalPermissions: 40, activePermissions: 32 },
 };
@@ -153,6 +153,7 @@ export default function AccessManagementScreen() {
 
     const newRole = {
       ...roleFields,
+      permissions: selectedPerms || [],
       permissionCount: newPermCount,
       userCount: 0,
     };

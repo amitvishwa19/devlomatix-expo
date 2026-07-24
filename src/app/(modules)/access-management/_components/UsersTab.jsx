@@ -129,11 +129,15 @@ export default function UsersTab({ palette, search, setSearch, users, statusBadg
                                 <Text className={`mt-0.5 text-[12px] ${palette.textMuted}`}>{user.email}</Text>
                                 {user.roles && user.roles.length > 0 && (
                                     <View className="mt-1.5 flex-row flex-wrap gap-1.5">
-                                        {user.roles.map((role) => (
-                                            <View key={role} className="rounded-full bg-teal-600/10 px-2 py-0.5">
-                                                <Text className="text-[10px] font-bold text-teal-700">{role}</Text>
-                                            </View>
-                                        ))}
+                                        {user.roles.map((roleTitle) => {
+                                            const role = allRoles.find((r) => r.title === roleTitle || r.id === roleTitle);
+                                            const roleColor = role?.color || '#0d9488';
+                                            return (
+                                                <View key={roleTitle} className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${roleColor}20` }}>
+                                                    <Text className="text-[10px] font-bold" style={{ color: roleColor }}>{roleTitle}</Text>
+                                                </View>
+                                            );
+                                        })}
                                     </View>
                                 )}
                             </View>

@@ -118,11 +118,6 @@ export default function RolesTab({ palette, search, setSearch, roles, allPermiss
             <View className="flex-row items-center justify-between">
               <Text className={`text-[17px] font-bold ${palette.text}`}>{role.title}</Text>
               <View className="flex-row items-center gap-2">
-                {role.permissionCount !== undefined && (
-                  <View className="rounded-full bg-sky-500/10 px-2.5 py-0.5">
-                    <Text className="text-[10px] font-bold text-sky-600">{role.permissionCount} perm</Text>
-                  </View>
-                )}
                 {role.userCount !== undefined && (
                   <View className="rounded-full bg-purple-500/10 px-2.5 py-0.5">
                     <Text className="text-[10px] font-bold text-purple-600">{role.userCount} users</Text>
@@ -133,6 +128,31 @@ export default function RolesTab({ palette, search, setSearch, roles, allPermiss
             <Text className={`mt-1.5 text-[13px] leading-[18px] ${palette.textSoft}`}>
               {role.description}
             </Text>
+            {role.permissions && role.permissions.length > 0 && (() => {
+              const seen = new Set();
+              const uniquePerms = [];
+              role.permissions.forEach((p) => {
+                const perm = typeof p === 'object' && p !== null
+                  ? p
+                  : allPermissions.find((ap) => ap.category === p) || allPermissions.find((ap) => ap.id === p);
+                if (perm && perm.module && !seen.has(perm.category)) {
+                  seen.add(perm.category);
+                  uniquePerms.push(perm);
+                }
+              });
+              return uniquePerms.length > 0 ? (
+                <View className="mt-3">
+                  <Text className={`mb-2 text-[11px] font-bold uppercase tracking-[0.5px] ${palette.textMuted}`}>Permissions</Text>
+                  <View className="flex-row flex-wrap gap-1.5">
+                    {uniquePerms.map((perm) => (
+                      <View key={perm.category || perm.id} className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${perm.color || '#6b7280'}20` }}>
+                        <Text className="text-[11px] font-bold" style={{ color: perm.color || '#6b7280' }}>{perm.module}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null;
+            })()}
             <View className={`mt-3 h-px ${palette.border}`} />
             <View className="mt-3 flex-row items-center justify-between">
               <View className="flex-row items-center gap-1.5">

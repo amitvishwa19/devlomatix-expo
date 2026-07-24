@@ -1,12 +1,13 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '~/theme/AppTheme';
 import { clearSession, getSession } from '~/utils/authStorage';
+import { fetchAccessData } from '~/services/access-management';
 
 const settingGroups = [
   {
@@ -31,6 +32,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { themeMode, setThemeMode, isDark, palette } = useAppTheme();
   const [user, setUser] = useState(null);
+  const [permModules, setPermModules] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +45,23 @@ export default function SettingsScreen() {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadPerms = async () => {
+      try {
+        const res = await fetchAccessData();
+        const body = res?.data || res;
+        if (body?.permissions && isMounted) {
+          setPermModules(body.permissions);
+        }
+      } catch {
+        // fallback to user session data
+      }
+    };
+    loadPerms();
+    return () => { isMounted = false; };
   }, []);
 
   const handleSignOut = async () => {
@@ -179,62 +198,61 @@ export default function SettingsScreen() {
               Access Management
             </Text>
 
-            <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
-              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
-                Roles
-              </Text>
-              <View className="mt-2 flex-row flex-wrap gap-2">
-                {(user?.roles?.length ? user.roles : [{ title: 'Admin' }]).map((role) => {
-                  const label = typeof role === 'string' ? role : role.title || role.name || 'User';
+            {user?.roles?.length > 0 && (
+              <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
+                <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                  Roles
+                </Text>
+                <View className="mt-2 flex-row flex-wrap gap-2">
+                  {user.roles.map((role) => {
+                    const label = typeof role === 'string' ? role : role.title || role.name || 'User';
+                    return (
+                      <View key={label} className="rounded-full bg-teal-600 px-3 py-1.5">
+                        <Text className="text-[12px] font-bold text-white">{label}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {permModules.length > 0 && (
+              <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
+                <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                  App Access
+                </Text>
+                {permModules.map((mod) => {
+                  const permValues = (user?.permissions || []).map((p) => typeof p === 'string' ? p : p.key || p.action || p.title || p.name || p.category);
+                  const hasAccess = !user?.permissions || permValues.includes(mod.category) || permValues.includes('*');
                   return (
-                    <View key={label} className="rounded-full bg-teal-600 px-3 py-1.5">
-                      <Text className="text-[12px] font-bold text-white">{label}</Text>
+                    <View key={mod.category || mod.id} className="flex-row items-center justify-between py-3">
+                      <View className="flex-row items-center gap-2.5">
+                        <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: mod.color || '#6b7280' }} />
+                        <Text className="text-base font-bold" style={{ color: palette.textColor }}>{mod.module}</Text>
+                      </View>
+                      {hasAccess ? (
+                        <View className="rounded-full bg-emerald-500/20 px-3 py-0.5">
+                          <Text className="text-[11px] font-bold text-emerald-600">Granted</Text>
+                        </View>
+                      ) : (
+                        <View className="rounded-full bg-rose-500/20 px-3 py-0.5">
+                          <Text className="text-[11px] font-bold text-rose-500">Restricted</Text>
+                        </View>
+                      )}
                     </View>
                   );
                 })}
               </View>
-            </View>
+            )}
 
-            <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
-              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
-                App Access
-              </Text>
-              {[
-                { name: 'SolarBright', key: 'solarbright', color: '#d97706' },
-                { name: 'Curexa', key: 'curexa', color: '#059669' },
-                { name: 'KonnectX', key: 'konnectx', color: '#0284c7' },
-                { name: 'CrystalAura', key: 'crystalaura', color: '#9333ea' },
-              ].map((app) => {
-                const permValues = (user?.permissions || []).map((p) => typeof p === 'string' ? p : p.key || p.action || p.title || p.name);
-                const hasAccess = !user?.permissions || permValues.includes(app.key) || permValues.includes('*');
-                return (
-                  <View key={app.key} className="flex-row items-center justify-between py-3">
-                    <View className="flex-row items-center gap-2.5">
-                      <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: app.color }} />
-                      <Text className="text-base font-bold" style={{ color: palette.textColor }}>{app.name}</Text>
-                    </View>
-                    {hasAccess ? (
-                      <View className="rounded-full bg-emerald-500/20 px-3 py-0.5">
-                        <Text className="text-[11px] font-bold text-emerald-600">Granted</Text>
-                      </View>
-                    ) : (
-                      <View className="rounded-full bg-rose-500/20 px-3 py-0.5">
-                        <Text className="text-[11px] font-bold text-rose-500">Restricted</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-
-            <View className="py-4">
-              <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
-                Permissions
-              </Text>
-              {user?.permissions?.length ? (
+            {user?.permissions?.length > 0 && (
+              <View className="py-4">
+                <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
+                  Permissions
+                </Text>
                 <View className="mt-2 flex-row flex-wrap gap-1.5">
                   {user.permissions.map((perm) => {
-                    const label = typeof perm === 'string' ? perm : perm.title || perm.name || perm.key || perm.action || '—';
+                    const label = typeof perm === 'string' ? perm : perm.title || perm.name || perm.key || perm.action || perm.category || '—';
                     return (
                       <View key={label} className="rounded-lg px-2.5 py-1" style={{ backgroundColor: palette.colors.surfaceAlt }}>
                         <Text className="text-[12px]" style={{ color: palette.textMutedColor }}>{label}</Text>
@@ -242,12 +260,8 @@ export default function SettingsScreen() {
                     );
                   })}
                 </View>
-              ) : (
-                <Text className="mt-2 text-sm leading-5" style={{ color: palette.textMutedColor }}>
-                  Full access to all modules and features.
-                </Text>
-              )}
-            </View>
+              </View>
+            )}
           </Pressable>
 
           {/* Logout */}
