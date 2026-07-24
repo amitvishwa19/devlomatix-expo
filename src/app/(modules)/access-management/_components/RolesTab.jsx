@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, Dimensions, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +7,20 @@ const PRESET_COLORS = ['#0d9488', '#0284c7', '#7c3aed', '#16a34a', '#d97706', '#
 
 export default function RolesTab({ palette, search, setSearch, roles, allPermissions = [], onSave, onDelete, offline }) {
   const insets = useSafeAreaInsets();
+
+  const permLookup = useMemo(() => {
+    const map = new Map();
+    allPermissions.forEach((p) => {
+      const mod = p.module || p.title || p.name;
+      if (mod) {
+        const entry = { module: mod, color: p.color || '#6b7280', category: p.category, id: p.id };
+        if (p.category) map.set(p.category, entry);
+        if (p.id) map.set(p.id, entry);
+        map.set(mod, entry);
+      }
+    });
+    return map;
+  }, [allPermissions]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [form, setForm] = useState({ title: '', description: '', color: '#0d9488' });
@@ -130,26 +144,22 @@ export default function RolesTab({ palette, search, setSearch, roles, allPermiss
             </Text>
             {role.permissions && role.permissions.length > 0 && (() => {
               const seen = new Set();
-              const uniquePerms = [];
+              const badges = [];
               role.permissions.forEach((p) => {
-                const perm = typeof p === 'object' && p !== null
-                  ? p
-                  : allPermissions.find((ap) => ap.category === p) || allPermissions.find((ap) => ap.id === p);
-                if (perm && perm.module && !seen.has(perm.category)) {
-                  seen.add(perm.category);
-                  uniquePerms.push(perm);
+                const name = typeof p === 'object' && p ? (p.module || p.title || p.name) : p;
+                const color = typeof p === 'object' && p ? (p.color || '#6b7280') : (permLookup.get(p)?.color || '#6b7280');
+                if (name && !seen.has(name)) {
+                  seen.add(name);
+                  badges.push({ name, color });
                 }
               });
-              return uniquePerms.length > 0 ? (
-                <View className="mt-3">
-                  <Text className={`mb-2 text-[11px] font-bold uppercase tracking-[0.5px] ${palette.textMuted}`}>Permissions</Text>
-                  <View className="flex-row flex-wrap gap-1.5">
-                    {uniquePerms.map((perm) => (
-                      <View key={perm.category || perm.id} className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${perm.color || '#6b7280'}20` }}>
-                        <Text className="text-[11px] font-bold" style={{ color: perm.color || '#6b7280' }}>{perm.module}</Text>
-                      </View>
-                    ))}
-                  </View>
+              return badges.length > 0 ? (
+                <View className="mt-2 flex-row flex-wrap gap-1.5">
+                  {badges.map((b) => (
+                    <View key={b.name} className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${b.color}20` }}>
+                      <Text className="text-[10px] font-bold" style={{ color: b.color }}>{b.name}</Text>
+                    </View>
+                  ))}
                 </View>
               ) : null;
             })()}

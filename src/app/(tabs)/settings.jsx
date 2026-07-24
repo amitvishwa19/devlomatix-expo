@@ -1,13 +1,13 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { fetchAccessData } from '~/services/access-management';
 import { useAppTheme } from '~/theme/AppTheme';
 import { clearSession, getSession } from '~/utils/authStorage';
-import { fetchAccessData } from '~/services/access-management';
 
 const settingGroups = [
   {
@@ -219,29 +219,21 @@ export default function SettingsScreen() {
             {permModules.length > 0 && (
               <View className="py-4 border-b" style={{ borderColor: palette.colors.border }}>
                 <Text className="text-[13px] font-bold uppercase tracking-[0.3px]" style={{ color: palette.textSoftColor }}>
-                  App Access
+                  Permissions
                 </Text>
-                {permModules.map((mod) => {
-                  const permValues = (user?.permissions || []).map((p) => typeof p === 'string' ? p : p.key || p.action || p.title || p.name || p.category);
-                  const hasAccess = !user?.permissions || permValues.includes(mod.category) || permValues.includes('*');
+                <View className="mt-2 flex-row flex-wrap gap-2">
+                  {permModules.map((mod) => {
+                 
+                  
                   return (
-                    <View key={mod.category || mod.id} className="flex-row items-center justify-between py-3">
-                      <View className="flex-row items-center gap-2.5">
-                        <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: mod.color || '#6b7280' }} />
-                        <Text className="text-base font-bold" style={{ color: palette.textColor }}>{mod.module}</Text>
+                    <View key={mod.category || mod.id} className="flex-row items-center justify-between py-3">        
+                      <View key={'label'} className="rounded-full bg-teal-600 px-3 py-1.5">
+                        <Text className="text-[12px] font-bold text-white" >{mod.module}</Text>
                       </View>
-                      {hasAccess ? (
-                        <View className="rounded-full bg-emerald-500/20 px-3 py-0.5">
-                          <Text className="text-[11px] font-bold text-emerald-600">Granted</Text>
-                        </View>
-                      ) : (
-                        <View className="rounded-full bg-rose-500/20 px-3 py-0.5">
-                          <Text className="text-[11px] font-bold text-rose-500">Restricted</Text>
-                        </View>
-                      )}
                     </View>
                   );
                 })}
+                </View>
               </View>
             )}
 

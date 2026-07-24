@@ -26,11 +26,11 @@ const FALLBACK_DATA = {
     { id: '3', name: 'Rahul Kumar', email: 'rahul@devlomatix.com', roles: ['Manager', 'Editor'], status: 'active', color: '#7c3aed' },
   ],
   roles: [
-    { id: '1', title: 'Super Admin', description: 'Full system access with all permissions.', color: '#0d9488', permissionCount: 48, userCount: 1, permissions: ['dashboard', 'users', 'roles', 'permissions', 'solarbright', 'curexa', 'konnectx', 'crystalaura'] },
-    { id: '2', title: 'Admin', description: 'Administrative access to manage workspace.', color: '#0284c7', permissionCount: 36, userCount: 1, permissions: ['dashboard', 'users', 'roles', 'permissions', 'konnectx', 'crystalaura'] },
-    { id: '3', title: 'Manager', description: 'Can manage content and moderate users.', color: '#7c3aed', permissionCount: 24, userCount: 2, permissions: ['dashboard', 'users', 'curexa', 'konnectx'] },
-    { id: '4', title: 'Editor', description: 'Can create and edit content.', color: '#16a34a', permissionCount: 18, userCount: 2, permissions: ['dashboard', 'curexa', 'konnectx'] },
-    { id: '5', title: 'Viewer', description: 'Read-only access to approved modules.', color: '#d97706', permissionCount: 8, userCount: 1, permissions: ['dashboard', 'solarbright'] },
+    { id: '1', title: 'Super Admin', description: 'Full system access with all permissions.', color: '#0d9488', permissionCount: 48, userCount: 1, permissions: ['Dashboard', 'Users', 'Roles', 'Permissions', 'SolarBright', 'Curexa', 'KonnectX', 'CrystalAura'] },
+    { id: '2', title: 'Admin', description: 'Administrative access to manage workspace.', color: '#0284c7', permissionCount: 36, userCount: 1, permissions: ['Dashboard', 'Users', 'Roles', 'Permissions', 'KonnectX', 'CrystalAura'] },
+    { id: '3', title: 'Manager', description: 'Can manage content and moderate users.', color: '#7c3aed', permissionCount: 24, userCount: 2, permissions: ['Dashboard', 'Users', 'Curexa', 'KonnectX'] },
+    { id: '4', title: 'Editor', description: 'Can create and edit content.', color: '#16a34a', permissionCount: 18, userCount: 2, permissions: ['Dashboard', 'Curexa', 'KonnectX'] },
+    { id: '5', title: 'Viewer', description: 'Read-only access to approved modules.', color: '#d97706', permissionCount: 8, userCount: 1, permissions: ['Dashboard', 'SolarBright'] },
   ],
   permissions: [
     { id: 'perm-dashboard', module: 'Dashboard', category: 'dashboard', color: '#0d9488', actions: { view: true, create: false, edit: false, delete: false, manage: false } },
@@ -57,6 +57,18 @@ export default function AccessManagementScreen() {
   const [permSearch, setPermSearch] = useState('');
 
   const [data, setData] = useState(FALLBACK_DATA);
+  const [rolePermsMap, setRolePermsMap] = useState(() => {
+    const map = {};
+    FALLBACK_DATA.roles.forEach((r) => {
+      if (r.permissions && r.permissions.length > 0) {
+        map[r.id] = r.permissions.map((name) => {
+          const match = FALLBACK_DATA.permissions.find((p) => p.module === name || p.category === name);
+          return { name, color: match?.color || '#6b7280' };
+        });
+      }
+    });
+    return map;
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -77,6 +89,24 @@ export default function AccessManagementScreen() {
         permissions: body.permissions || [],
         stats: body.stats || {},
       });
+      const perms = body.permissions || [];
+      const permMap = {};
+      (body.roles || []).forEach((role) => {
+        if (role.permissions && role.permissions.length > 0) {
+          const items = role.permissions.map((p) => {
+            const name = typeof p === 'object' ? (p.module || p.title || p.name) : null;
+            const color = typeof p === 'object' ? (p.color || '#6b7280') : null;
+            if (name) return { name, color: color || '#6b7280' };
+            const match = perms.find((ap) => ap.id === p || ap.category === p || ap._id === p);
+            if (match) return { name: match.module || match.title || match.name, color: match.color || '#6b7280' };
+            const modMatch = perms.find((ap) => (ap.module || ap.title || ap.name) === p);
+            return modMatch ? { name: p, color: modMatch.color || '#6b7280' } : null;
+          }).filter(Boolean);
+          const unique = items.filter((item, idx, self) => idx === self.findIndex((s) => s.name === item.name));
+          if (unique.length > 0) permMap[role.id] = unique;
+        }
+      });
+      setRolePermsMap((prev) => ({ ...prev, ...permMap }));
       setOffline(false);
     } catch (e) {
       console.log('[ACCESS_MGMT] Error:', e.message);
@@ -150,19 +180,32 @@ export default function AccessManagementScreen() {
   const handleUpsertRole = async (payload) => {
     const { permissionCount: _, selectedPerms, ...roleFields } = payload;
     const newPermCount = (selectedPerms || []).length;
+    const permMap = {};
+    const permNames = (selectedPerms || []).map((cat) => {
+      const match = (data.permissions || []).find((p) => p.category === cat);
+      const name = match ? (match.module || match.title || match.name) : cat;
+      permMap[name] = match?.color || '#6b7280';
+      return name;
+    }).filter(Boolean);
+    const uniquePerms = [...new Set(permNames)];
 
     const newRole = {
       ...roleFields,
-      permissions: selectedPerms || [],
       permissionCount: newPermCount,
       userCount: 0,
     };
 
+    const roleId = payload.id || Date.now().toString();
+    setRolePermsMap((prev) => ({
+      ...prev,
+      [roleId]: uniquePerms.map((name) => ({ name, color: permMap[name] || '#6b7280' })),
+    }));
+
     setData((prev) => ({
       ...prev,
       roles: payload.id
-        ? prev.roles.map((r) => (r.id === payload.id ? { ...r, ...newRole } : r))
-        : [...prev.roles, { id: Date.now().toString(), ...newRole }],
+        ? prev.roles.map((r) => (r.id === roleId ? { ...r, ...newRole } : r))
+        : [...prev.roles, { id: roleId, ...newRole }],
       stats: { ...prev.stats, totalRoles: payload.id ? prev.stats.totalRoles : prev.stats.totalRoles + 1 },
     }));
 
@@ -310,6 +353,7 @@ export default function AccessManagementScreen() {
                 setSearch={setRoleSearch}
                 roles={filteredRoles}
                 allPermissions={data.permissions}
+                rolePermsMap={rolePermsMap}
                 onSave={handleUpsertRole}
                 onDelete={handleDeleteRole}
                 offline={offline}
