@@ -54,6 +54,7 @@ export const globalKeys = {
 };
 
 export const pageBackground = require("../assets/images/page-background.png");
+export const pageBackgroundDark = require("../assets/images/page-background-dark.png");
 
 export const openAiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 export const aiMlApiKey = process.env.EXPO_PUBLIC_AIML_API_KEY;
