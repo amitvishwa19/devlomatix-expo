@@ -331,7 +331,7 @@ export default function AccessManagementScreen() {
         >
           <View className="px-5 pb-28">
             {activeTab === 'dashboard' && (
-              <DashboardTab palette={palette} stats={data.stats} roles={data.roles} />
+              <DashboardTab palette={palette} stats={data.stats} roles={data.roles} rolePermsMap={rolePermsMap} />
             )}
             {activeTab === 'users' && (
               <UsersTab
