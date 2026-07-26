@@ -181,22 +181,24 @@ export default function KonnectXContactsScreen() {
                             {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
                         </Text>
                     </View>
-                    <View className="flex-1">
-                        <Text className={`text-[14px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
-                        <Text className={`text-[12px] ${palette.textSoft}`}>{item.phone}</Text>
-                        {item.email ? <Text className={`text-[10px] ${palette.textMuted}`}>{item.email}</Text> : null}
-                        {hasGroups ? (
-                            <View className="mt-0.5 flex-row flex-wrap gap-1">
-                                {groupList.map((g) => (
-                                    <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-1.5 py-0.5">
-                                        <Text className="text-[8px] font-semibold text-sky-600">
-                                            {typeof g === 'string' ? getGroupName(g) : g.name}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
-                        ) : null}
-                        <View className="mt-0.5 flex-row flex-wrap gap-1">
+                    <View className="flex-1 flex-row justify-between">
+                        <View className="flex-shrink">
+                            <Text className={`text-[14px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
+                            <Text className={`text-[12px] ${palette.textSoft}`}>{item.phone}</Text>
+                            {item.email ? <Text className={`text-[10px] ${palette.textMuted}`}>{item.email}</Text> : null}
+                            {hasGroups ? (
+                                <View className="mt-0.5 flex-row flex-wrap gap-1">
+                                    {groupList.map((g) => (
+                                        <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-1.5 py-0.5">
+                                            <Text className="text-[8px] font-semibold text-sky-600">
+                                                {typeof g === 'string' ? getGroupName(g) : g.name}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : null}
+                        </View>
+                        <View className="items-end gap-1">
                             {item.type && item.type !== 'CONTACT' ? (
                                 <View className="rounded-full bg-amber-500/10 px-1.5 py-0.5">
                                     <Text className="text-[8px] font-bold text-amber-600">{item.type}</Text>
