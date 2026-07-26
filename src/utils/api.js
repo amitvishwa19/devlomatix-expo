@@ -1,8 +1,8 @@
 //export const baseApi = 'http://192.168.29.31:3000/api/v4'
 //const baseApi = 'https://healthyfine.devlomatix.in/api/v4'
 
-//ACS
 export const baseApi = "https://dev.devlomatix.com/api/v5";
+//export const baseApi = "https://devlomatix.com/api/v5";
 
 export const apiUrls = {
   //Auth
@@ -28,10 +28,8 @@ export const apiUrls = {
   fcmNotification: baseApi + "/fcm", // POST
   fcmExpoNotification: baseApi + "/fcm/expo", // POST
 
-
   //Konnectx
   konnectx: baseApi + "/konnectx/",
-
 
   contact: baseApi + "/konnectx/contacts", // GET (list), POST (create)
   templates: baseApi + "/konnectx/templates", // GET (list), POST (create)
@@ -45,6 +43,7 @@ export const apiUrls = {
   kanbanTaskById: baseApi + "/kanban/tasks", // PATCH/DELETE /tasks/:id
   kanbanColumns: baseApi + "/kanban/columns", // POST
   kanbanColumnById: baseApi + "/kanban/columns", // DELETE /columns/:id
+  kanbanCloneColumn: baseApi + "/kanban/columns", // POST /columns/:id/clone
   kanbanChecklists: baseApi + "/kanban/tasks", // POST /tasks/:id/checklists
   kanbanChecklistItem: baseApi + "/kanban/tasks", // PATCH/DELETE /tasks/:id/checklists/:itemId
   kanbanAiDescription: baseApi + "/kanban/ai/generate-description", // POST

@@ -15,8 +15,8 @@ export function KonnectxProvider({ children }) {
     async function loadUser() {
       try {
         const session = await getSession();
-        if (session?.user?.id) {
-          setUserId(session.user.id);
+        if (session?.user?.userId) {
+          setUserId(session.user.userId);
         }
       } catch (err) {
         console.error('Failed to load user session in KonnectxProvider', err);

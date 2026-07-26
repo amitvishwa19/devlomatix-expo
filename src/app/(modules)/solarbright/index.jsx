@@ -3,7 +3,7 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/theme/AppTheme';
 
-import solarHero from '../../../assets/images/solarbright/hero-solar.png';
+import solarHero from '../../../assets/images/solarbright/hero-solar.jpg';
 import BackButton from './_components/BackButton';
 import SolarBrightFloatingCta from './_components/SolarBrightFloatingCta';
 import SolarBrightSection from './_components/SolarBrightSection';

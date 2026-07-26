@@ -174,42 +174,42 @@ export default function KonnectXContactsScreen() {
                 onLongPress={() => confirmDelete(item)}
             >
                 <View
-                    className="flex-row items-center gap-3 rounded-[20px] border p-4"
+                    className="flex-row items-center gap-2.5 rounded-[16px] border p-3"
                     style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
-                    <View className="h-12 w-12 items-center justify-center rounded-full bg-sky-500/20">
-                        <Text className="text-[16px] font-bold text-sky-600">
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/20">
+                        <Text className="text-[13px] font-bold text-sky-600">
                             {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
                         </Text>
                     </View>
                     <View className="flex-1">
-                        <Text className={`text-[15px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
-                        <Text className={`mt-0.5 text-[13px] ${palette.textSoft}`}>{item.phone}</Text>
-                        {item.email ? <Text className={`text-[11px] ${palette.textMuted}`}>{item.email}</Text> : null}
+                        <Text className={`text-[14px] font-bold ${palette.text}`}>{item.name || 'Unknown'}</Text>
+                        <Text className={`text-[12px] ${palette.textSoft}`}>{item.phone}</Text>
+                        {item.email ? <Text className={`text-[10px] ${palette.textMuted}`}>{item.email}</Text> : null}
                         {hasGroups ? (
-                            <View className="mt-1 flex-row flex-wrap gap-1">
+                            <View className="mt-0.5 flex-row flex-wrap gap-1">
                                 {groupList.map((g) => (
-                                    <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-2 py-0.5">
-                                        <Text className="text-[9px] font-semibold text-sky-600">
+                                    <View key={typeof g === 'string' ? g : g.id} className="rounded-full bg-sky-500/10 px-1.5 py-0.5">
+                                        <Text className="text-[8px] font-semibold text-sky-600">
                                             {typeof g === 'string' ? getGroupName(g) : g.name}
                                         </Text>
                                     </View>
                                 ))}
                             </View>
                         ) : null}
-                        <View className="mt-1 flex-row flex-wrap gap-1">
+                        <View className="mt-0.5 flex-row flex-wrap gap-1">
                             {item.type && item.type !== 'CONTACT' ? (
-                                <View className="rounded-full bg-amber-500/10 px-2 py-0.5">
-                                    <Text className="text-[9px] font-bold text-amber-600">{item.type}</Text>
+                                <View className="rounded-full bg-amber-500/10 px-1.5 py-0.5">
+                                    <Text className="text-[8px] font-bold text-amber-600">{item.type}</Text>
                                 </View>
                             ) : null}
                             {item.category ? (
-                                <View className="rounded-full bg-purple-500/10 px-2 py-0.5">
-                                    <Text className="text-[9px] font-bold text-purple-600">{item.category}</Text>
+                                <View className="rounded-full bg-purple-500/10 px-1.5 py-0.5">
+                                    <Text className="text-[8px] font-bold text-purple-600">{item.category}</Text>
                                 </View>
                             ) : null}
                         </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={palette.textMutedColor} />
+                    <Ionicons name="chevron-forward" size={16} color={palette.textMutedColor} />
                 </View>
             </SwipeableRow>
         );
@@ -217,26 +217,26 @@ export default function KonnectXContactsScreen() {
 
     return (
         <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
-            <View className="flex-1 px-4 pt-5">
-                <View className="mb-4 flex-row items-center justify-between">
+            <View className="flex-1 px-3 pt-3">
+                <View className="mb-2.5 flex-row items-center justify-between">
                     <View>
-                        <View className="mb-2 self-start rounded-full bg-sky-600 px-3 py-1.5">
-                            <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">CONTACTS</Text>
+                        <View className="mb-1 self-start rounded-full bg-sky-600 px-2.5 py-1">
+                            <Text className="text-[10px] font-bold uppercase tracking-[1px] text-white">CONTACTS</Text>
                         </View>
-                        <Text className="text-[28px] font-bold" style={{ color: palette.textColor }}>Audience</Text>
+                        <Text className="text-[22px] font-bold" style={{ color: palette.textColor }}>Audience</Text>
                     </View>
-                    <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-4 py-3">
-                        <Ionicons name="add" size={20} color="#fff" />
+                    <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-3 py-2">
+                        <Ionicons name="add" size={18} color="#fff" />
                     </TouchableOpacity>
                 </View>
 
                 {/* Search */}
-                <View className="mb-4 flex-row items-center gap-3">
-                    <View className="flex-1 flex-row items-center rounded-[20px] border px-4 py-3"
+                <View className="mb-2.5 flex-row items-center gap-2">
+                    <View className="flex-1 flex-row items-center rounded-[16px] border px-3 py-2.5"
                         style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
-                        <Ionicons name="search" size={18} color={palette.textMutedColor} />
+                        <Ionicons name="search" size={16} color={palette.textMutedColor} />
                         <TextInput
-                            className="ml-2 flex-1 text-[14px]"
+                            className="ml-2 flex-1 text-[13px]"
                             style={{ color: palette.textColor }}
                             placeholder="Search contacts..."
                             placeholderTextColor={palette.textMutedColor}
@@ -247,7 +247,7 @@ export default function KonnectXContactsScreen() {
                 </View>
 
                 {/* Stat badge */}
-                <Text className={`mb-3 text-[12px] font-semibold ${palette.textSoft}`}>
+                <Text className={`mb-2 text-[11px] font-semibold ${palette.textSoft}`}>
                     {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
                     {groups.length > 0 ? ` · ${groups.length} group${groups.length !== 1 ? 's' : ''}` : ''}
                 </Text>
@@ -256,7 +256,7 @@ export default function KonnectXContactsScreen() {
                     data={contacts}
                     keyExtractor={(item) => item.id?.toString()}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 100 }}
+                    contentContainerStyle={{ paddingBottom: 80 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
                     ListEmptyComponent={
                         loading ? null : (
@@ -272,56 +272,56 @@ export default function KonnectXContactsScreen() {
             {/* Add/Edit Modal */}
             <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowAddModal(false)}>
                 <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
-                    <View className="flex-row items-center justify-between px-5 py-4" style={{ backgroundColor: palette.colors.surface }}>
-                        <Text className={`text-[20px] font-bold ${palette.text}`}>{editContact ? 'Edit Contact' : 'Add Contact'}</Text>
-                        <TouchableOpacity onPress={() => setShowAddModal(false)} className="p-2">
-                            <Ionicons name="close" size={24} color={palette.textColor} />
+                    <View className="flex-row items-center justify-between px-4 py-3" style={{ backgroundColor: palette.colors.surface }}>
+                        <Text className={`text-[18px] font-bold ${palette.text}`}>{editContact ? 'Edit Contact' : 'Add Contact'}</Text>
+                        <TouchableOpacity onPress={() => setShowAddModal(false)} className="p-1.5">
+                            <Ionicons name="close" size={22} color={palette.textColor} />
                         </TouchableOpacity>
                     </View>
 
-                    <View className="flex-1 px-5 pt-6">
+                    <View className="flex-1 px-4 pt-4">
                         {!editContact ? (
                             <TouchableOpacity onPress={pickFromPhoneContacts}
-                                className="mb-5 flex-row items-center justify-center gap-2 rounded-xl border py-3.5"
+                                className="mb-3 flex-row items-center justify-center gap-2 rounded-xl border py-3"
                                 style={{ borderColor: palette.colors.border, borderStyle: 'dashed' }}>
-                                <Ionicons name="people" size={20} color={palette.textMutedColor} />
-                                <Text className={`text-[14px] font-semibold ${palette.textSoft}`}>Pick from Contacts</Text>
+                                <Ionicons name="people" size={18} color={palette.textMutedColor} />
+                                <Text className={`text-[13px] font-semibold ${palette.textSoft}`}>Pick from Contacts</Text>
                             </TouchableOpacity>
                         ) : null}
 
-                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Name *</Text>
-                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+                        <Text className={`mb-0.5 text-[12px] font-semibold ${palette.text}`}>Name *</Text>
+                        <TextInput className="mb-2.5 rounded-xl border px-3 py-2.5 text-[14px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
                             placeholder="John Doe" placeholderTextColor={palette.textMutedColor}
                             value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
 
-                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Phone *</Text>
-                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+                        <Text className={`mb-0.5 text-[12px] font-semibold ${palette.text}`}>Phone *</Text>
+                        <TextInput className="mb-2.5 rounded-xl border px-3 py-2.5 text-[14px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
                             placeholder="+919876543210" placeholderTextColor={palette.textMutedColor}
                             value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" />
 
-                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Email</Text>
-                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+                        <Text className={`mb-0.5 text-[12px] font-semibold ${palette.text}`}>Email</Text>
+                        <TextInput className="mb-2.5 rounded-xl border px-3 py-2.5 text-[14px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
                             placeholder="john@example.com" placeholderTextColor={palette.textMutedColor}
                             value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" />
 
-                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Category</Text>
-                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+                        <Text className={`mb-0.5 text-[12px] font-semibold ${palette.text}`}>Category</Text>
+                        <TextInput className="mb-2.5 rounded-xl border px-3 py-2.5 text-[14px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
                             placeholder="e.g. Lead, Customer, VIP" placeholderTextColor={palette.textMutedColor}
                             value={form.category} onChangeText={(v) => setForm({ ...form, category: v })} />
 
-                        <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Tags (comma separated)</Text>
-                        <TextInput className="mb-6 rounded-xl border px-4 py-3 text-[15px]"
+                        <Text className={`mb-0.5 text-[12px] font-semibold ${palette.text}`}>Tags (comma separated)</Text>
+                        <TextInput className="mb-4 rounded-xl border px-3 py-2.5 text-[14px]"
                             style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
                             placeholder="lead, vip, support" placeholderTextColor={palette.textMutedColor}
                             value={form.tags} onChangeText={(v) => setForm({ ...form, tags: v })} />
 
                         <TouchableOpacity onPress={handleSave} disabled={saving}
-                            className={`items-center rounded-xl bg-sky-600 py-4 shadow-lg ${editContact ? 'mb-3' : ''}`}>
-                            <Text className="text-[16px] font-bold text-white">
+                            className={`items-center rounded-xl bg-sky-600 py-3.5 shadow-lg ${editContact ? 'mb-2' : ''}`}>
+                            <Text className="text-[15px] font-bold text-white">
                                 {saving ? 'Saving...' : editContact ? 'Save Changes' : 'Add Contact'}
                             </Text>
                         </TouchableOpacity>
@@ -331,8 +331,8 @@ export default function KonnectXContactsScreen() {
                                 setShowAddModal(false);
                                 confirmDelete(editContact);
                             }}
-                                className="items-center rounded-xl border border-red-500 py-4">
-                                <Text className="text-[16px] font-bold text-red-500">Delete Contact</Text>
+                                className="items-center rounded-xl border border-red-500 py-3.5">
+                                <Text className="text-[15px] font-bold text-red-500">Delete Contact</Text>
                             </TouchableOpacity>
                         ) : null}
                     </View>
@@ -342,24 +342,24 @@ export default function KonnectXContactsScreen() {
             {/* Delete Alert */}
             <Modal visible={showDeleteAlert} transparent animationType="fade" onRequestClose={() => setShowDeleteAlert(false)}>
                 <Pressable className="flex-1 justify-center bg-black/50 px-6" onPress={() => setShowDeleteAlert(false)}>
-                    <Pressable className="rounded-[28px] p-6" style={{ backgroundColor: palette.colors.surface }}>
-                        <View className="mb-4 items-center">
-                            <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
-                                <Ionicons name="trash" size={28} color="#dc2626" />
+                    <Pressable className="rounded-[24px] p-5" style={{ backgroundColor: palette.colors.surface }}>
+                        <View className="mb-3 items-center">
+                            <View className="mb-2.5 h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                                <Ionicons name="trash" size={24} color="#dc2626" />
                             </View>
-                            <Text className={`text-[20px] font-bold ${palette.text}`}>Delete Contact</Text>
-                            <Text className={`mt-2 text-center text-[14px] ${palette.textSoft}`}>
+                            <Text className={`text-[18px] font-bold ${palette.text}`}>Delete Contact</Text>
+                            <Text className={`mt-1.5 text-center text-[13px] ${palette.textSoft}`}>
                                 Remove {contactToDelete?.name || 'this contact'} and all their data?
                             </Text>
                         </View>
-                        <View className="flex-row gap-3">
+                        <View className="flex-row gap-2.5">
                             <TouchableOpacity onPress={() => setShowDeleteAlert(false)}
-                                className="flex-1 items-center rounded-xl border py-3.5" style={{ borderColor: palette.colors.border }}>
-                                <Text className={`text-[15px] font-bold ${palette.text}`}>Cancel</Text>
+                                className="flex-1 items-center rounded-xl border py-3" style={{ borderColor: palette.colors.border }}>
+                                <Text className={`text-[14px] font-bold ${palette.text}`}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={handleDelete}
-                                className="flex-1 items-center rounded-xl bg-red-600 py-3.5">
-                                <Text className="text-[15px] font-bold text-white">Delete</Text>
+                                className="flex-1 items-center rounded-xl bg-red-600 py-3">
+                                <Text className="text-[14px] font-bold text-white">Delete</Text>
                             </TouchableOpacity>
                         </View>
                     </Pressable>
