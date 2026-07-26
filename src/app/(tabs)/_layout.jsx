@@ -13,156 +13,156 @@ import { getSession } from '~/utils/authStorage';
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function TabLayout() {
-  const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
+    const router = useRouter();
+    const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+    useEffect(() => {
+        let isMounted = true;
 
-    const checkSession = async () => {
-      const session = await getSession();
+        const checkSession = async () => {
+            const session = await getSession();
 
-      if (!isMounted) {
-        return;
-      }
+            if (!isMounted) {
+                return;
+            }
 
-      if (!session?.isLoggedIn) {
-        router.replace('/(auth)/login');
-        return;
-      }
+            if (!session?.isLoggedIn) {
+                router.replace('/(auth)/login');
+                return;
+            }
 
-      setIsReady(true);
-    };
+            setIsReady(true);
+        };
 
-    checkSession();
+        checkSession();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [router]);
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
 
-  if (!isReady) {
-    return null;
-  }
+    if (!isReady) {
+        return null;
+    }
 
-  return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
-      <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
-      <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
-    </Tabs>);
+    return (
+        <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
+            <Tabs.Screen name="home" options={{ title: 'Home' }} />
+            <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
+            <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
+            <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
+            <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
+            <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+        </Tabs>);
 
 }
 
 function CustomTabBar({ state, descriptors, navigation }) {
-  const insets = useSafeAreaInsets();
-  const { palette } = useAppTheme();
+    const insets = useSafeAreaInsets();
+    const { palette } = useAppTheme();
 
-  const { unreadCount } = useNotificationStore();
+    const { unreadCount } = useNotificationStore();
 
-  const icon = (routeName, iconColor) => {
-    const size = 20;
+    const icon = (routeName, iconColor) => {
+        const size = 20;
 
-    switch (routeName) {
-      case 'home':
-        return <FontAwesome size={size} name="home" color={iconColor} />;
-      case 'messages':
-        return (
-          <View>
-            <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />
-            {unreadCount > 0 && (
-              <View className="absolute -right-2.5 -top-2 h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1">
-                <Text className="text-[10px] font-bold text-white">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Text>
-              </View>
-            )}
-          </View>
-        );
-      case 'tasks':
-        return <Ionicons size={size} name="layers-outline" color={iconColor} />;
-      case 'apps':
-        return <Ionicons size={size} name="briefcase-outline" color={iconColor} />;
-      case 'activity':
-        return <Ionicons size={size} name="pulse-outline" color={iconColor} />;
-      case 'settings':
-        return <Ionicons size={size} name="settings-outline" color={iconColor} />;
-      default:
-        return <FontAwesome size={size} name="circle" color={iconColor} />;
-    }
-  };
+        switch (routeName) {
+            case 'home':
+                return <FontAwesome size={size} name="home" color={iconColor} />;
+            case 'messages':
+                return (
+                    <View>
+                        <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />
+                        {unreadCount > 0 && (
+                            <View className="absolute -right-2.5 -top-2 h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1">
+                                <Text className="text-[10px] font-bold text-white">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                );
+            case 'tasks':
+                return <Ionicons size={size} name="layers-outline" color={iconColor} />;
+            case 'apps':
+                return <Ionicons size={size} name="briefcase-outline" color={iconColor} />;
+            case 'activity':
+                return <Ionicons size={size} name="pulse-outline" color={iconColor} />;
+            case 'settings':
+                return <Ionicons size={size} name="settings-outline" color={iconColor} />;
+            default:
+                return <FontAwesome size={size} name="circle" color={iconColor} />;
+        }
+    };
 
-  return (
-    <View
-      pointerEvents="box-none"
-      className="absolute bottom-2 left-0 right-0 items-center"
-      style={{
-        paddingBottom: Math.max(insets.bottom, 10),
-        zIndex: 100,
-        elevation: 20
-      }}>
-      <Animated.View
-        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-4"
-        style={{
-          backgroundColor: palette.colors.tabBar,
-          zIndex: 100,
-          elevation: 20
-        }}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const label =
-          typeof options.tabBarLabel === 'string' ?
-          options.tabBarLabel :
-          options.title !== undefined ?
-          options.title :
-          route.name;
-          const isFocused = state.index === index;
+    return (
+        <View
+            pointerEvents="box-none"
+            className="absolute bottom-2 left-0 right-0 items-center"
+            style={{
+                paddingBottom: Math.max(insets.bottom, 10),
+                zIndex: 100,
+                elevation: 20
+            }}>
+            <Animated.View
+                className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-4"
+                style={{
+                    backgroundColor: palette.colors.tabBar,
+                    zIndex: 100,
+                    elevation: 20
+                }}>
+                {state.routes.map((route, index) => {
+                    const { options } = descriptors[route.key];
+                    const label =
+                        typeof options.tabBarLabel === 'string' ?
+                            options.tabBarLabel :
+                            options.title !== undefined ?
+                                options.title :
+                                route.name;
+                    const isFocused = state.index === index;
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true
-            });
+                    const onPress = () => {
+                        const event = navigation.emit({
+                            type: 'tabPress',
+                            target: route.key,
+                            canPreventDefault: true
+                        });
 
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
+                        if (!isFocused && !event.defaultPrevented) {
+                            navigation.navigate(route.name, route.params);
+                        }
+                    };
 
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key
-            });
-          };
+                    const onLongPress = () => {
+                        navigation.emit({
+                            type: 'tabLongPress',
+                            target: route.key
+                        });
+                    };
 
-          return (
-            <AnimatedTouchableOpacity
-              key={route.key}
-              layout={LinearTransition.springify().mass(0.5)}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              testID={options.tabBarButtonTestID}
-              className="flex-row items-center gap-x-2 rounded-2xl p-2"
-              style={{ backgroundColor: isFocused ? palette.colors.tabActive : 'transparent' }}>
-              {icon(route.name, isFocused ? palette.tabActiveIcon : palette.tabInactiveIcon)}
-              {isFocused ?
-              <Animated.Text
-                entering={FadeIn.duration(200)}
-                exiting={FadeOut.duration(200)}
-                className="text-sm font-bold"
-                style={{ color: palette.tabActiveTextColor }}>
-                  {label}
-                </Animated.Text> :
-              null}
-            </AnimatedTouchableOpacity>);
+                    return (
+                        <AnimatedTouchableOpacity
+                            key={route.key}
+                            layout={LinearTransition.springify().mass(0.5)}
+                            onPress={onPress}
+                            onLongPress={onLongPress}
+                            testID={options.tabBarButtonTestID}
+                            className="flex-row items-center gap-x-2 rounded-2xl p-2"
+                            style={{ backgroundColor: isFocused ? palette.colors.tabActive : 'transparent' }}>
+                            {icon(route.name, isFocused ? palette.tabActiveIcon : palette.tabInactiveIcon)}
+                            {isFocused ?
+                                <Animated.Text
+                                    entering={FadeIn.duration(200)}
+                                    exiting={FadeOut.duration(200)}
+                                    className="text-sm font-bold"
+                                    style={{ color: palette.tabActiveTextColor }}>
+                                    {label}
+                                </Animated.Text> :
+                                null}
+                        </AnimatedTouchableOpacity>);
 
-        })}
-      </Animated.View>
-    </View>);
+                })}
+            </Animated.View>
+        </View>);
 
 }

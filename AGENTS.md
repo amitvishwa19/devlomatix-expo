@@ -62,3 +62,22 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 ### VS Code
 - On-save: fix all, organize imports, sort members
 - Recommended extension: `expo.vscode-expo-tools`
+
+## Coding Style
+
+### Layout (UI density)
+- **Compact by default** — prefer `p-3` over `p-4`, `px-3` over `px-4`, `py-2` over `py-3`, `gap-2` over `gap-3`, `text-[13px]` over `text-[15px]`
+- Reduce avatar sizes (`h-9 w-9`), border radius (`rounded-[16px]`), and title sizes (`text-[22px]`)
+- Use tighter margins (`mb-2` / `mb-2.5` / `mt-1.5`) and smaller chevron/icons (`size={16}`)
+
+### List items (contact rows)
+- `flex-row items-center` with avatar on left, then `flex-1 flex-row justify-between` for content:
+  - **Left column**: name, phone, email, groups stacked vertically
+  - **Right column**: type/category badges stacked `items-end`
+
+### Campaign cards
+- `flex-row items-center` card with `flex-1` left content and delete icon on far right
+- Row 1: campaign title
+- Row 2 (below): status badge + action (Start for DRAFT/PAUSED)
+- Row 3 (below): progress bar
+- Delete icon is standalone on the right edge, not in the bottom action row
