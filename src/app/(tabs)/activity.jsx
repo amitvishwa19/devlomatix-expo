@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import UserStatusBar from '~/components/UserStatusBar';
 import { useAppTheme } from '~/theme/AppTheme';
 
 const activities = [
@@ -20,6 +21,7 @@ export default function ActivityScreen() {
   return (
     <SafeAreaView className={`flex-1 ${palette.page}`}>
       <StatusBar style={palette.statusBar} />
+      <UserStatusBar />
       <ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}>
         <View className="px-5 pb-28 pt-5">
           <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>

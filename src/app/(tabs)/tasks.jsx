@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import UserStatusBar from "~/components/UserStatusBar";
 import { useAppTheme } from "~/theme/AppTheme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
@@ -55,6 +56,7 @@ export default function TasksScreen() {
   return (
     <SafeAreaView className={`flex-1 ${palette.page}`}>
       <StatusBar style={palette.statusBar} />
+      <UserStatusBar />
       <View className={`flex-1 ${palette.page}`}>
         <View className="px-5 pb-2 pt-5">
           <View

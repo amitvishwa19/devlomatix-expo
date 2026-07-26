@@ -86,9 +86,19 @@ export function NotificationStoreProvider({ children }) {
     persist([]);
   }, [persist]);
 
+  const removeNotification = useCallback((id) => {
+    setNotifications((prev) => {
+      const target = prev.find((n) => n.id === id);
+      const next = prev.filter((n) => n.id !== id);
+      persist(next);
+      return next;
+    });
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  }, [persist]);
+
   return (
     <NotificationStoreContext.Provider
-      value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAll, isReady }}
+      value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAll, removeNotification, isReady }}
     >
       {children}
     </NotificationStoreContext.Provider>

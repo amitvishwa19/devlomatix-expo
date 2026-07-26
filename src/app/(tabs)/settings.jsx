@@ -89,6 +89,7 @@ export default function SettingsScreen() {
       style={{ backgroundColor: palette.colors.page }}
     >
       <StatusBar style={palette.statusBar} />
+     
       <ScrollView
         className="flex-1"
         style={{ backgroundColor: palette.colors.page }}

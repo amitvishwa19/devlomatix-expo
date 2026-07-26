@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import UserStatusBar from '~/components/UserStatusBar';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useWidgets } from '~/contexts/WidgetContext';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -92,8 +93,7 @@ export default function HomeScreen() {
   return (
     <AppScreen>
       <View className="flex-1">
-        {/* <View className="absolute -right-16 -top-28 h-72 w-72 rounded-full bg-teal-700/10" />
-        <View className="absolute -bottom-36 -left-24 h-80 w-80 rounded-full bg-sky-500/10" /> */}
+        <UserStatusBar />
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="px-5 pb-8 pt-5">
