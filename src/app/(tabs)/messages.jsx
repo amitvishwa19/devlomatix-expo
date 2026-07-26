@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useNotificationStore } from '~/contexts/NotificationStore';
@@ -15,13 +16,16 @@ const MODULE_COLORS = {
 
 export default function MessagesScreen() {
   const { palette } = useAppTheme();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
 
   return (
     <SafeAreaView className={`flex-1 ${palette.page}`}>
       <StatusBar style={palette.statusBar} />
-      <UserStatusBar />
-      <ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}>
+      <UserStatusBar scrollY={scrollY} />
+      <Animated.ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}>
         <View className="px-5 pb-28 pt-5">
           <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
             <View className="flex-row items-center justify-between">
@@ -118,7 +122,7 @@ export default function MessagesScreen() {
             </View>
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }

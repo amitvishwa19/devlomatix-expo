@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
 
-export default function UserStatusBar() {
+export default function UserStatusBar({ scrollY }) {
   const router = useRouter();
   const { palette } = useAppTheme();
   const { unreadCount } = useNotificationStore();
@@ -16,13 +16,39 @@ export default function UserStatusBar() {
     getSession().then((s) => setUser(s?.user ?? null));
   }, []);
 
+  const offsetAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const scrollTimer = useRef(null);
+
+  useEffect(() => {
+    if (!scrollY) return;
+    const listener = scrollY.addListener(({ value }) => {
+      const clampedOffset = Math.max(-60, Math.min(0, -value * 0.2));
+      const clampedOpacity = Math.max(0, Math.min(1, 1 - value / 300));
+      offsetAnim.setValue(clampedOffset);
+      opacityAnim.setValue(clampedOpacity);
+
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+      scrollTimer.current = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(offsetAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+          Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+        ]).start();
+      }, 200);
+    });
+    return () => {
+      scrollY.removeListener(listener);
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    };
+  }, [scrollY]);
+
   if (!user) return null;
 
   const avatarUri = user.avatar || user.photo;
 
   return (
-    <View className={`flex-row items-center gap-2 px-4 py-2 border-b ${palette.border}`}
-      style={{ backgroundColor: palette.colors.surface }}>
+    <Animated.View className={`flex-row items-center gap-2 px-4 py-2 border-b ${palette.border}`}
+      style={{ backgroundColor: palette.colors.surface, transform: [{ translateY: offsetAnim }], opacity: opacityAnim }}>
       {avatarUri ? (
         <Image source={{ uri: avatarUri }} className="h-10 w-10 rounded-full" />
       ) : (
@@ -48,6 +74,6 @@ export default function UserStatusBar() {
           </View>
         )}
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }

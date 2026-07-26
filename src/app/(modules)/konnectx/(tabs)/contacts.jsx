@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, Pressable, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Modal, Pressable, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -9,16 +9,19 @@ import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import * as contactsService from '~/services/konnectx/contacts';
 import { useKonnectx } from '~/providers/KonnectxProvider';
 import SwipeableRow from '~/components/konnectx/SwipeableRow';
+import UserStatusBar from '~/components/UserStatusBar';
 import * as Contacts from 'expo-contacts';
 
 export default function KonnectXContactsScreen() {
     const { palette } = useAppTheme();
     const { userId } = useKonnectx();
+    const scrollY = useRef(new Animated.Value(0)).current;
     const [contacts, setContacts] = useState([]);
     const [groups, setGroups] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [activeTab, setActiveTab] = useState('groups');
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -28,6 +31,12 @@ export default function KonnectXContactsScreen() {
     const [form, setForm] = useState({ name: '', phone: '', email: '', type: 'CONTACT', tags: '', category: '' });
     const [saving, setSaving] = useState(false);
     const [openRowId, setOpenRowId] = useState(null);
+
+    const [newGroupName, setNewGroupName] = useState('');
+    const [addingGroup, setAddingGroup] = useState(false);
+    const [expandedGroupId, setExpandedGroupId] = useState(null);
+    const [expandedCategory, setExpandedCategory] = useState(null);
+    const [expandedTag, setExpandedTag] = useState(null);
 
     const fetchContacts = useCallback(async () => {
         if (!userId) return;
@@ -151,9 +160,58 @@ export default function KonnectXContactsScreen() {
         }
     };
 
+    const handleAddGroup = async () => {
+        if (!newGroupName.trim()) return;
+        setAddingGroup(true);
+        try {
+            await contactsService.saveGroup(userId, { name: newGroupName.trim() });
+            Toast.show({ type: 'success', text1: 'Group created' });
+            setNewGroupName('');
+            fetchGroups();
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+        } finally {
+            setAddingGroup(false);
+        }
+    };
+
+    const handleDeleteGroup = (groupId, groupName) => {
+        const doDelete = async () => {
+            try {
+                await contactsService.deleteGroup(groupId);
+                Toast.show({ type: 'success', text1: `"${groupName}" deleted` });
+                fetchGroups();
+            } catch (err) {
+                Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+            }
+        };
+        doDelete();
+    };
+
     const getGroupName = (groupId) => {
         const group = groups.find((g) => g.id === groupId);
         return group?.name || 'Unknown';
+    };
+
+    const getUniqueCategories = () => {
+        const cats = {};
+        contacts.forEach((c) => {
+            if (c.category) {
+                cats[c.category] = (cats[c.category] || 0) + 1;
+            }
+        });
+        return Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    };
+
+    const getUniqueTags = () => {
+        const tagMap = {};
+        contacts.forEach((c) => {
+            const tags = Array.isArray(c.tags) ? c.tags : (typeof c.tags === 'string' ? c.tags.split(',').map((t) => t.trim()).filter(Boolean) : []);
+            tags.forEach((tag) => {
+                tagMap[tag] = (tagMap[tag] || 0) + 1;
+            });
+        });
+        return Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
     };
 
     const renderContact = ({ item }) => {
@@ -217,9 +275,48 @@ export default function KonnectXContactsScreen() {
         );
     };
 
+    const getGroupContacts = (groupId) => contacts.filter((c) => {
+        const ids = c.groups || c.groupIds || [];
+        return ids.some((g) => (typeof g === 'string' ? g : g.id) === groupId);
+    });
+    const getCategoryContacts = (cat) => contacts.filter((c) => c.category === cat);
+    const getTagContacts = (tagName) => contacts.filter((c) => {
+        const tagsArr = Array.isArray(c.tags) ? c.tags : (typeof c.tags === 'string' ? c.tags.split(',').map((t) => t.trim()).filter(Boolean) : []);
+        return tagsArr.includes(tagName);
+    });
+
+    const renderCompactContact = (item) => (
+        <TouchableOpacity key={item.id} onPress={() => openEdit(item)}
+            className="mb-1 ml-4 flex-row items-center gap-2 rounded-[12px] border px-3 py-2"
+            style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+            <View className="h-7 w-7 items-center justify-center rounded-full bg-sky-500/20">
+                <Text className="text-[10px] font-bold text-sky-600">
+                    {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
+                </Text>
+            </View>
+            <View className="flex-1">
+                <Text className={`text-[12px] font-semibold ${palette.text}`}>{item.name || 'Unknown'}</Text>
+                <Text className={`text-[10px] ${palette.textSoft}`}>{item.phone}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={14} color={palette.textMutedColor} />
+        </TouchableOpacity>
+    );
+
+    const renderExpandedContacts = (contactList) =>
+        contactList.length === 0 ? (
+            <Text className={`ml-4 mb-1.5 text-[11px] italic ${palette.textMuted}`}>No contacts</Text>
+        ) : (
+            contactList.map(renderCompactContact)
+        );
+
+    const categories = getUniqueCategories();
+    const tags = getUniqueTags();
+
     return (
         <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
+            <UserStatusBar scrollY={scrollY} />
             <View className="flex-1 px-3 pt-3">
+                {/* Header */}
                 <View className="mb-2.5 flex-row items-center justify-between">
                     <View>
                         <View className="mb-1 self-start rounded-full bg-sky-600 px-2.5 py-1">
@@ -227,48 +324,213 @@ export default function KonnectXContactsScreen() {
                         </View>
                         <Text className="text-[22px] font-bold" style={{ color: palette.textColor }}>Audience</Text>
                     </View>
-                    <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-3 py-2">
-                        <Ionicons name="add" size={18} color="#fff" />
+                    {activeTab === 'contacts' && (
+                        <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-3 py-2">
+                            <Ionicons name="add" size={18} color="#fff" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Segmented Tab */}
+                <View className="mb-3 flex-row rounded-[12px] p-0.5" style={{ backgroundColor: palette.colors.border }}>
+                    <TouchableOpacity
+                        onPress={() => setActiveTab('groups')}
+                        className={`flex-1 items-center rounded-[10px] py-2 ${activeTab === 'groups' ? 'bg-sky-600' : ''}`}
+                    >
+                        <Text className={`text-[12px] font-bold ${activeTab === 'groups' ? 'text-white' : palette.textMuted}`}>
+                            Groups / Tags
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setActiveTab('contacts')}
+                        className={`flex-1 items-center rounded-[10px] py-2 ${activeTab === 'contacts' ? 'bg-sky-600' : ''}`}
+                    >
+                        <Text className={`text-[12px] font-bold ${activeTab === 'contacts' ? 'text-white' : palette.textMuted}`}>
+                            All Contacts
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Search */}
-                <View className="mb-2.5 flex-row items-center gap-2">
-                    <View className="flex-1 flex-row items-center rounded-[16px] border px-3 py-2.5"
-                        style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
-                        <Ionicons name="search" size={16} color={palette.textMutedColor} />
-                        <TextInput
-                            className="ml-2 flex-1 text-[13px]"
-                            style={{ color: palette.textColor }}
-                            placeholder="Search contacts..."
-                            placeholderTextColor={palette.textMutedColor}
-                            value={search}
-                            onChangeText={setSearch}
+                {activeTab === 'groups' ? (
+                    <Animated.FlatList
+                        data={[{ key: 'groups_section' }]}
+                        keyExtractor={(item) => item.key}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: 80 }}
+                        scrollEventThrottle={16}
+                        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+                        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
+                        renderItem={() => (
+                            <View>
+                                {/* Groups Section */}
+                                <View className="mb-2 flex-row items-center justify-between">
+                                    <Text className={`text-[15px] font-bold ${palette.text}`}>Groups</Text>
+                                    <Text className={`text-[11px] ${palette.textMuted}`}>{groups.length} total</Text>
+                                </View>
+                                {groups.length === 0 ? (
+                                    <View className="mb-4 items-center rounded-[16px] border py-6" style={{ borderColor: palette.colors.border, borderStyle: 'dashed' }}>
+                                        <Ionicons name="folder-open-outline" size={24} color={palette.textMutedColor} />
+                                        <Text className={`mt-1.5 text-[13px] ${palette.textSoft}`}>No groups yet</Text>
+                                    </View>
+                                ) : (
+                                    groups.map((group) => {
+                                        const isExpanded = expandedGroupId === group.id;
+                                        const groupContacts = getGroupContacts(group.id);
+                                        return (
+                                            <View key={group.id}>
+                                                <TouchableOpacity
+                                                    onPress={() => setExpandedGroupId(isExpanded ? null : group.id)}
+                                                    className="mb-1.5 flex-row items-center justify-between rounded-[12px] border px-3 py-2.5"
+                                                    style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                                    <View className="flex-row items-center gap-2 flex-1">
+                                                        <Ionicons name={isExpanded ? 'chevron-down' : 'chevron-forward'} size={14} color={palette.textMutedColor} />
+                                                        <Ionicons name="folder" size={16} color="#0284c7" />
+                                                        <Text className={`text-[13px] font-semibold flex-1 ${palette.text}`}>{group.name}</Text>
+                                                    </View>
+                                                    <View className="flex-row items-center gap-2">
+                                                        <Text className={`text-[11px] ${palette.textMuted}`}>{groupContacts.length}</Text>
+                                                        <TouchableOpacity onPress={() => handleDeleteGroup(group.id, group.name)} className="p-1">
+                                                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </TouchableOpacity>
+                                                {isExpanded && renderExpandedContacts(groupContacts)}
+                                            </View>
+                                        );
+                                    })
+                                )}
+
+                                {/* Add Group */}
+                                <View className="mb-5 flex-row items-center gap-2">
+                                    <TextInput
+                                        className="flex-1 rounded-[12px] border px-3 py-2 text-[13px]"
+                                        style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
+                                        placeholder="New group name..."
+                                        placeholderTextColor={palette.textMutedColor}
+                                        value={newGroupName}
+                                        onChangeText={setNewGroupName}
+                                    />
+                                    <TouchableOpacity onPress={handleAddGroup} disabled={addingGroup || !newGroupName.trim()}
+                                        className="rounded-full bg-sky-600 px-3 py-2">
+                                        <Ionicons name="add" size={16} color="#fff" />
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Divider */}
+                                <View className="mb-4 h-px" style={{ backgroundColor: palette.colors.border }} />
+
+                                {/* Categories Section */}
+                                <Text className={`mb-2 text-[15px] font-bold ${palette.text}`}>Categories</Text>
+                                {categories.length === 0 ? (
+                                    <View className="mb-4 items-center rounded-[16px] border py-6" style={{ borderColor: palette.colors.border, borderStyle: 'dashed' }}>
+                                        <Ionicons name="pricetag-outline" size={24} color={palette.textMutedColor} />
+                                        <Text className={`mt-1.5 text-[13px] ${palette.textSoft}`}>No categories yet</Text>
+                                    </View>
+                                ) : (
+                                    categories.map(([cat, count]) => {
+                                        const isExpanded = expandedCategory === cat;
+                                        const catContacts = getCategoryContacts(cat);
+                                        return (
+                                            <View key={cat}>
+                                                <TouchableOpacity
+                                                    onPress={() => setExpandedCategory(isExpanded ? null : cat)}
+                                                    className="mb-1.5 flex-row items-center justify-between rounded-[12px] border px-3 py-2.5"
+                                                    style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                                    <View className="flex-row items-center gap-2 flex-1">
+                                                        <Ionicons name={isExpanded ? 'chevron-down' : 'chevron-forward'} size={14} color={palette.textMutedColor} />
+                                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-purple-500/20">
+                                                            <Text className="text-[10px] font-bold text-purple-600">#</Text>
+                                                        </View>
+                                                        <Text className={`text-[13px] font-semibold ${palette.text}`}>{cat}</Text>
+                                                    </View>
+                                                    <Text className={`text-[11px] ${palette.textMuted}`}>{count} contact{count !== 1 ? 's' : ''}</Text>
+                                                </TouchableOpacity>
+                                                {isExpanded && renderExpandedContacts(catContacts)}
+                                            </View>
+                                        );
+                                    })
+                                )}
+
+                                {/* Divider */}
+                                <View className="mb-4 mt-2 h-px" style={{ backgroundColor: palette.colors.border }} />
+
+                                {/* Tags Section */}
+                                <Text className={`mb-2 text-[15px] font-bold ${palette.text}`}>Tags</Text>
+                                {tags.length === 0 ? (
+                                    <View className="mb-4 items-center rounded-[16px] border py-6" style={{ borderColor: palette.colors.border, borderStyle: 'dashed' }}>
+                                        <Ionicons name="pricetags-outline" size={24} color={palette.textMutedColor} />
+                                        <Text className={`mt-1.5 text-[13px] ${palette.textSoft}`}>No tags yet</Text>
+                                    </View>
+                                ) : (
+                                    tags.map(([tag, count]) => {
+                                        const isExpanded = expandedTag === tag;
+                                        const tagContacts = getTagContacts(tag);
+                                        return (
+                                            <View key={tag}>
+                                                <TouchableOpacity
+                                                    onPress={() => setExpandedTag(isExpanded ? null : tag)}
+                                                    className="mb-1.5 flex-row items-center justify-between rounded-[12px] border px-3 py-2.5"
+                                                    style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                                    <View className="flex-row items-center gap-2 flex-1">
+                                                        <Ionicons name={isExpanded ? 'chevron-down' : 'chevron-forward'} size={14} color={palette.textMutedColor} />
+                                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-amber-500/20">
+                                                            <Text className="text-[10px] font-bold text-amber-600">#</Text>
+                                                        </View>
+                                                        <Text className={`text-[13px] font-semibold ${palette.text}`}>{tag}</Text>
+                                                    </View>
+                                                    <Text className={`text-[11px] ${palette.textMuted}`}>{count} contact{count !== 1 ? 's' : ''}</Text>
+                                                </TouchableOpacity>
+                                                {isExpanded && renderExpandedContacts(tagContacts)}
+                                            </View>
+                                        );
+                                    })
+                                )}
+                            </View>
+                        )}
+                    />
+                ) : (
+                    <>
+                        {/* Search */}
+                        <View className="mb-2.5 flex-row items-center gap-2">
+                            <View className="flex-1 flex-row items-center rounded-[16px] border px-3 py-2.5"
+                                style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                <Ionicons name="search" size={16} color={palette.textMutedColor} />
+                                <TextInput
+                                    className="ml-2 flex-1 text-[13px]"
+                                    style={{ color: palette.textColor }}
+                                    placeholder="Search contacts..."
+                                    placeholderTextColor={palette.textMutedColor}
+                                    value={search}
+                                    onChangeText={setSearch}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Stat badge */}
+                        <Text className={`mb-2 text-[11px] font-semibold ${palette.textSoft}`}>
+                            {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+                            {groups.length > 0 ? ` · ${groups.length} group${groups.length !== 1 ? 's' : ''}` : ''}
+                        </Text>
+
+                        <Animated.FlatList
+                            data={contacts}
+                            keyExtractor={(item) => item.id?.toString()}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 80 }}
+                            onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+                            scrollEventThrottle={16}
+                            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
+                            ListEmptyComponent={
+                                loading ? null : (
+                                    <KonnectxEmptyState icon="people-outline" title="No contacts yet"
+                                        description="Add your first contact to start building your audience."
+                                        ctaLabel="Add Contact" onCtaPress={openAdd} />
+                                )
+                            }
+                            renderItem={renderContact}
                         />
-                    </View>
-                </View>
-
-                {/* Stat badge */}
-                <Text className={`mb-2 text-[11px] font-semibold ${palette.textSoft}`}>
-                    {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
-                    {groups.length > 0 ? ` · ${groups.length} group${groups.length !== 1 ? 's' : ''}` : ''}
-                </Text>
-
-                <FlatList
-                    data={contacts}
-                    keyExtractor={(item) => item.id?.toString()}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 80 }}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
-                    ListEmptyComponent={
-                        loading ? null : (
-                            <KonnectxEmptyState icon="people-outline" title="No contacts yet"
-                                description="Add your first contact to start building your audience."
-                                ctaLabel="Add Contact" onCtaPress={openAdd} />
-                        )
-                    }
-                    renderItem={renderContact}
-                />
+                    </>
+                )}
             </View>
 
             {/* Add/Edit Modal */}

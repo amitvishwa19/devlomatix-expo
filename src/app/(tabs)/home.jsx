@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Animated, Modal, Pressable, Switch, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useNotificationStore } from '~/contexts/NotificationStore';
@@ -87,15 +87,18 @@ export default function HomeScreen() {
   const { notifications, unreadCount } = useNotificationStore();
   const [showCustomize, setShowCustomize] = useState(false);
 
+  const scrollY = useRef(new Animated.Value(0)).current;
   const enabledKeys = Object.entries(widgets).filter(([, v]) => v).map(([k]) => k);
   const allEnabled = enabledKeys.length === Object.keys(widgets).length;
 
   return (
     <AppScreen>
       <View className="flex-1">
-        <UserStatusBar />
+        <UserStatusBar scrollY={scrollY} />
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView className="flex-1" showsVerticalScrollIndicator={false}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+          scrollEventThrottle={16}>
           <View className="px-5 pb-8 pt-5">
             <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
               <View className="flex-row items-center justify-between">
@@ -203,7 +206,7 @@ export default function HomeScreen() {
               );
             })}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
 
       <Modal

@@ -1,8 +1,8 @@
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Image, Pressable, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { fetchAccessData } from "~/services/access-management";
@@ -30,6 +30,7 @@ const settingGroups = [
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const { themeMode, setThemeMode, isDark, palette } = useAppTheme();
   const [user, setUser] = useState(null);
   const [permModules, setPermModules] = useState([]);
@@ -89,12 +90,15 @@ export default function SettingsScreen() {
       style={{ backgroundColor: palette.colors.page }}
     >
       <StatusBar style={palette.statusBar} />
+      
      
-      <ScrollView
+      <Animated.ScrollView
         className="flex-1"
         style={{ backgroundColor: palette.colors.page }}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
       >
         <View className="px-5 pt-5">
           {/* User Profile Header Card */}
@@ -411,7 +415,7 @@ export default function SettingsScreen() {
             <Text className="text-base font-bold text-slate-50">Logout</Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
