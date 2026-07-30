@@ -54,6 +54,7 @@ export default function TemplatesScreen() {
     if (!userId) return;
     try {
       const data = await templatesService.getTemplates(userId);
+      console.log('[Templates] API response:', JSON.stringify(data).slice(0, 500));
       const parsed = (Array.isArray(data) ? data : data?.templates ?? []).map(t => {
         const n = { ...t };
         if (typeof n.metadata === 'string' && n.metadata.trim().startsWith('{')) {
@@ -65,7 +66,9 @@ export default function TemplatesScreen() {
         return n;
       });
       setTemplates(parsed);
-    } catch { } finally {
+    } catch (err) {
+      console.error('[Templates] fetch error:', err?.response?.status, err?.response?.data || err.message);
+    } finally {
       setLoading(false);
     }
   }, [userId]);

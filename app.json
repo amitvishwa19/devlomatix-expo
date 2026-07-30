@@ -3,7 +3,7 @@
     "name": "devlomatix",
     "slug": "devlomatix",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./src/assets/images/app-icon.png",
     "scheme": "devlomatix",
     "userInterfaceStyle": "automatic",

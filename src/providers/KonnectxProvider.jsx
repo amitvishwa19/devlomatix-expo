@@ -15,8 +15,10 @@ export function KonnectxProvider({ children }) {
     async function loadUser() {
       try {
         const session = await getSession();
-        if (session?.user?.userId) {
-          setUserId(session.user.userId);
+        const u = session?.user;
+        const uid = u?.userId || u?.id || u?._id || u?.sub;
+        if (uid) {
+          setUserId(uid);
         }
       } catch (err) {
         console.error('Failed to load user session in KonnectxProvider', err);
@@ -26,11 +28,17 @@ export function KonnectxProvider({ children }) {
   }, []);
 
   const refreshCredentials = useCallback(async () => {
-    if (!userId) return;
+    let resolvedId = userId;
+    if (!resolvedId) {
+      const session = await getSession();
+      const u = session?.user;
+      resolvedId = u?.userId || u?.id || u?._id || u?.sub;
+    }
+    if (!resolvedId) return;
     try {
       setIsLoading(true);
       setError(null);
-      const creds = await credentialsService.getCredentials(userId);
+      const creds = await credentialsService.getCredentials(resolvedId);
       const list = Array.isArray(creds) ? creds : creds?.credentials ?? [];
       setCredentials(list);
       const defaultCred = list.find((c) => c.isDefault) ?? list[0] ?? null;
@@ -45,10 +53,8 @@ export function KonnectxProvider({ children }) {
   }, [userId, selectedCredential]);
 
   useEffect(() => {
-    if (userId) {
-      refreshCredentials();
-    }
-  }, [userId]);
+    refreshCredentials();
+  }, [userId, refreshCredentials]);
 
   const value = {
     userId,

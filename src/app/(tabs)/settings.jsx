@@ -69,9 +69,9 @@ export default function SettingsScreen() {
 
   const handleSignOut = async () => {
     try {
-      await GoogleSignin.signOut();
+      await GoogleSignin.disconnect();
     } catch {
-      // Ignore when the current session was not created with Google Sign-In.
+      try { await GoogleSignin.signOut(); } catch {}
     }
     await clearSession();
     router.replace("/(auth)/login");

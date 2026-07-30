@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform,
+  ActivityIndicator, Animated, FlatList, Image, KeyboardAvoidingView, Modal, Platform,
   Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +36,30 @@ function formatDistance(ts) {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return d.toLocaleDateString();
+}
+
+function SkeletonRow() {
+  const pulse = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+  return (
+    <Animated.View className="mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3"
+      style={{ opacity: pulse, backgroundColor: '#1e293b', borderColor: '#334155' }}>
+      <View className="h-9 w-9 rounded-full bg-[#334155]" />
+      <View className="flex-1 gap-2">
+        <View className="h-3 w-2/5 rounded bg-[#334155]" />
+        <View className="h-2.5 w-4/5 rounded bg-[#334155]" />
+      </View>
+    </Animated.View>
+  );
 }
 
 function MessageStatus({ status }) {
@@ -452,47 +476,55 @@ export default function KonnectXChatsScreen() {
           </View>
 
           {activeTab === 'chats' ? (
-            <FlatList
-              data={filteredConversations}
-              keyExtractor={(item) => item.jid}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 80 }}
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
-              ListEmptyComponent={
-                loading ? null : (
+            loading && filteredConversations.length === 0 ? (
+              <FlatList
+                data={[1, 2, 3, 4, 5, 6]}
+                keyExtractor={(item) => String(item)}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                renderItem={() => <SkeletonRow />}
+              />
+            ) : (
+              <FlatList
+                data={filteredConversations}
+                keyExtractor={(item) => item.jid}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
+                ListEmptyComponent={
                   <KonnectxEmptyState icon="chatbubbles-outline" title="No conversations"
                     description="Start a conversation by selecting a contact." />
-                )
-              }
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => selectConversation(item.jid)}
-                  onLongPress={() => deleteConversation(item.jid)}
-                  className={`mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3 ${palette.surface} ${palette.border}`}>
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/20">
-                    <Text className="text-[13px] font-bold text-sky-600">
-                      {(item.name || item.jid)?.[0]?.toUpperCase() || '?'}
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-center justify-between">
-                      <Text className={`text-[14px] font-bold flex-1 ${palette.text}`} numberOfLines={1}>
-                        {item.name || item.jid?.split('@')[0]}
-                      </Text>
-                      <Text className={`text-[10px] ${palette.textMuted}`}>{formatTime(item.timestamp)}</Text>
-                    </View>
-                    <View className="flex-row items-center gap-1 mt-0.5">
-                      {item.fromMe ? (
-                        <Text className="text-[10px] font-semibold text-sky-500">You: </Text>
-                      ) : null}
-                      <Text className={`text-[12px] flex-1 ${palette.textSoft}`} numberOfLines={1}>
-                        {item.lastMessage || item.messages?.[0]?.text || ''}
+                }
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => selectConversation(item.jid)}
+                    onLongPress={() => deleteConversation(item.jid)}
+                    className={`mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3 ${palette.surface} ${palette.border}`}>
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/20">
+                      <Text className="text-[13px] font-bold text-sky-600">
+                        {(item.name || item.jid)?.[0]?.toUpperCase() || '?'}
                       </Text>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
+                    <View className="flex-1">
+                      <View className="flex-row items-center justify-between">
+                        <Text className={`text-[14px] font-bold flex-1 ${palette.text}`} numberOfLines={1}>
+                          {item.name || item.jid?.split('@')[0]}
+                        </Text>
+                        <Text className={`text-[10px] ${palette.textMuted}`}>{formatTime(item.timestamp)}</Text>
+                      </View>
+                      <View className="flex-row items-center gap-1 mt-0.5">
+                        {item.fromMe ? (
+                          <Text className="text-[10px] font-semibold text-sky-500">You: </Text>
+                        ) : null}
+                        <Text className={`text-[12px] flex-1 ${palette.textSoft}`} numberOfLines={1}>
+                          {item.lastMessage || item.messages?.[0]?.text || ''}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            )
           ) : (
             <FlatList
               data={filteredContacts}

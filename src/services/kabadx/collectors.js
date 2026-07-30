@@ -1,0 +1,58 @@
+export const INITIAL_COLLECTORS = [
+  {
+    id: 'col-101',
+    name: 'Ramesh Kumar',
+    phone: '+91 98765 43210',
+    vehicleType: 'E-Loader Rickshaw',
+    vehicleNo: 'DL 1ER 4521',
+    rating: 4.8,
+    active: true,
+    location: 'Sector 62, Noida',
+    completedPickups: 142,
+    todayPickups: 3,
+    avatarColor: '#0d9488',
+  },
+  {
+    id: 'col-102',
+    name: 'Sunil Sharma',
+    phone: '+91 98123 65470',
+    vehicleType: 'Three-Wheeler Auto',
+    vehicleNo: 'DL 3AT 8820',
+    rating: 4.9,
+    active: true,
+    location: 'Indirapuram, Ghaziabad',
+    completedPickups: 215,
+    todayPickups: 4,
+    avatarColor: '#0284c7',
+  },
+  {
+    id: 'col-103',
+    name: 'Vikram Singh',
+    phone: '+91 97110 99882',
+    vehicleType: 'Tata Ace Mini Truck',
+    vehicleNo: 'UP 14 BT 3301',
+    rating: 4.7,
+    active: true,
+    location: 'Greater Noida West',
+    completedPickups: 98,
+    todayPickups: 2,
+    avatarColor: '#d97706',
+  },
+  {
+    id: 'col-104',
+    name: 'Mohd. Imran',
+    phone: '+91 99580 11223',
+    vehicleType: 'E-Loader Rickshaw',
+    vehicleNo: 'DL 2ER 9041',
+    rating: 4.6,
+    active: false,
+    location: 'Preet Vihar, Delhi',
+    completedPickups: 84,
+    todayPickups: 0,
+    avatarColor: '#7c3aed',
+  },
+];
+
+export async function getCollectors() {
+  return INITIAL_COLLECTORS;
+}

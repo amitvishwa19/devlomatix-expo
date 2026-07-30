@@ -8,6 +8,8 @@ const DEFAULT_WIDGETS = {
   curexa: true,
   konnectx: true,
   crystalaura: true,
+  hireflow: true,
+  kabadx: true,
 };
 
 const WidgetContext = createContext(null);

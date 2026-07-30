@@ -5,6 +5,7 @@ import { FlatList, Modal, RefreshControl, Text, TextInput, TouchableOpacity, Vie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
+import IosConfirmModal from '~/components/IosConfirmModal';
 
 import { useKonnectx } from '~/providers/KonnectxProvider';
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
@@ -22,13 +23,14 @@ export default function ChatbotScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', active: false });
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   const fetchBots = useCallback(async () => {
     if (!userId) return;
     try {
       const data = await chatbotsService.getBots(userId);
       setBots(Array.isArray(data) ? data : data?.bots ?? []);
-    } catch {} finally {
+    } catch { } finally {
       setLoading(false);
     }
   }, [userId]);
@@ -46,9 +48,9 @@ export default function ChatbotScreen() {
       Toast.show({ type: 'error', text1: 'Validation', text2: 'Bot name is required' });
       return;
     }
-    setSaving(true);
     try {
-      await chatbotsService.saveBot(userId, { name: form.name.trim(), description: form.description.trim() || undefined, active: form.active, nodes: [], edges: [] });
+      setSaving(true);
+      await chatbotsService.createBot(userId, form);
       Toast.show({ type: 'success', text1: 'Bot created' });
       setShowCreate(false);
       setForm({ name: '', description: '', active: false });
@@ -70,30 +72,34 @@ export default function ChatbotScreen() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+    const id = deleteTargetId;
     try {
       await chatbotsService.deleteBot(userId, id);
       setBots((prev) => prev.filter((b) => b.id !== id));
       Toast.show({ type: 'success', text1: 'Bot deleted' });
     } catch (err) {
       Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
       <View className="flex-1 px-4 pt-5">
-        <View className="mb-4 flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={palette.textColor} />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-[28px] font-bold" style={{ color: palette.textColor }}>Chatbots</Text>
-            <Text className={`text-[13px] ${palette.textSoft}`}>{bots.length} bot{bots.length !== 1 ? 's' : ''}</Text>
+        <View className="mb-4 flex-row items-center justify-between">
+          <View>
+            <View className="mb-1 self-start rounded-full bg-sky-600 px-2.5 py-0.5">
+              <Text className="text-[10px] font-bold uppercase tracking-[1px] text-white">AUTOMATION</Text>
+            </View>
+            <Text className={`text-[24px] font-bold ${palette.text}`}>Chatbots</Text>
           </View>
           <TouchableOpacity onPress={() => setShowCreate(true)}
-            className="rounded-full bg-sky-600 px-4 py-3">
-            <Ionicons name="add" size={20} color="#fff" />
+            className="flex-row items-center gap-1 rounded-full bg-sky-600 px-4 py-2.5 shadow-lg">
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text className="text-[13px] font-bold text-white">New Bot</Text>
           </TouchableOpacity>
         </View>
 
@@ -101,54 +107,63 @@ export default function ChatbotScreen() {
           data={bots}
           keyExtractor={(item) => item.id?.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 80 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
           ListEmptyComponent={
-            loading ? <><SkeletonCard /><SkeletonCard /></> : (
-              <KonnectxEmptyState icon="robot-outline" title="No chatbots"
-                description="Create automated conversation flows for your business."
-                ctaLabel="Create Bot" onCtaPress={() => setShowCreate(true)} />
+            loading ? (
+              <><SkeletonCard /><SkeletonCard /></>
+            ) : (
+              <KonnectxEmptyState icon="hardware-chip-outline" title="No chatbots configured"
+                description="Create an AI or keyword-based chatbot to automate user replies."
+                ctaLabel="Create Chatbot" onCtaPress={() => setShowCreate(true)} />
             )
           }
           renderItem={({ item }) => (
-            <View className="mb-3 rounded-[20px] border p-4" style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+            <View className="mb-3 rounded-[16px] border p-4 shadow-sm"
+              style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
               <View className="flex-row items-center justify-between">
-                <View className="flex-1 flex-row items-center gap-3">
-                  <View className="h-12 w-12 items-center justify-center rounded-full"
-                    style={{ backgroundColor: item.active ? 'rgba(22,163,74,0.1)' : 'rgba(107,114,128,0.1)' }}>
-                    <Ionicons name="hardware-chip-outline" size={22} color={item.active ? '#16a34a' : '#6b7280'} />
-                  </View>
-                  <View className="flex-1">
+                <View className="flex-1 pr-3">
+                  <View className="flex-row items-center gap-2">
                     <Text className={`text-[16px] font-bold ${palette.text}`}>{item.name}</Text>
-                    {item.description ? <Text className={`text-[12px] ${palette.textSoft}`}>{item.description}</Text> : null}
-                    <View className="mt-1 flex-row items-center gap-2">
-                      <View className={`rounded-full px-2 py-0.5 ${item.active ? 'bg-green-500/10' : 'bg-gray-500/10'}`}>
-                        <Text className={`text-[9px] font-bold ${item.active ? 'text-green-600' : 'text-gray-500'}`}>
-                          {item.active ? 'ACTIVE' : 'INACTIVE'}
-                        </Text>
-                      </View>
+                    <View className={`rounded-full px-2 py-0.5 ${item.active ? 'bg-green-500/10' : 'bg-slate-500/10'}`}>
+                      <Text className={`text-[9px] font-bold ${item.active ? 'text-green-600' : 'text-slate-500'}`}>
+                        {item.active ? 'ACTIVE' : 'INACTIVE'}
+                      </Text>
                     </View>
                   </View>
+                  {item.description ? (
+                    <Text className={`mt-1 text-[12px] ${palette.textSoft}`}>{item.description}</Text>
+                  ) : null}
                 </View>
-              </View>
 
-              <View className="mt-3 flex-row gap-2">
-                <TouchableOpacity onPress={() => handleToggle(item)}
-                  className={`flex-1 items-center rounded-xl py-2.5 ${item.active ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-green-500/10 border border-green-500/20'}`}>
-                  <Text className={`text-[12px] font-bold ${item.active ? 'text-amber-600' : 'text-green-600'}`}>
-                    {item.active ? 'Pause' : 'Activate'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item.id)}
-                  className="items-center rounded-xl border border-red-500/20 px-4 py-2.5"
-                  style={{ backgroundColor: 'rgba(220,38,38,0.05)' }}>
-                  <Ionicons name="trash-outline" size={16} color="#dc2626" />
-                </TouchableOpacity>
+                <View className="flex-row items-center gap-2">
+                  <TouchableOpacity onPress={() => handleToggle(item)}
+                    className={`rounded-xl border px-3 py-1.5 ${item.active ? 'border-amber-500/30' : 'border-green-500/30'}`}>
+                    <Text className={`text-[11px] font-bold ${item.active ? 'text-amber-600' : 'text-green-600'}`}>
+                      {item.active ? 'Pause' : 'Activate'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => setDeleteTargetId(item.id)} className="p-1">
+                    <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           )}
         />
       </View>
+
+      <IosConfirmModal
+        visible={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Chatbot?"
+        message="Are you sure you want to delete this chatbot? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
 
       <Modal visible={showCreate} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreate(false)}>
         <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>

@@ -1,6 +1,7 @@
 //export const baseApi = 'http://192.168.29.31:3000/api/v4'
 //const baseApi = 'https://healthyfine.devlomatix.in/api/v4'
 
+//export const baseApi = "http://192.168.29.31:3000/api/v5";
 export const baseApi = "https://dev.devlomatix.com/api/v5";
 //export const baseApi = "https://devlomatix.com/api/v5";
 
@@ -55,6 +56,14 @@ export const apiUrls = {
     );
   },
 
+  //Quotation
+  quotation: baseApi + "/misc/quotation",
+  quotationById: baseApi + "/misc/quotation",
+
+  //Lead Gen
+  leadgen: baseApi + "/misc/lead-gen",
+  leadgenSave: baseApi + "/misc/lead-gen/save",
+
   //Access Management
   accessManagement: baseApi + "/auth/access-management", // GET
   accessUser: baseApi + "/auth/access-management/user", // POST (upsert)
@@ -63,4 +72,21 @@ export const apiUrls = {
   accessRoleById: baseApi + "/auth/access-management/role", // DELETE /role/:id
   accessPermission: baseApi + "/auth/access-management/permission", // POST (bulk upsert)
   accessPermissionById: baseApi + "/auth/access-management/permission", // DELETE /permission/:id
+
+  //HireFlow
+  hireflow: baseApi + "/hireflow",
+  hireflowSummary: baseApi + "/hireflow/summary",
+  hireflowJobs: baseApi + "/hireflow/jobs",
+  hireflowJobById: baseApi + "/hireflow/jobs",
+  hireflowCandidates: baseApi + "/hireflow/candidates",
+  hireflowCandidateById: baseApi + "/hireflow/candidates",
+  hireflowApplications: baseApi + "/hireflow/applications",
+  hireflowDepartments: baseApi + "/hireflow/departments",
+  hireflowDepartmentById: baseApi + "/hireflow/departments",
+  hireflowInterviews: baseApi + "/hireflow/interviews",
+  hireflowInterviewById: baseApi + "/hireflow/interviews",
+  hireflowScorecards: baseApi + "/hireflow/scorecards",
+  hireflowNotes: baseApi + "/hireflow/notes",
+  hireflowOffers: baseApi + "/hireflow/offers",
+  hireflowActivities: baseApi + "/hireflow/activities",
 };

@@ -56,6 +56,24 @@ const tools = [
     bg: 'bg-teal-500/15',
     description: 'Ambient sounds and lo-fi beats for deep work.',
   },
+  {
+    id: 'quotation',
+    name: 'Quotation',
+    icon: 'document-text-outline',
+    color: '#f59e0b',
+    bg: 'bg-amber-500/15',
+    description: 'Generate professional quotations and proposals.',
+    route: '/(misc)/quotation',
+  },
+  {
+    id: 'leadgen',
+    name: 'Lead Generator',
+    icon: 'people-outline',
+    color: '#dc2626',
+    bg: 'bg-red-500/15',
+    description: 'Find and generate business leads from Google Maps.',
+    route: '/(misc)/leadgen',
+  },
 ];
 
 export default function ProductivityScreen() {
@@ -87,6 +105,7 @@ export default function ProductivityScreen() {
             {tools.map((tool) => (
               <Pressable
                 key={tool.id}
+                onPress={tool.route ? () => router.push(tool.route) : undefined}
                 className={`w-[48%] rounded-[20px] border p-4 ${palette.surface} ${palette.border}`}
               >
                 <View className={`mb-3 h-12 w-12 items-center justify-center rounded-2xl ${tool.bg}`}>
@@ -96,11 +115,19 @@ export default function ProductivityScreen() {
                 <Text className={`mt-1 text-[12px] leading-4 ${palette.textSoft}`}>
                   {tool.description}
                 </Text>
-                <View className="mt-3 self-start rounded-full border px-3 py-1" style={{ borderColor: tool.color }}>
-                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px]" style={{ color: tool.color }}>
-                    Coming soon
-                  </Text>
-                </View>
+                {tool.route ? (
+                  <View className="mt-3 self-start rounded-full bg-amber-600 px-3 py-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-white">
+                      Open
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="mt-3 self-start rounded-full border px-3 py-1" style={{ borderColor: tool.color }}>
+                    <Text className="text-[10px] font-bold uppercase tracking-[0.5px]" style={{ color: tool.color }}>
+                      Coming soon
+                    </Text>
+                  </View>
+                )}
               </Pressable>
             ))}
           </View>

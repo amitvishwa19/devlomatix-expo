@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Modal, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
 
+import IosConfirmModal from '~/components/IosConfirmModal';
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import { SkeletonCard } from '~/components/konnectx/KonnectxLoadingSkeleton';
 import { useKonnectx } from '~/providers/KonnectxProvider';
@@ -32,6 +33,7 @@ export default function KonnectXCampaignsScreen() {
     const [showCreate, setShowCreate] = useState(false);
     const [showDetail, setShowDetail] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [deleteTargetId, setDeleteTargetId] = useState(null);
 
     const [form, setForm] = useState({
         name: '', templateId: null, messageTemplate: '',
@@ -39,13 +41,14 @@ export default function KonnectXCampaignsScreen() {
     });
 
     const fetchData = useCallback(async () => {
-        if (!userId) return;
         try {
             const [camps, tmpls] = await Promise.all([
                 campaignsService.getCampaigns(userId).catch(() => []),
                 templatesService.getTemplates(userId).catch(() => [])
             ]);
-            setCampaigns(Array.isArray(camps) ? camps : camps?.campaigns ?? []);
+            const rawList = Array.isArray(camps) ? camps : camps?.campaigns ?? [];
+            const list = rawList.filter((c) => c && c.status !== 'DELETED' && !c.isDeleted && !c.deletedAt);
+            setCampaigns(list);
             setTemplates(Array.isArray(tmpls) ? tmpls : tmpls?.templates ?? []);
         } catch { } finally {
             setLoading(false);
@@ -98,14 +101,19 @@ export default function KonnectXCampaignsScreen() {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleConfirmDelete = async () => {
+        if (!deleteTargetId) return;
+        const id = deleteTargetId;
         try {
             await campaignsService.deleteCampaign(userId, id);
-            setCampaigns((prev) => prev.filter((c) => c.id !== id));
+            setCampaigns((prev) => prev.filter((c) => String(c.id || c._id) !== String(id)));
             Toast.show({ type: 'success', text1: 'Campaign deleted' });
-            if (showDetail?.id === id) setShowDetail(null);
+            if (showDetail && String(showDetail.id || showDetail._id) === String(id)) setShowDetail(null);
+            fetchData();
         } catch (err) {
             Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+        } finally {
+            setDeleteTargetId(null);
         }
     };
 
@@ -168,7 +176,7 @@ export default function KonnectXCampaignsScreen() {
                         <TouchableOpacity onPress={() => handleClone(item)} className="p-1">
                             <Ionicons name="copy-outline" size={14} color={palette.textMutedColor} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDelete(item.id)} className="p-1">
+                        <TouchableOpacity onPress={() => setDeleteTargetId(item.id)} className="p-1">
                             <Ionicons name="trash-outline" size={14} color="#dc2626" />
                         </TouchableOpacity>
                     </View>
@@ -336,16 +344,27 @@ export default function KonnectXCampaignsScreen() {
                                         className="flex-1 items-center rounded-xl border py-3" style={{ borderColor: palette.colors.border }}>
                                         <Text className={`text-[13px] font-bold ${palette.text}`}>Clone</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => { handleDelete(showDetail.id); setShowDetail(null); }}
-                                        className="items-center rounded-xl bg-red-600 px-5 py-3">
-                                        <Ionicons name="trash" size={18} color="#fff" />
-                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => setDeleteTargetId(showDetail.id)}
+                                         className="items-center rounded-xl bg-red-600 px-5 py-3">
+                                         <Ionicons name="trash" size={18} color="#fff" />
+                                     </TouchableOpacity>
                                 </View>
                             </>
                         ) : null}
                     </View>
                 </SafeAreaView>
             </Modal>
+
+            <IosConfirmModal
+                visible={!!deleteTargetId}
+                onClose={() => setDeleteTargetId(null)}
+                onConfirm={handleConfirmDelete}
+                title="Delete Campaign?"
+                message="Are you sure you want to delete this campaign? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                isDestructive={true}
+            />
         </SafeAreaView>
     );
 }

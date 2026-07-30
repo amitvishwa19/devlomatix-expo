@@ -27,6 +27,10 @@ export const AuthProvider = ({ children }) => {
   const { expoPushToken } = useNotification();
 
   useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: "245235062421-rugl7hdlgdfqieia79tjeqar9m1j2tvf.apps.googleusercontent.com",
+      offlineAccess: false,
+    });
     getDeviceTocken();
     getUserFromToken();
   }, []);
