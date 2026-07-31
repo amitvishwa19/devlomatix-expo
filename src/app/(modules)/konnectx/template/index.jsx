@@ -15,6 +15,8 @@ import ShareTemplateDialog from './_components/ShareTemplateDialog';
 import TestTemplateDialog from './_components/TestTemplateDialog';
 import TemplatePreview from './_components/TemplatePreview';
 
+import { useUniversalLoader } from '~/providers/UniversalLoaderProvider';
+
 const STATUS_STYLES = {
   APPROVED: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)', label: 'Approved' },
   PENDING_APPROVAL: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', label: 'In Review' },
@@ -28,7 +30,8 @@ const STATUS_STYLES = {
 export default function TemplatesScreen() {
   const { palette } = useAppTheme();
   const router = useRouter();
-  const { userId, selectedCredential } = useKonnectx();
+  const { userId, selectedCredential, credentials, setSelectedCredential } = useKonnectx();
+  const { showLoader, hideLoader } = useUniversalLoader();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,6 +40,7 @@ export default function TemplatesScreen() {
   const [isSubmittingId, setIsSubmittingId] = useState(null);
   const [isDeletingId, setIsDeletingId] = useState(null);
 
+  const [showAcctSwitcher, setShowAcctSwitcher] = useState(false);
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,12 +54,16 @@ export default function TemplatesScreen() {
   const [showShare, setShowShare] = useState(false);
   const [shareTemplate, setShareTemplate] = useState(null);
 
-  const fetchTemplates = useCallback(async () => {
+  const fetchTemplates = useCallback(async (targetCred = null) => {
     if (!userId) return;
     try {
-      const data = await templatesService.getTemplates(userId);
+      const activeCred = targetCred || selectedCredential;
+      const credId = activeCred?.id || activeCred?._id;
+      const wabaId = activeCred?.wabaId;
+      const data = await templatesService.getTemplates(userId, { credentialId: credId, wabaId });
       console.log('[Templates] API response:', JSON.stringify(data).slice(0, 500));
-      const parsed = (Array.isArray(data) ? data : data?.templates ?? []).map(t => {
+      const rawList = Array.isArray(data) ? data : (data?.templates ?? data?.data ?? data?.items ?? data?.result ?? []);
+      const parsed = rawList.map(t => {
         const n = { ...t };
         if (typeof n.metadata === 'string' && n.metadata.trim().startsWith('{')) {
           try { n.metadata = JSON.parse(n.metadata); } catch { }
@@ -70,33 +78,40 @@ export default function TemplatesScreen() {
       console.error('[Templates] fetch error:', err?.response?.status, err?.response?.data || err.message);
     } finally {
       setLoading(false);
+      hideLoader();
     }
-  }, [userId]);
+  }, [userId, selectedCredential, hideLoader]);
 
   useEffect(() => {
     if (userId) fetchTemplates();
-  }, [userId, fetchTemplates]);
+  }, [userId, fetchTemplates, selectedCredential]);
 
   const onRefresh = useCallback(async () => {
     if (!userId) return;
     setRefreshing(true);
+    const credId = selectedCredential?.id || selectedCredential?._id;
+    const wabaId = selectedCredential?.wabaId;
     await fetchTemplates();
-    await templatesService.syncTemplates(userId).catch(() => { });
+    await templatesService.syncTemplates(userId, { credentialId: credId, wabaId }).catch(() => { });
     await fetchTemplates();
     setRefreshing(false);
-  }, [userId, fetchTemplates]);
+  }, [userId, fetchTemplates, selectedCredential]);
 
   const handleSync = async () => {
     if (!userId) return;
     setIsSyncing(true);
+    showLoader('Syncing templates from Meta...');
     try {
-      await templatesService.syncTemplates(userId);
+      const credId = selectedCredential?.id || selectedCredential?._id;
+      const wabaId = selectedCredential?.wabaId;
+      await templatesService.syncTemplates(userId, { credentialId: credId, wabaId });
       Toast.show({ type: 'success', text1: 'Synced', text2: 'Templates synced from Meta' });
-      fetchTemplates();
+      await fetchTemplates();
     } catch (err) {
       Toast.show({ type: 'error', text1: 'Sync failed', text2: err?.response?.data?.error || err.message });
     } finally {
       setIsSyncing(false);
+      hideLoader();
     }
   };
 
@@ -274,21 +289,31 @@ export default function TemplatesScreen() {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: palette.colors.page }}>
       <View className="flex-1 px-4 pt-5">
-        <View className="mb-4 flex-row items-center gap-3">
+        <View className="mb-4 flex-row items-center gap-2">
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={palette.textColor} />
           </TouchableOpacity>
           <View className="flex-1">
-            <Text className="text-[28px] font-bold" style={{ color: palette.textColor }}>Templates</Text>
-            <Text className={`text-[13px] ${palette.textSoft}`}>{templates.length} template{templates.length !== 1 ? 's' : ''}</Text>
+            <Text className="text-[24px] font-bold" style={{ color: palette.textColor }}>Templates</Text>
+            <Text className={`text-[12px] ${palette.textSoft}`}>{templates.length} template{templates.length !== 1 ? 's' : ''}</Text>
           </View>
+          {credentials.length > 1 ? (
+            <TouchableOpacity onPress={() => setShowAcctSwitcher(true)}
+              className="flex-row items-center gap-1 rounded-full border px-2.5 py-1.5"
+              style={{ borderColor: palette.colors.border }}>
+              <Ionicons name="swap-horizontal" size={14} color={palette.textColor} />
+              <Text className="text-[11px] font-semibold" style={{ color: palette.textColor }} numberOfLines={1}>
+                {selectedCredential?.profile || 'Account'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity onPress={handleSync} disabled={isSyncing}
-            className="rounded-full border px-4 py-3" style={{ borderColor: palette.colors.border }}>
-            <Ionicons name={isSyncing ? 'hourglass' : 'sync-outline'} size={20} color={palette.textColor} />
+            className="rounded-full border p-2.5" style={{ borderColor: palette.colors.border }}>
+            <Ionicons name={isSyncing ? 'hourglass' : 'sync-outline'} size={18} color={palette.textColor} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleOpenBuilder()}
-            className="rounded-full bg-sky-600 px-4 py-3">
-            <Ionicons name="add" size={20} color="#fff" />
+            className="rounded-full bg-sky-600 p-2.5">
+            <Ionicons name="add" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -316,6 +341,70 @@ export default function TemplatesScreen() {
           renderItem={renderItem}
         />
       </View>
+
+      <Modal visible={showAcctSwitcher} transparent animationType="fade" onRequestClose={() => setShowAcctSwitcher(false)}>
+        <Pressable className="flex-1 justify-end bg-black/50" onPress={() => setShowAcctSwitcher(false)}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            className={`w-full rounded-t-[28px] px-5 pt-5 pb-16 shadow-2xl ${palette.surface}`}
+            style={{ backgroundColor: palette.colors.surface }}
+          >
+            <View className="mb-4 items-center">
+              <View className={`mb-3 h-1.5 w-12 rounded-full ${palette.surfaceAlt}`} />
+              <Text className={`text-[18px] font-bold ${palette.text}`}>Switch Account</Text>
+              <Text className={`mt-0.5 text-[12px] ${palette.textSoft}`}>Select an active WhatsApp Cloud account</Text>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={true} style={{ maxHeight: 340 }}>
+              <View className="gap-2.5 pb-8">
+                {credentials.length > 0 ? credentials.map((cred) => {
+                  const isSelected = String(selectedCredential?.id || selectedCredential?._id || '') === String(cred.id || cred._id || '');
+                  return (
+                    <TouchableOpacity
+                      key={cred.id || cred._id || cred.phoneNumberId}
+                      activeOpacity={0.7}
+                      onPress={async () => {
+                        showLoader(`Switching to ${cred.profile || 'WhatsApp Account'}...`);
+                        setSelectedCredential(cred);
+                        setShowAcctSwitcher(false);
+                        setLoading(true);
+                        await fetchTemplates(cred);
+                      }}
+                      className="flex-row items-center gap-3 rounded-[16px] border p-4"
+                      style={{
+                        backgroundColor: isSelected ? 'rgba(2,132,199,0.12)' : palette.colors.surface,
+                        borderColor: isSelected ? '#0284c7' : palette.colors.border
+                      }}>
+                      <Ionicons
+                        name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                        size={20}
+                        color={isSelected ? '#0284c7' : palette.textMutedColor}
+                      />
+                      <View className="flex-1">
+                        <Text className={`text-[15px] font-semibold ${palette.text}`}>
+                          {cred.profile || 'WhatsApp Account'}
+                        </Text>
+                        {cred.phoneNumberId ? (
+                          <Text className={`mt-0.5 text-[11px] font-mono ${palette.textMuted}`}>
+                            Phone ID: {cred.phoneNumberId}
+                          </Text>
+                        ) : null}
+                      </View>
+                      {isSelected ? (
+                        <View className="rounded-full bg-sky-600 px-2.5 py-0.5">
+                          <Text className="text-[10px] font-bold uppercase text-white">Active</Text>
+                        </View>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                }) : (
+                  <Text className={`py-6 text-center text-[13px] ${palette.textSoft}`}>No accounts available</Text>
+                )}
+              </View>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <TemplateBuilder
         visible={showBuilder}

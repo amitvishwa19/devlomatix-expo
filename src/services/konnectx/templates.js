@@ -1,7 +1,8 @@
 import konnectxClient from './client';
 
-export async function getTemplates(userId) {
-  const { data } = await konnectxClient.get('/templates', { params: { userId } });
+export async function getTemplates(userId, params = {}) {
+  const queryParams = typeof params === 'object' ? { userId, ...params } : { userId, credentialId: params };
+  const { data } = await konnectxClient.get('/templates', { params: queryParams });
   return data.data ?? data;
 }
 
@@ -20,8 +21,9 @@ export async function deleteTemplate(userId, id) {
   return data;
 }
 
-export async function syncTemplates(userId) {
-  const { data } = await konnectxClient.post('/templates/sync', {}, { params: { userId } });
+export async function syncTemplates(userId, params = {}) {
+  const queryParams = typeof params === 'object' ? { userId, ...params } : { userId, credentialId: params };
+  const { data } = await konnectxClient.post('/templates/sync', {}, { params: queryParams });
   return data;
 }
 

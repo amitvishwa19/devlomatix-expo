@@ -1,18 +1,21 @@
 import konnectxClient from './client';
 
-export async function getAnalytics(userId, days = 30) {
-  const { data } = await konnectxClient.get('/analytics', { params: { userId, days } });
+export async function getAnalytics(userId, days = 30, params = {}) {
+  const queryParams = typeof params === 'object' ? { userId, days, ...params } : { userId, days, credentialId: params };
+  const { data } = await konnectxClient.get('/analytics', { params: queryParams });
   return data.data ?? data;
 }
 
-export async function getStats(userId) {
-  const { data } = await konnectxClient.get('/stats', { params: { userId } });
+export async function getStats(userId, params = {}) {
+  const queryParams = typeof params === 'object' ? { userId, ...params } : { userId, credentialId: params };
+  const { data } = await konnectxClient.get('/stats', { params: queryParams });
   return data.data ?? data;
 }
 
-export async function getActivities(userId, page = 1, pageSize = 10) {
+export async function getActivities(userId, page = 1, pageSize = 10, params = {}) {
+  const extraParams = typeof params === 'object' ? params : { credentialId: params };
   const { data } = await konnectxClient.get('/activities', {
-    params: { userId, page, pageSize }
+    params: { userId, page, pageSize, ...extraParams }
   });
   return data.data ?? data;
 }

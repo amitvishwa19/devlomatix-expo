@@ -14,7 +14,7 @@ import * as Contacts from 'expo-contacts';
 
 export default function KonnectXContactsScreen() {
     const { palette } = useAppTheme();
-    const { userId } = useKonnectx();
+    const { userId, selectedCredential } = useKonnectx();
     const scrollY = useRef(new Animated.Value(0)).current;
     const [contacts, setContacts] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -41,12 +41,20 @@ export default function KonnectXContactsScreen() {
     const fetchContacts = useCallback(async () => {
         if (!userId) return;
         try {
-            const data = await contactsService.getContacts(userId, { search, page: 1, limit: 100 });
+            const credId = selectedCredential?.id || selectedCredential?._id;
+            const data = await contactsService.getContacts(userId, {
+                search,
+                page: 1,
+                limit: 100,
+                credentialId: credId,
+                wabaId: selectedCredential?.wabaId,
+                phoneNumberId: selectedCredential?.phoneNumberId
+            });
             setContacts(data?.data ?? data?.contacts ?? []);
         } catch { } finally {
             setLoading(false);
         }
-    }, [userId, search]);
+    }, [userId, search, selectedCredential]);
 
     const fetchGroups = useCallback(async () => {
         try {
@@ -60,7 +68,7 @@ export default function KonnectXContactsScreen() {
             fetchContacts();
         }
         fetchGroups();
-    }, [userId, fetchContacts, fetchGroups]);
+    }, [userId, fetchContacts, fetchGroups, selectedCredential]);
 
     const onRefresh = useCallback(async () => {
         if (!userId) return;

@@ -1,4 +1,4 @@
-import konnectxClient from './client';
+import konnectxClient, { getClientCredential } from './client';
 import { getSession } from '~/utils/authStorage';
 
 async function resolveUserId(providedUserId) {
@@ -12,9 +12,10 @@ async function resolveUserId(providedUserId) {
   }
 }
 
-export async function getCampaigns(arg1) {
+export async function getCampaigns(arg1, extraParams = {}) {
   const userId = await resolveUserId(arg1);
-  const params = userId ? { userId } : {};
+  const queryParams = typeof extraParams === 'object' ? extraParams : { credentialId: extraParams };
+  const params = userId ? { userId, ...queryParams } : { ...queryParams };
   const { data } = await konnectxClient.get('/campaigns', { params });
   let list = [];
   if (Array.isArray(data)) list = data;
@@ -37,9 +38,40 @@ export async function getCampaignDetails(arg1, arg2) {
 export async function saveCampaign(arg1, arg2) {
   const userId = await resolveUserId(arg2 !== undefined ? arg1 : null);
   const body = arg2 !== undefined ? arg2 : arg1;
-  const params = userId ? { userId } : {};
-  const { data } = await konnectxClient.post('/campaigns', body, { params });
-  return data;
+  const activeCred = getClientCredential();
+  const credId = activeCred?.id || activeCred?._id || body?.credentialId || body?.credential_id;
+
+  const cleanBody = {
+    userId,
+    name: body.name,
+    status: body.status || 'DRAFT',
+    messageType: body.messageType || 'text',
+    ...(credId ? { credentialId: credId } : {}),
+    ...(body.description ? { description: body.description } : {}),
+    ...(body.platform ? { platform: body.platform } : {}),
+    ...(body.templateId ? { templateId: body.templateId } : {}),
+    ...(body.messageTemplate ? { messageTemplate: body.messageTemplate } : {}),
+    ...(body.scheduledAt ? { scheduledAt: body.scheduledAt } : {}),
+    ...(body.recipients ? { recipients: body.recipients } : {}),
+    ...(body.groupIds ? { groupIds: body.groupIds } : {})
+  };
+
+  const params = {
+    ...(userId ? { userId } : {}),
+    ...(credId ? { credentialId: credId, credential_id: credId } : {}),
+    ...(activeCred?.wabaId ? { wabaId: activeCred.wabaId, waba_id: activeCred.wabaId } : {}),
+    ...(activeCred?.phoneNumberId ? { phoneNumberId: activeCred.phoneNumberId, phone_number_id: activeCred.phoneNumberId } : {})
+  };
+
+  console.log('[saveCampaign] Posting cleanBody:', JSON.stringify(cleanBody), 'params:', JSON.stringify(params));
+  try {
+    const { data } = await konnectxClient.post('/campaigns', cleanBody, { params });
+    console.log('[saveCampaign] Response:', JSON.stringify(data));
+    return data;
+  } catch (err) {
+    console.error('[saveCampaign API Error]:', err?.response?.status, JSON.stringify(err?.response?.data || err.message));
+    throw err;
+  }
 }
 
 export async function updateCampaign(arg1, arg2, arg3) {

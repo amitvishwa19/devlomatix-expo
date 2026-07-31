@@ -15,7 +15,7 @@ import * as flowsService from '~/services/konnectx/flows';
 export default function FlowsScreen() {
   const { palette } = useAppTheme();
   const router = useRouter();
-  const { userId } = useKonnectx();
+  const { userId, selectedCredential } = useKonnectx();
 
   const [flows, setFlows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,14 +28,19 @@ export default function FlowsScreen() {
   const fetchFlows = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await flowsService.getFlows(userId);
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await flowsService.getFlows(userId, credParams);
       setFlows(Array.isArray(data) ? data : data?.flows ?? []);
     } catch { } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
-  useEffect(() => { fetchFlows(); }, [fetchFlows]);
+  useEffect(() => { fetchFlows(); }, [fetchFlows, selectedCredential]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

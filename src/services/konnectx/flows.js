@@ -11,9 +11,10 @@ async function resolveUserId(providedUserId) {
   }
 }
 
-export async function getFlows(arg1) {
+export async function getFlows(arg1, extraParams = {}) {
   const userId = await resolveUserId(arg1);
-  const params = userId ? { userId } : {};
+  const queryParams = typeof extraParams === 'object' ? extraParams : { credentialId: extraParams };
+  const params = userId ? { userId, ...queryParams } : { ...queryParams };
   const { data } = await konnectxClient.get('/flows', { params });
   return data.data ?? data;
 }

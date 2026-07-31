@@ -1,15 +1,43 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSession } from '~/utils/authStorage';
 import * as credentialsService from '~/services/konnectx/credentials';
+import konnectxClient, { setClientCredential } from '~/services/konnectx/client';
+import { useUniversalLoader } from '~/providers/UniversalLoaderProvider';
+
+const SELECTED_CRED_KEY = '@konnectx_selected_credential_id';
 
 const KonnectxContext = createContext(null);
 
 export function KonnectxProvider({ children }) {
+  const { showLoader } = useUniversalLoader();
   const [userId, setUserId] = useState(null);
   const [credentials, setCredentials] = useState([]);
-  const [selectedCredential, setSelectedCredential] = useState(null);
+  const [selectedCredential, setSelectedCredentialState] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const selectedRef = useRef(null);
+
+  const setSelectedCredential = useCallback((cred) => {
+    if (cred) {
+      const isDifferent = String(cred.id || cred._id || '') !== String(selectedRef.current?.id || selectedRef.current?._id || '');
+      if (selectedRef.current && isDifferent) {
+        showLoader(`Switching to ${cred.profile || 'WhatsApp Account'}...`);
+      }
+      selectedRef.current = cred;
+    }
+    setSelectedCredentialState(cred);
+    setClientCredential(cred);
+    if (cred?.id || cred?._id) {
+      const credId = cred.id || cred._id;
+      AsyncStorage.setItem(SELECTED_CRED_KEY, String(credId)).catch(() => {});
+      if (userId) {
+        credentialsService.setDefaultCredential(userId, credId).catch((e) => {
+          console.warn('Failed to update default credential on server:', e?.message);
+        });
+      }
+    }
+  }, [userId, showLoader]);
 
   useEffect(() => {
     async function loadUser() {
@@ -41,19 +69,30 @@ export function KonnectxProvider({ children }) {
       const creds = await credentialsService.getCredentials(resolvedId);
       const list = Array.isArray(creds) ? creds : creds?.credentials ?? [];
       setCredentials(list);
-      const defaultCred = list.find((c) => c.isDefault) ?? list[0] ?? null;
-      if (defaultCred && !selectedCredential) {
-        setSelectedCredential(defaultCred);
+
+      const savedCredId = await AsyncStorage.getItem(SELECTED_CRED_KEY).catch(() => null);
+      let targetCred = null;
+      if (savedCredId) {
+        targetCred = list.find((c) => String(c.id || c._id) === String(savedCredId));
+      }
+      if (!targetCred) {
+        targetCred = list.find((c) => c.isDefault) ?? list[0] ?? null;
+      }
+
+      if (targetCred) {
+        setSelectedCredential(targetCred);
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [userId, selectedCredential]);
+  }, [userId, setSelectedCredential]);
 
   useEffect(() => {
-    refreshCredentials();
+    if (userId) {
+      refreshCredentials();
+    }
   }, [userId, refreshCredentials]);
 
   const value = {

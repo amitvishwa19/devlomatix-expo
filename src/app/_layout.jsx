@@ -20,6 +20,8 @@ import { NotificationStoreProvider } from "~/contexts/NotificationStore";
 import { WidgetProvider } from "~/contexts/WidgetContext";
 import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
+import { UniversalLoaderProvider } from "~/providers/UniversalLoaderProvider";
+
 setNotificationHandler({
     handleNotification: async () => ({
         shouldShowBanner: true,
@@ -62,7 +64,9 @@ export default function RootLayout() {
 
     return (
         <AppThemeProvider>
-            <RootLayoutNav />
+            <UniversalLoaderProvider>
+                <RootLayoutNav />
+            </UniversalLoaderProvider>
         </AppThemeProvider>
     );
 }

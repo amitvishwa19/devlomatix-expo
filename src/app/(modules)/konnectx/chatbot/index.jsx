@@ -15,7 +15,7 @@ import * as chatbotsService from '~/services/konnectx/chatbots';
 export default function ChatbotScreen() {
   const { palette } = useAppTheme();
   const router = useRouter();
-  const { userId } = useKonnectx();
+  const { userId, selectedCredential } = useKonnectx();
 
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,14 +28,19 @@ export default function ChatbotScreen() {
   const fetchBots = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await chatbotsService.getBots(userId);
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await chatbotsService.getBots(userId, credParams);
       setBots(Array.isArray(data) ? data : data?.bots ?? []);
     } catch { } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
-  useEffect(() => { fetchBots(); }, [fetchBots]);
+  useEffect(() => { fetchBots(); }, [fetchBots, selectedCredential]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

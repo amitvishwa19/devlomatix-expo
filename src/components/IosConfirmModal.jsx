@@ -1,4 +1,4 @@
-import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { useAppTheme } from '~/theme/AppTheme';
 
 export default function IosConfirmModal({
@@ -10,14 +10,29 @@ export default function IosConfirmModal({
   confirmText = 'Delete',
   cancelText = 'Cancel',
   isDestructive = true,
+  loading = false,
+  loadingText = 'Deleting...',
 }) {
   const { palette } = useAppTheme();
 
   if (!visible) return null;
 
+  const handleBackdropPress = () => {
+    if (!loading && onClose) {
+      onClose();
+    }
+  };
+
+  const handleConfirmPress = async () => {
+    if (loading) return;
+    if (onConfirm) {
+      await onConfirm();
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable className="flex-1 items-center justify-center bg-black/40 px-6" onPress={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleBackdropPress}>
+      <Pressable className="flex-1 items-center justify-center bg-black/40 px-6" onPress={handleBackdropPress}>
         <Pressable
           onPress={(e) => e.stopPropagation()}
           className="w-full max-w-[320px] overflow-hidden rounded-[20px] bg-white shadow-2xl"
@@ -39,8 +54,9 @@ export default function IosConfirmModal({
           <View className="flex-row border-t border-slate-200/80" style={{ borderColor: palette.isDark ? '#334155' : '#e2e8f0' }}>
             <TouchableOpacity
               onPress={onClose}
+              disabled={loading}
               activeOpacity={0.7}
-              className="flex-1 items-center justify-center py-3 border-r border-slate-200/80"
+              className={`flex-1 items-center justify-center py-3 border-r border-slate-200/80 ${loading ? 'opacity-40' : ''}`}
               style={{ borderColor: palette.isDark ? '#334155' : '#e2e8f0' }}
             >
               <Text className="text-[14px] font-semibold text-slate-600 dark:text-slate-300">
@@ -49,20 +65,27 @@ export default function IosConfirmModal({
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => {
-                onConfirm?.();
-                onClose?.();
-              }}
+              onPress={handleConfirmPress}
+              disabled={loading}
               activeOpacity={0.7}
-              className="flex-1 items-center justify-center py-3"
+              className="flex-1 flex-row items-center justify-center gap-1.5 py-3"
             >
-              <Text
-                className={`text-[14px] font-bold ${
-                  isDestructive ? 'text-rose-600' : 'text-sky-600'
-                }`}
-              >
-                {confirmText}
-              </Text>
+              {loading ? (
+                <>
+                  <ActivityIndicator size="small" color={isDestructive ? '#f43f5e' : '#0284c7'} />
+                  <Text className={`text-[13px] font-bold ${isDestructive ? 'text-rose-600' : 'text-sky-600'}`}>
+                    {loadingText}
+                  </Text>
+                </>
+              ) : (
+                <Text
+                  className={`text-[14px] font-bold ${
+                    isDestructive ? 'text-rose-600' : 'text-sky-600'
+                  }`}
+                >
+                  {confirmText}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </Pressable>

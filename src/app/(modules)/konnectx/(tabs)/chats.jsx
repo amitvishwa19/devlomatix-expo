@@ -204,7 +204,12 @@ export default function KonnectXChatsScreen() {
   const fetchConversations = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await chatsService.getConversations(userId);
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await chatsService.getConversations(userId, credParams);
       const list = Array.isArray(data) ? data : data?.conversations ?? [];
       setConversations((prev) => {
         const incomingMap = new Map(list.map((c) => [c.jid, c]));
@@ -231,34 +236,49 @@ export default function KonnectXChatsScreen() {
       console.error('Conversations error:', err);
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
   const fetchMessages = useCallback(async (jid) => {
     if (!jid || !userId) return;
     try {
-      const data = await chatsService.getMessages(userId, jid.replace('@s.whatsapp.net', ''));
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await chatsService.getMessages(userId, jid.replace('@s.whatsapp.net', ''), credParams);
       const msgs = Array.isArray(data) ? data : data?.messages ?? data?.data ?? [];
       setMessages(msgs);
     } catch {}
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
   const fetchContacts = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await contactsService.getContacts(userId);
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await contactsService.getContacts(userId, credParams);
       const list = Array.isArray(data) ? data : data?.contacts ?? data?.data ?? [];
       setContacts(list);
     } catch {}
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
   const fetchTemplates = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await templatesService.getTemplates(userId);
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
+      const data = await templatesService.getTemplates(userId, credParams);
       const list = Array.isArray(data) ? data : data?.templates ?? [];
       setTemplates(list);
     } catch {}
-  }, [userId]);
+  }, [userId, selectedCredential]);
 
   useEffect(() => {
     fetchConversations();
@@ -266,7 +286,7 @@ export default function KonnectXChatsScreen() {
     fetchContacts();
     pollRef.current = setInterval(fetchConversations, 5000);
     return () => clearInterval(pollRef.current);
-  }, [fetchConversations, fetchTemplates, fetchContacts]);
+  }, [fetchConversations, fetchTemplates, fetchContacts, selectedCredential]);
 
   useEffect(() => {
     if (selectedJid) {

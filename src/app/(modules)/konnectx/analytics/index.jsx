@@ -13,7 +13,7 @@ import * as analyticsService from '~/services/konnectx/analytics';
 export default function AnalyticsScreen() {
   const { palette } = useAppTheme();
   const router = useRouter();
-  const { userId } = useKonnectx();
+  const { userId, selectedCredential } = useKonnectx();
 
   const [analytics, setAnalytics] = useState(null);
   const [stats, setStats] = useState(null);
@@ -25,18 +25,23 @@ export default function AnalyticsScreen() {
     if (!userId) return;
     setLoading(true);
     try {
+      const credParams = {
+        credentialId: selectedCredential?.id || selectedCredential?._id,
+        wabaId: selectedCredential?.wabaId,
+        phoneNumberId: selectedCredential?.phoneNumberId
+      };
       const [a, s] = await Promise.all([
-        analyticsService.getAnalytics(userId, days).catch(() => null),
-        analyticsService.getStats(userId).catch(() => null)
+        analyticsService.getAnalytics(userId, days, credParams).catch(() => null),
+        analyticsService.getStats(userId, credParams).catch(() => null)
       ]);
       setAnalytics(a);
       setStats(s?.stats ?? s);
     } catch {} finally {
       setLoading(false);
     }
-  }, [userId, days]);
+  }, [userId, days, selectedCredential]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData, selectedCredential]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -16,6 +16,8 @@ import { useKonnectx } from '~/providers/KonnectxProvider';
 import * as analyticsService from '~/services/konnectx/analytics';
 import * as campaignsService from '~/services/konnectx/campaigns';
 
+import { useUniversalLoader } from '~/providers/UniversalLoaderProvider';
+
 const STATUS_BADGES = {
     DRAFT: { label: 'Draft', color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
     RUNNING: { label: 'Running', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
@@ -29,6 +31,7 @@ export default function KonnectXDashboardScreen() {
     const { palette } = useAppTheme();
     const router = useRouter();
     const { userId, selectedCredential, credentials, setSelectedCredential, refreshCredentials } = useKonnectx();
+    const { showLoader, hideLoader } = useUniversalLoader();
 
     const [stats, setStats] = useState(null);
     const [campaigns, setCampaigns] = useState([]);
@@ -39,8 +42,10 @@ export default function KonnectXDashboardScreen() {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [newCampaignName, setNewCampaignName] = useState('');
     const [deleteTargetId, setDeleteTargetId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    // KonnectX Dashboard Data Fetch
+    const fetchData = useCallback(async (targetCred = null) => {
         let resolvedId = userId;
         if (!resolvedId) {
             const session = await getSession();
@@ -48,10 +53,16 @@ export default function KonnectXDashboardScreen() {
             resolvedId = u?.userId || u?.id || u?._id || u?.sub;
         }
         try {
+            const activeCred = targetCred || selectedCredential;
+            const credParams = {
+                credentialId: activeCred?.id || activeCred?._id,
+                wabaId: activeCred?.wabaId,
+                phoneNumberId: activeCred?.phoneNumberId
+            };
             const [statsData, campaignsData, activitiesData] = await Promise.all([
-                analyticsService.getStats(resolvedId).catch(() => null),
-                campaignsService.getCampaigns(resolvedId).catch(() => []),
-                analyticsService.getActivities(resolvedId).catch(() => ({ activities: [] }))
+                analyticsService.getStats(resolvedId, credParams).catch(() => null),
+                campaignsService.getCampaigns(resolvedId, credParams).catch(() => []),
+                analyticsService.getActivities(resolvedId, 1, 10, credParams).catch(() => ({ activities: [] }))
             ]);
             setStats(statsData?.stats ?? statsData);
 
@@ -66,21 +77,17 @@ export default function KonnectXDashboardScreen() {
             setCampaigns(list);
 
             setActivities(Array.isArray(activitiesData) ? activitiesData : activitiesData?.activities ?? []);
-        } catch { } finally {
+        } catch (err) {
+            console.error('[Index Tab Fetch Error]', err);
+        } finally {
             setLoading(false);
+            hideLoader();
         }
-    }, [userId]);
+    }, [userId, selectedCredential, hideLoader]);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
-
-    useEffect(() => {
-        try {
-            addEventListener?.('wa-account-switched', fetchData);
-            return () => { try { removeEventListener?.('wa-account-switched', fetchData); } catch { } };
-        } catch { }
-    }, [fetchData]);
+    }, [fetchData, selectedCredential]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -90,8 +97,9 @@ export default function KonnectXDashboardScreen() {
     }, [refreshCredentials, fetchData]);
 
     const handleConfirmDelete = async () => {
-        if (!deleteTargetId) return;
+        if (!deleteTargetId || deleting) return;
         const id = deleteTargetId;
+        setDeleting(true);
         try {
             await campaignsService.deleteCampaign(userId, id);
             setCampaigns((prev) => prev.filter((c) => String(c.id || c._id) !== String(id)));
@@ -100,6 +108,7 @@ export default function KonnectXDashboardScreen() {
         } catch (err) {
             Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
         } finally {
+            setDeleting(false);
             setDeleteTargetId(null);
         }
     };
@@ -127,7 +136,9 @@ export default function KonnectXDashboardScreen() {
             setShowCreateDialog(false);
             fetchData();
         } catch (err) {
-            Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+            console.error('[CreateCampaign Error]', err?.response?.status, err?.response?.data || err.message, err);
+            const errorMsg = err?.response?.data?.message || err?.response?.data?.error || err.message || 'Failed to create campaign';
+            Toast.show({ type: 'error', text1: 'Error', text2: errorMsg });
         }
     };
 
@@ -294,7 +305,9 @@ export default function KonnectXDashboardScreen() {
 
             <IosConfirmModal
                 visible={!!deleteTargetId}
-                onClose={() => setDeleteTargetId(null)}
+                loading={deleting}
+                loadingText="Deleting..."
+                onClose={() => !deleting && setDeleteTargetId(null)}
                 onConfirm={handleConfirmDelete}
                 title="Delete Campaign?"
                 message="Are you sure you want to delete this campaign? This action cannot be undone."
@@ -304,33 +317,65 @@ export default function KonnectXDashboardScreen() {
             />
 
             <Modal visible={showAcctSwitcher} transparent animationType="fade" onRequestClose={() => setShowAcctSwitcher(false)}>
-                <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setShowAcctSwitcher(false)}>
-                    <Pressable className={`rounded-t-[24px] p-4 pb-8 ${palette.surface}`}>
-                        <View className="mb-2 items-center">
-                            <View className={`mb-3 h-1 w-10 rounded-full ${palette.surfaceAlt}`} />
-                            <Text className={`text-[17px] font-bold ${palette.text}`}>Switch Account</Text>
+                <Pressable className="flex-1 justify-end bg-black/50" onPress={() => setShowAcctSwitcher(false)}>
+                    <Pressable
+                        onPress={(e) => e.stopPropagation()}
+                        className={`w-full rounded-t-[28px] px-5 pt-5 pb-16 shadow-2xl ${palette.surface}`}
+                        style={{ backgroundColor: palette.colors.surface }}
+                    >
+                        <View className="mb-4 items-center">
+                            <View className={`mb-3 h-1.5 w-12 rounded-full ${palette.surfaceAlt}`} />
+                            <Text className={`text-[18px] font-bold ${palette.text}`}>Switch Account</Text>
+                            <Text className={`mt-0.5 text-[12px] ${palette.textSoft}`}>Select an active WhatsApp Cloud account</Text>
                         </View>
-                        {credentials.length > 0 ? credentials.map((cred) => (
-                            <TouchableOpacity key={cred.id} onPress={() => {
-                                setSelectedCredential(cred);
-                                setShowAcctSwitcher(false);
-                                try { dispatchEvent?.(new Event('wa-account-switched')); } catch { }
-                            }}
-                                className={`mb-1.5 flex-row items-center gap-2.5 rounded-[14px] border p-3.5 ${palette.border}`}
-                                style={{
-                                    backgroundColor: selectedCredential?.id === cred.id ? 'rgba(2,132,199,0.1)' : palette.colors.surface,
-                                    borderColor: selectedCredential?.id === cred.id ? '#0284c7' : palette.colors.border
-                                }}>
-                                <Ionicons name={selectedCredential?.id === cred.id ? 'radio-button-on' : 'radio-button-off'} size={18}
-                                    color={selectedCredential?.id === cred.id ? '#0284c7' : palette.textMutedColor} />
-                                <View>
-                                    <Text className={`text-[14px] font-semibold ${palette.text}`}>{cred.profile || 'WhatsApp Account'}</Text>
-                                    {cred.phoneNumberId ? <Text className={`mt-0.5 text-[10px] font-mono ${palette.textMuted}`}>Phone ID: {cred.phoneNumberId}</Text> : null}
-                                </View>
-                            </TouchableOpacity>
-                        )) : (
-                            <Text className={`text-center text-[13px] ${palette.textSoft}`}>No accounts available</Text>
-                        )}
+
+                        <ScrollView showsVerticalScrollIndicator={true} style={{ maxHeight: 340 }}>
+                            <View className="gap-2.5 pb-8">
+                                {credentials.length > 0 ? credentials.map((cred) => {
+                                    const isSelected = String(selectedCredential?.id || selectedCredential?._id || '') === String(cred.id || cred._id || '');
+                                    return (
+                                        <TouchableOpacity
+                                            key={cred.id || cred._id || cred.phoneNumberId}
+                                            activeOpacity={0.7}
+                                            onPress={async () => {
+                                                showLoader(`Switching to ${cred.profile || 'WhatsApp Account'}...`);
+                                                setSelectedCredential(cred);
+                                                setShowAcctSwitcher(false);
+                                                setLoading(true);
+                                                await fetchData(cred);
+                                            }}
+                                            className="flex-row items-center gap-3 rounded-[16px] border p-4"
+                                            style={{
+                                                backgroundColor: isSelected ? 'rgba(2,132,199,0.12)' : palette.colors.surface,
+                                                borderColor: isSelected ? '#0284c7' : palette.colors.border
+                                            }}>
+                                            <Ionicons
+                                                name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                                                size={20}
+                                                color={isSelected ? '#0284c7' : palette.textMutedColor}
+                                            />
+                                            <View className="flex-1">
+                                                <Text className={`text-[15px] font-semibold ${palette.text}`}>
+                                                    {cred.profile || 'WhatsApp Account'}
+                                                </Text>
+                                                {cred.phoneNumberId ? (
+                                                    <Text className={`mt-0.5 text-[11px] font-mono ${palette.textMuted}`}>
+                                                        Phone ID: {cred.phoneNumberId}
+                                                    </Text>
+                                                ) : null}
+                                            </View>
+                                            {isSelected ? (
+                                                <View className="rounded-full bg-sky-600 px-2.5 py-0.5">
+                                                    <Text className="text-[10px] font-bold uppercase text-white">Active</Text>
+                                                </View>
+                                            ) : null}
+                                        </TouchableOpacity>
+                                    );
+                                }) : (
+                                    <Text className={`py-6 text-center text-[13px] ${palette.textSoft}`}>No accounts available</Text>
+                                )}
+                            </View>
+                        </ScrollView>
                     </Pressable>
                 </Pressable>
             </Modal>
