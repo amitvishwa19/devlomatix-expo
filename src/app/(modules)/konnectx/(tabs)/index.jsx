@@ -201,7 +201,7 @@ export default function KonnectXDashboardScreen() {
                             </View>
                         )}
 
-                        <TouchableOpacity onPress={() => setShowCreateDialog(true)}
+                        <TouchableOpacity onPress={() => router.push('/(modules)/konnectx/(tabs)/campaigns')}
                             className="mb-3 flex-row items-center justify-center gap-2 rounded-[16px] bg-sky-600 py-3 shadow-lg">
                             <Ionicons name="add-circle" size={18} color="#fff" />
                             <Text className="text-[13px] font-bold text-white">New Campaign</Text>

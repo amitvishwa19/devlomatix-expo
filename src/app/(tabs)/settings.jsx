@@ -1,9 +1,10 @@
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Image, Pressable, Switch, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, Animated, Image, Modal, Pressable, Switch, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fetchAccessData } from "~/services/access-management";
 import { useAppTheme } from "~/theme/AppTheme";
@@ -30,10 +31,12 @@ const settingGroups = [
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const { themeMode, setThemeMode, isDark, palette } = useAppTheme();
   const [user, setUser] = useState(null);
   const [permModules, setPermModules] = useState([]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,14 +70,20 @@ export default function SettingsScreen() {
     };
   }, []);
 
-  const handleSignOut = async () => {
+  const performLogout = async () => {
     try {
       await GoogleSignin.disconnect();
     } catch {
-      try { await GoogleSignin.signOut(); } catch {}
+      try {
+        await GoogleSignin.signOut();
+      } catch {}
     }
     await clearSession();
     router.replace("/(auth)/login");
+  };
+
+  const handleSignOut = () => {
+    setShowLogoutModal(true);
   };
 
   const settingsGroups = [
@@ -416,6 +425,66 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
       </Animated.ScrollView>
+
+      {/* iOS Style Logout Action Sheet */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <Pressable
+          className="flex-1 justify-end bg-black/50 p-4"
+          style={{ paddingBottom: Math.max(insets.bottom + 90, 110) }}
+          onPress={() => setShowLogoutModal(false)}
+        >
+          <Pressable className="w-full gap-2" onPress={(e) => e.stopPropagation()}>
+            {/* Top Info & Action Card */}
+            <View
+              className="overflow-hidden rounded-[16px]"
+              style={{
+                backgroundColor: palette.mode === "dark" ? "#1c1c1e" : "#f9f9f9",
+              }}
+            >
+              <View className="items-center px-4 py-3.5 border-b border-gray-500/20">
+                <Text className="text-[13px] font-semibold text-gray-400">
+                  Log Out of Devlomatix?
+                </Text>
+                <Text className="mt-0.5 text-[11px] text-gray-400">
+                  You will need to sign back in to access your workspace.
+                </Text>
+              </View>
+
+              <Pressable
+                className="items-center py-3.5 active:bg-gray-500/20"
+                onPress={async () => {
+                  setShowLogoutModal(false);
+                  await performLogout();
+                }}
+              >
+                <Text className="text-[17px] font-semibold text-red-500">
+                  Log Out
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Bottom Cancel Button Card */}
+            <Pressable
+              className="items-center rounded-[16px] py-3.5 active:bg-gray-500/20"
+              style={{
+                backgroundColor: palette.mode === "dark" ? "#1c1c1e" : "#ffffff",
+              }}
+              onPress={() => setShowLogoutModal(false)}
+            >
+              <Text
+                className="text-[17px] font-bold text-sky-500"
+              >
+                Cancel
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

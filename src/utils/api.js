@@ -1,9 +1,15 @@
-//export const baseApi = 'http://192.168.29.31:3000/api/v4'
-//const baseApi = 'https://healthyfine.devlomatix.in/api/v4'
+const DEV_API_URL = "https://dev.devlomatix.com/api/v5";
+const PROD_API_URL = "https://devlomatix.com/api/v5";
 
-//export const baseApi = "http://192.168.29.31:3000/api/v5";
-export const baseApi = "https://dev.devlomatix.com/api/v5";
-//export const baseApi = "https://devlomatix.com/api/v5";
+const CUREXA_PROD_API_URL = "https://curexa.devlomatix.com/api/v5";
+
+export const baseApi =
+  process.env.EXPO_PUBLIC_BASE_API ||
+  (__DEV__ ? DEV_API_URL : PROD_API_URL);
+
+export const curexaBaseApi =
+  process.env.EXPO_PUBLIC_BASE_API ||
+  (__DEV__ ? DEV_API_URL : CUREXA_PROD_API_URL);
 
 export const apiUrls = {
   //Auth
@@ -89,4 +95,23 @@ export const apiUrls = {
   hireflowNotes: baseApi + "/hireflow/notes",
   hireflowOffers: baseApi + "/hireflow/offers",
   hireflowActivities: baseApi + "/hireflow/activities",
+
+  //Curexa HMS & CRM
+  curexaPatient: curexaBaseApi + "/patient",
+  curexaAppointment: curexaBaseApi + "/appointment",
+  curexaBed: curexaBaseApi + "/bed",
+  curexaPharmacy: curexaBaseApi + "/pharmacy",
+  curexaLaboratory: curexaBaseApi + "/laboratory",
+  curexaBilling: curexaBaseApi + "/billing",
+  curexaCrm: curexaBaseApi + "/crm",
+  curexaDepartment: curexaBaseApi + "/department",
+  curexaWorkflow: curexaBaseApi + "/workflow",
+  curexaCalendar: curexaBaseApi + "/calendar",
+  curexaKanban: curexaBaseApi + "/kanban",
+  curexaDocument: curexaBaseApi + "/document",
+  curexaPrescription: curexaBaseApi + "/prescription",
+  curexaService: curexaBaseApi + "/service",
+  curexaInventory: curexaBaseApi + "/inventory",
+  curexaInvoice: curexaBaseApi + "/invoice",
 };
+

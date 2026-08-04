@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Image, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { getSession } from '~/utils/authStorage';
 
 const SPLASH_DURATION_MS = 1500;
@@ -22,16 +22,36 @@ export default function AppSplashScreen() {
   }, [router]);
 
   return (
-    <View className="flex-1">
-      <StatusBar hidden />
+    <View style={styles.container}>
+      <StatusBar hidden translucent backgroundColor="transparent" />
       <Image
         source={require('~/assets/images/splashscreen-light.png')}
-        className="absolute h-full w-full"
+        style={styles.image}
         resizeMode="cover"
       />
-      <View className="flex-1 items-center justify-center">
+      <View style={styles.content}>
         {/* <BrandLogo size={250} /> */}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#ffffff',
+  },
+  image: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+

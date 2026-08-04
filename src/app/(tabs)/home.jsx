@@ -1,19 +1,35 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, Switch, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useWidgets } from '~/contexts/WidgetContext';
-import { useAppTheme } from '~/theme/AppTheme';
-import { resolveWorkspaceId } from '~/utils/workspace';
-import { getSession } from '~/utils/authStorage';
 import * as hireflowService from '~/services/hireflow';
-import * as campaignsService from '~/services/konnectx/campaigns';
 import * as analyticsService from '~/services/konnectx/analytics';
+import * as campaignsService from '~/services/konnectx/campaigns';
+import { useAppTheme } from '~/theme/AppTheme';
+import { getSession } from '~/utils/authStorage';
+import { resolveWorkspaceId } from '~/utils/workspace';
 
 const appMeta = {
+    konnectx: {
+        name: 'KonnectX',
+        badge: 'WhatsApp Platform',
+        route: '/(modules)/konnectx',
+        accentBg: 'bg-sky-600',
+        accentBgLight: 'bg-sky-500/15',
+        accentText: 'text-sky-600',
+        dot: 'bg-sky-500',
+        stats: [
+            { label: 'Total Campaigns', value: '--' },
+            { label: 'Messages Sent', value: '--' },
+            { label: 'Active Contacts', value: '--' },
+            { label: 'Approved Templates', value: '--' },
+        ],
+        description: 'WhatsApp Cloud API management for messaging, campaigns, and contacts.',
+    },
     solarbright: {
         name: 'SolarBright',
         badge: 'Solar Panel Cleaning',
@@ -38,27 +54,11 @@ const appMeta = {
         accentText: 'text-emerald-600',
         dot: 'bg-emerald-500',
         stats: [
-            { label: 'Active Beds', value: '218' },
-            { label: "Today's Appointments", value: '146' },
-            { label: 'CRM Automations', value: '32' },
+            { label: 'Active Beds', value: '0' },
+            { label: "Today's Appointments", value: '0' },
+            { label: 'CRM Automations', value: '0' },
         ],
         description: 'Complete hospital management system with AI powered CRM.',
-    },
-    konnectx: {
-        name: 'KonnectX',
-        badge: 'WhatsApp Platform',
-        route: '/(modules)/konnectx',
-        accentBg: 'bg-sky-600',
-        accentBgLight: 'bg-sky-500/15',
-        accentText: 'text-sky-600',
-        dot: 'bg-sky-500',
-        stats: [
-            { label: 'Total Campaigns', value: '--' },
-            { label: 'Messages Sent', value: '--' },
-            { label: 'Active Contacts', value: '--' },
-            { label: 'Approved Templates', value: '--' },
-        ],
-        description: 'WhatsApp Cloud API management for messaging, campaigns, and contacts.',
     },
     crystalaura: {
         name: 'CrystalAura',
@@ -109,9 +109,9 @@ const appMeta = {
 };
 
 const widgetColors = {
+    konnectx: { label: 'KonnectX', color: '#0284c7' },
     solarbright: { label: 'SolarBright', color: '#d97706' },
     curexa: { label: 'Curexa', color: '#059669' },
-    konnectx: { label: 'KonnectX', color: '#0284c7' },
     crystalaura: { label: 'CrystalAura', color: '#9333ea' },
     hireflow: { label: 'HireFlow', color: '#6366f1' },
     kabadx: { label: 'KabadX', color: '#0d9488' },
@@ -127,7 +127,7 @@ export default function HomeScreen() {
     const [konnectxStats, setKonnectxStats] = useState(null);
 
     const scrollY = useRef(new Animated.Value(0)).current;
-    const enabledKeys = Object.entries(widgets).filter(([, v]) => v).map(([k]) => k);
+    const enabledKeys = Object.keys(appMeta).filter((k) => widgets[k]);
     const allEnabled = enabledKeys.length === Object.keys(widgets).length;
 
     useEffect(() => {
