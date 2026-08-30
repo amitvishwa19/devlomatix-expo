@@ -87,7 +87,7 @@ export default function KonnectXCampaignsScreen() {
                 campaignsService.getCampaigns(userId, credParams).catch(() => []),
                 templatesService.getTemplates(userId, credParams).catch(() => []),
                 contactsService.getContacts(userId).catch(() => []),
-                contactsService.getGroups().catch(() => [])
+                contactsService.getGroups(userId).catch(() => [])
             ]);
             const rawList = Array.isArray(camps) ? camps : camps?.campaigns ?? [];
             const list = rawList.filter((c) => c && c.status !== 'DELETED' && !c.isDeleted && !c.deletedAt);

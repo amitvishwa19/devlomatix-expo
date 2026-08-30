@@ -35,13 +35,13 @@ export async function bulkTagContacts(userId, ids, tag) {
   return data;
 }
 
-export async function bulkCategoryContacts(contactIds, category) {
-  const { data } = await konnectxClient.post('/contacts/bulk-category', { contactIds, category });
+export async function bulkCategoryContacts(userId, contactIds, category) {
+  const { data } = await konnectxClient.post('/contacts/bulk-category', { contactIds, category }, { params: { userId } });
   return data;
 }
 
-export async function bulkGroupContacts(contactIds, groupId) {
-  const { data } = await konnectxClient.post('/contacts/bulk-group', { contactIds, groupId });
+export async function bulkGroupContacts(userId, contactIds, groupId) {
+  const { data } = await konnectxClient.post('/contacts/bulk-group', { contactIds, groupId }, { params: { userId } });
   return data;
 }
 
@@ -60,8 +60,8 @@ export async function sendMessageToContact(userId, phone, message) {
   return data;
 }
 
-export async function getGroups() {
-  const { data } = await konnectxClient.get('/contact-groups');
+export async function getGroups(userId) {
+  const { data } = await konnectxClient.get('/contact-groups', { params: { userId } });
   return data.data ?? data;
 }
 
@@ -80,8 +80,8 @@ export async function updateGroup(id, body) {
   return data;
 }
 
-export async function getCategories(type = 'CONTACT') {
-  const { data } = await konnectxClient.get('/categories', { params: { type } });
+export async function getCategories(userId, type = 'CONTACT') {
+  const { data } = await konnectxClient.get('/categories', { params: { userId, type } });
   return data.data ?? data;
 }
 

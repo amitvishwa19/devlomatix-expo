@@ -46,7 +46,7 @@ function KonnectXTabBar({ state, descriptors, navigation }) {
       className="absolute bottom-2 left-0 right-0 items-center"
       style={{ paddingBottom: Math.max(insets.bottom, 10), zIndex: 100, elevation: 20 }}>
       <Animated.View
-        className="w-[96%] flex-row items-center justify-around rounded-xl border px-2 py-4"
+        className="w-full flex-row items-center justify-around rounded-xl border px-2 py-4"
         style={{
           backgroundColor: palette.colors.surface,
           borderColor: palette.colors.border,

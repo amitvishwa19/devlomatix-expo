@@ -1,9 +1,10 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
+import { baseApi } from '~/utils/api';
 import { storageKey } from '~/utils/constants';
 
-const BASE_URL = 'https://dev.devlomatix.com/api/v5/konnectx';
+const BASE_URL = `${baseApi}/konnectx`;
 
 let currentCredential = null;
 

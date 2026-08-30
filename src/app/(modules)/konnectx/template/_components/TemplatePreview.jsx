@@ -66,13 +66,13 @@ export default function TemplatePreview({ visible, onClose, template }) {
 
                 {/* Header */}
                 {meta.headerText ? (
-                  <Text className="text-[14px] font-bold text-zinc-900 mb-1">{meta.headerText}</Text>
+                  <Text style={{ color: '#18181b', fontSize: 14 }} className="font-bold mb-1">{meta.headerText}</Text>
                 ) : null}
 
                 {/* Carousel */}
                 {nt === 'carousel' ? (
                   <View>
-                    {template.body ? <Text className="text-[13px] text-zinc-800 mb-2">{template.body}</Text> : null}
+                    {template.body ? <Text style={{ color: '#27272a', fontSize: 13 }} className="mb-2">{template.body}</Text> : null}
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
                       {(meta.cards || []).map((card, idx) => (
                         <View key={idx} className="w-44 rounded-xl overflow-hidden border border-zinc-200 mr-2">
@@ -84,7 +84,7 @@ export default function TemplatePreview({ visible, onClose, template }) {
                             )}
                           </View>
                           <View className="p-2">
-                            <Text className="text-[11px] text-zinc-700">{card.body || 'No content'}</Text>
+                            <Text style={{ color: '#3f3f46', fontSize: 11 }}>{card.body || 'No content'}</Text>
                           </View>
                         </View>
                       ))}
@@ -92,9 +92,9 @@ export default function TemplatePreview({ visible, onClose, template }) {
                   </View>
                 ) : (
                   <>
-                    <Text className="text-[13px] leading-5 text-zinc-800">{template.body || <Text className="italic text-zinc-400">No content</Text>}</Text>
+                    <Text style={{ color: '#27272a', fontSize: 13, lineHeight: 20 }}>{template.body || 'No content'}</Text>
                     {template.footer ? (
-                      <Text className="text-[11px] text-zinc-400 mt-1 italic">{template.footer}</Text>
+                      <Text style={{ color: '#a1a1aa', fontSize: 11, marginTop: 4 }} className="italic">{template.footer}</Text>
                     ) : null}
                   </>
                 )}
@@ -105,7 +105,7 @@ export default function TemplatePreview({ visible, onClose, template }) {
                     {buttons.filter(Boolean).map((btn, idx) => {
                       const b = typeof btn === 'object' ? btn : { type: 'QUICK_REPLY', text: btn };
                       return (
-                        <Text key={idx} className="text-[12px] font-semibold text-[#007aff] text-center py-1">
+                        <Text key={idx} style={{ color: '#007aff', fontSize: 12 }} className="font-semibold text-center py-1">
                           {b.text || 'Button'}
                         </Text>
                       );

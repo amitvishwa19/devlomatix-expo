@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useAppTheme } from '~/theme/AppTheme';
 
+export default PatientDetailModal;
+
 /**
  * 1. Patient Detail & EHR Sheet Modal
  */

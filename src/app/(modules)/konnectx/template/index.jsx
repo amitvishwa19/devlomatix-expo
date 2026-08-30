@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';

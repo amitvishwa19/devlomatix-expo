@@ -41,34 +41,31 @@ export default function KonnectXContactsScreen() {
     const fetchContacts = useCallback(async () => {
         if (!userId) return;
         try {
-            const credId = selectedCredential?.id || selectedCredential?._id;
             const data = await contactsService.getContacts(userId, {
                 search,
                 page: 1,
                 limit: 100,
-                credentialId: credId,
-                wabaId: selectedCredential?.wabaId,
-                phoneNumberId: selectedCredential?.phoneNumberId
             });
             setContacts(data?.data ?? data?.contacts ?? []);
         } catch { } finally {
             setLoading(false);
         }
-    }, [userId, search, selectedCredential]);
+    }, [userId, search]);
 
     const fetchGroups = useCallback(async () => {
+        if (!userId) return;
         try {
-            const data = await contactsService.getGroups();
+            const data = await contactsService.getGroups(userId);
             setGroups(Array.isArray(data) ? data : []);
         } catch { }
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
         if (userId) {
             fetchContacts();
         }
         fetchGroups();
-    }, [userId, fetchContacts, fetchGroups, selectedCredential]);
+    }, [userId, fetchContacts, fetchGroups]);
 
     const onRefresh = useCallback(async () => {
         if (!userId) return;

@@ -31,6 +31,8 @@ export function CurexaDrawerProvider({ children }) {
   );
 }
 
+export default CurexaDrawerProvider;
+
 const menuCategories = [
   {
     title: 'CLINICAL OPERATIONS',

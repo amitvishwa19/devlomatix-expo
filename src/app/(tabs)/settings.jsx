@@ -1,9 +1,8 @@
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Animated, Image, Modal, Pressable, Switch, Text, View } from "react-native";
+import { Animated, Image, Modal, Pressable, Switch, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fetchAccessData } from "~/services/access-management";
@@ -234,7 +233,7 @@ export default function SettingsScreen() {
             <View
               key={group.title}
               className="mb-4 rounded-3xl px-5 py-2"
-              style={{ backgroundColor: palette.colors.surfaceAlt }}
+              style={{ backgroundColor: palette.colors.surface }}
             >
               <Text
                 className="py-4 text-sm font-bold uppercase tracking-[0.3px]"
