@@ -117,11 +117,18 @@ const widgetColors = {
     kabadx: { label: 'KabadX', color: '#0d9488' },
 };
 
+const MODULE_COLORS = {
+    solarbright: '#d97706',
+    curexa: '#059669',
+    konnectx: '#0284c7',
+    crystalaura: '#9333ea',
+};
+
 export default function HomeScreen() {
     const router = useRouter();
     const { palette } = useAppTheme();
     const { widgets, toggleWidget, setAll } = useWidgets();
-    const { notifications, unreadCount } = useNotificationStore();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
     const [showCustomize, setShowCustomize] = useState(false);
     const [hireflowStats, setHireflowStats] = useState(null);
     const [konnectxStats, setKonnectxStats] = useState(null);
@@ -218,31 +225,81 @@ export default function HomeScreen() {
                             </View>
                         )}
 
-                        {unreadCount > 0 && (
-                            <Pressable
-                                onPress={() => router.push('/(tabs)/messages')}
-                                className={`mb-4 rounded-[24px] p-5 ${palette.surface}`}
-                            >
-                                <View className="mb-3 flex-row items-center justify-between">
-                                    <Text className={`text-[16px] font-bold ${palette.text}`}>Recent activity</Text>
+                        {/* <View className={`mb-4 rounded-[24px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
+                            <View className="mb-3 flex-row items-center justify-between">
+                                <View>
+                                    <Text className={`text-[12px] font-bold uppercase tracking-[1.8px] ${palette.accentText}`}>
+                                        NOTIFICATIONS
+                                    </Text>
+                                    <Text className={`mt-1 text-[16px] font-bold ${palette.text}`}>Recent activity</Text>
+                                </View>
+                                {unreadCount > 0 && (
                                     <View className="items-center justify-center rounded-full bg-teal-600 px-2.5 py-0.5">
                                         <Text className="text-[11px] font-bold text-white">{unreadCount} new</Text>
                                     </View>
+                                )}
+                            </View>
+
+                            {notifications.length > 0 && (
+                                <View className="mb-3 flex-row gap-2">
+                                    {unreadCount > 0 && (
+                                        <Pressable
+                                            onPress={markAllAsRead}
+                                            className="flex-row items-center gap-1.5 rounded-full bg-teal-700/10 px-4 py-2"
+                                        >
+                                            <Ionicons name="checkmark-done" size={16} color="#0d9488" />
+                                            <Text className="text-[12px] font-bold text-teal-700">Mark all read</Text>
+                                        </Pressable>
+                                    )}
+                                    <Pressable
+                                        onPress={clearAll}
+                                        className="flex-row items-center gap-1.5 rounded-full bg-rose-500/10 px-4 py-2"
+                                    >
+                                        <Ionicons name="trash-outline" size={16} color="#e11d48" />
+                                        <Text className="text-[12px] font-bold text-rose-600">Clear all</Text>
+                                    </Pressable>
                                 </View>
-                                {notifications.filter((n) => !n.read).slice(0, 3).map((n) => (
-                                    <View key={n.id} className={`mb-2 flex-row items-center gap-3 rounded-[16px] p-3 ${palette.surfaceInset}`}>
-                                        <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${n.color || '#6b7280'}20` }}>
-                                            <Ionicons name={n.icon || 'notifications'} size={14} color={n.color || '#6b7280'} />
-                                        </View>
-                                        <View className="flex-1">
-                                            <Text className={`text-[13px] font-semibold ${palette.text}`}>{n.title}</Text>
-                                            <Text className={`text-[11px] ${palette.textMuted}`}>{n.description}</Text>
-                                        </View>
-                                    </View>
-                                ))}
-                                <Text className={`mt-1 text-[12px] font-semibold text-teal-600`}>View all →</Text>
-                            </Pressable>
-                        )}
+                            )}
+
+                            {notifications.length > 0 ? (
+                                notifications.map((item) => {
+                                    const color = MODULE_COLORS[item.module] || item.color || '#6b7280';
+                                    return (
+                                        <Pressable
+                                            key={item.id}
+                                            onPress={() => markAsRead(item.id)}
+                                            className={`mb-2 flex-row items-center gap-3 rounded-[16px] p-3 ${palette.surfaceInset} ${!item.read ? 'border-l-4' : ''}`}
+                                            style={!item.read ? { borderLeftColor: color } : undefined}
+                                        >
+                                            <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${color}20` }}>
+                                                <Ionicons name={item.icon || 'notifications'} size={14} color={color} />
+                                            </View>
+                                            <View className="flex-1">
+                                                <View className="flex-row items-center gap-2">
+                                                    <Text className={`flex-1 text-[13px] font-semibold ${palette.text}`}>{item.title}</Text>
+                                                    {!item.read && <View className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />}
+                                                </View>
+                                                {item.description ? (
+                                                    <Text className={`text-[11px] ${palette.textMuted}`}>{item.description}</Text>
+                                                ) : null}
+                                                <Text className={`mt-0.5 text-[11px] ${palette.textMuted}`}>
+                                                    {item.module ? `${item.module.charAt(0).toUpperCase() + item.module.slice(1)} · ` : ''}
+                                                    {formatRelativeTime(item.time)}
+                                                </Text>
+                                            </View>
+                                        </Pressable>
+                                    );
+                                })
+                            ) : (
+                                <View className={`rounded-[16px] p-6 items-center ${palette.surfaceInset}`}>
+                                    <Ionicons name="notifications-off-outline" size={28} color={palette.textMutedColor} />
+                                    <Text className={`mt-3 text-[14px] font-bold ${palette.text}`}>All caught up</Text>
+                                    <Text className={`mt-1 text-[12px] text-center ${palette.textSoft}`}>
+                                        No new notifications. Activity from your apps will appear here.
+                                    </Text>
+                                </View>
+                            )}
+                        </View> */}
 
                         {enabledKeys.map((key) => {
                             const app = appMeta[key];
@@ -354,4 +411,19 @@ export default function HomeScreen() {
             </View>
         </AppScreen>
     );
+}
+
+function formatRelativeTime(isoString) {
+    if (!isoString) return '';
+    const now = Date.now();
+    const diff = now - new Date(isoString).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins} min ago`;
+    if (hours < 24) return `${hours} hr ago`;
+    if (days < 7) return `${days} day ago`;
+    return new Date(isoString).toLocaleDateString();
 }

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
@@ -18,52 +18,72 @@ export default function UserStatusBar({ scrollY }) {
 
   const offsetAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
-  const scrollTimer = useRef(null);
+  const animRef = useRef(null);
+  const settleTimer = useRef(null);
+
+  const settleTo = (show) => {
+    if (animRef.current) animRef.current.stop();
+    animRef.current = Animated.parallel([
+      Animated.timing(offsetAnim, {
+        toValue: show ? 0 : -84,
+        duration: 240,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: show ? 1 : 0,
+        duration: 340,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]);
+    animRef.current.start();
+  };
 
   useEffect(() => {
     if (!scrollY) return;
     const listener = scrollY.addListener(({ value }) => {
-      const clampedOffset = Math.max(-60, Math.min(0, -value * 0.2));
-      const clampedOpacity = Math.max(0, Math.min(1, 1 - value / 300));
-      offsetAnim.setValue(clampedOffset);
-      opacityAnim.setValue(clampedOpacity);
+      const rawOffset = -value * 0.35;
+      offsetAnim.setValue(Math.max(-84, Math.min(0, rawOffset)));
+      opacityAnim.setValue(Math.max(0, Math.min(1, 1 - value / 260)));
 
-      if (scrollTimer.current) clearTimeout(scrollTimer.current);
-      scrollTimer.current = setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(offsetAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-          Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-        ]).start();
-      }, 200);
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      settleTimer.current = setTimeout(() => {
+        settleTo(value < 160);
+      }, 140);
     });
     return () => {
       scrollY.removeListener(listener);
-      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      if (animRef.current) animRef.current.stop();
     };
   }, [scrollY]);
 
-  if (!user) return null;
-
-  const avatarUri = user.avatar || user.photo;
+  const avatarUri = user?.avatar || user?.photo;
+  const userInitial = (user?.displayName || user?.name || user?.email)?.[0]?.toUpperCase() || 'U';
 
   return (
     <Animated.View className={`flex-row items-center gap-2 px-4 py-2 border-b ${palette.border}`}
-      style={{ backgroundColor: palette.colors.surface, transform: [{ translateY: offsetAnim }], opacity: opacityAnim }}>
+      style={{
+        backgroundColor: palette.colors.surface,
+        transform: scrollY ? [{ translateY: offsetAnim }] : undefined,
+        opacity: scrollY ? opacityAnim : 1,
+      }}>
       {avatarUri ? (
         <Image source={{ uri: avatarUri }} className="h-10 w-10 rounded-full" />
       ) : (
         <View className="h-7 w-7 items-center justify-center rounded-full bg-teal-600">
           <Text className="text-sm font-bold text-white">
-            {(user.displayName || user.name || user.email)?.[0]?.toUpperCase() || 'U'}
+            {userInitial}
           </Text>
         </View>
       )}
       <View className="flex-1">
         <Text className={`text-lg font-semibold ${palette.text}`} numberOfLines={1}>
-          {user.displayName || user.name || 'User'}
+          {user?.displayName || user?.name || 'User'}
         </Text>
         <Text className={`text-sm ${palette.textMuted}`} numberOfLines={1}>
-          {user.email || ''}
+          {user?.email || ''}
         </Text>
       </View>
       <TouchableOpacity onPress={() => router.push('/(misc)/notifications')} className="relative p-1">

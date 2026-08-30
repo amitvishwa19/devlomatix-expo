@@ -49,7 +49,6 @@ export default function TabLayout() {
         <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
             <Tabs.Screen name="home" options={{ title: 'Home' }} />
             <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
-            <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
             <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
             <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
             <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
@@ -68,11 +67,9 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
         switch (routeName) {
             case 'home':
-                return <FontAwesome size={size} name="home" color={iconColor} />;
-            case 'messages':
                 return (
                     <View>
-                        <Ionicons size={size} name="chatbubble-ellipses-outline" color={iconColor} />
+                        <FontAwesome size={size} name="home" color={iconColor} />
                         {unreadCount > 0 && (
                             <View className="absolute -right-2.5 -top-2 h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1">
                                 <Text className="text-[10px] font-bold text-white">
