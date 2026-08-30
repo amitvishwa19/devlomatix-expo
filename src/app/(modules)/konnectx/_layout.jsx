@@ -10,8 +10,6 @@ export default function KonnectxRootLayout() {
         <Stack.Screen name="template/index" />
         <Stack.Screen name="analytics/index" />
         <Stack.Screen name="quick-message/index" />
-        <Stack.Screen name="chatbot/index" />
-        <Stack.Screen name="flows/index" />
       </Stack>
     </KonnectxProvider>
   );

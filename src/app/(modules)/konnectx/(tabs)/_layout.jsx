@@ -1,5 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
 import { TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
@@ -16,6 +17,8 @@ export default function KonnectXTabsLayout() {
       <Tabs.Screen name="chats" options={{ title: 'Chats' }} />
       <Tabs.Screen name="campaigns" options={{ title: 'Campaigns' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
+      <Tabs.Screen name="chatbot" options={{ title: 'Chatbots' }} />
+      <Tabs.Screen name="flows" options={{ title: 'Flows' }} />
     </Tabs>
   );
 }
@@ -35,6 +38,10 @@ function KonnectXTabBar({ state, descriptors, navigation }) {
         return <Ionicons size={size} name="megaphone-outline" color={iconColor} />;
       case 'contacts':
         return <Ionicons size={size} name="people-outline" color={iconColor} />;
+      case 'chatbot':
+        return <MaterialCommunityIcons size={size} name="robot-outline" color={iconColor} />;
+      case 'flows':
+        return <Ionicons size={size} name="layers-outline" color={iconColor} />;
       default:
         return <FontAwesome size={size} name="circle" color={iconColor} />;
     }

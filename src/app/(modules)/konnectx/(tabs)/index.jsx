@@ -153,8 +153,8 @@ export default function KonnectXDashboardScreen() {
         { icon: 'stats-chart', label: 'Analytics', route: '/(modules)/konnectx/analytics' },
         { icon: 'document-text', label: 'Templates', route: '/(modules)/konnectx/template' },
         { icon: 'chatbubble-ellipses', label: 'Quick Message', route: '/(modules)/konnectx/quick-message' },
-        { icon: 'hardware-chip', label: 'Chatbots', route: '/(modules)/konnectx/chatbot' },
-        { icon: 'layers', label: 'Flows', route: '/(modules)/konnectx/flows' },
+        { icon: 'hardware-chip', label: 'Chatbots', route: '/(modules)/konnectx/(tabs)/chatbot' },
+        { icon: 'layers', label: 'Flows', route: '/(modules)/konnectx/(tabs)/flows' },
     ];
 
     return (
