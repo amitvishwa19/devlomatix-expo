@@ -35,6 +35,11 @@ export async function deleteAutoResponder(id) {
   return data;
 }
 
+export async function updateAutoResponder(id, body) {
+  const { data } = await konnectxClient.patch(`/auto-responder?id=${id}`, body);
+  return data;
+}
+
 export async function getDocs(category) {
   const { data } = await konnectxClient.get('/docs', { params: { category } });
   return data.data ?? data;
@@ -48,4 +53,19 @@ export async function saveDoc(userId, body) {
 export async function deleteDoc(id) {
   const { data } = await konnectxClient.delete(`/docs?id=${id}`);
   return data;
+}
+
+export async function getBusinessProfile(userId) {
+  const { data } = await konnectxClient.get('/settings/business-profile', { params: { userId } });
+  return data.data ?? data;
+}
+
+export async function updateBusinessProfile(userId, body) {
+  const { data } = await konnectxClient.patch('/settings/business-profile', body, { params: { userId } });
+  return data;
+}
+
+export async function getClickToChatInfo(userId) {
+  const { data } = await konnectxClient.get('/settings/click-to-chat', { params: { userId } });
+  return data.data ?? data;
 }

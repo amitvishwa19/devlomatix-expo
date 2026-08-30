@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -37,6 +37,13 @@ export default function KonnectXContactsScreen() {
     const [expandedGroupId, setExpandedGroupId] = useState(null);
     const [expandedCategory, setExpandedCategory] = useState(null);
     const [expandedTag, setExpandedTag] = useState(null);
+
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [renameGroup, setRenameGroup] = useState(null);
+    const [renameValue, setRenameValue] = useState('');
+    const [bulkModal, setBulkModal] = useState(null);
+    const [bulkCatValue, setBulkCatValue] = useState('');
 
     const fetchContacts = useCallback(async () => {
         if (!userId) return;
@@ -193,6 +200,51 @@ export default function KonnectXContactsScreen() {
         doDelete();
     };
 
+    const startRename = (group) => {
+        setRenameGroup(group);
+        setRenameValue(group.name || '');
+    };
+
+    const handleRename = async () => {
+        if (!renameGroup || !renameValue.trim()) return;
+        try {
+            await contactsService.updateGroup(renameGroup.id, { name: renameValue.trim() });
+            Toast.show({ type: 'success', text1: 'Group renamed' });
+            setRenameGroup(null);
+            fetchGroups();
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+        }
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    };
+
+    const isSelected = (id) => selectedIds.includes(id);
+
+    const exitSelection = () => {
+        setSelectionMode(false);
+        setSelectedIds([]);
+        setBulkModal(null);
+        setBulkCatValue('');
+    };
+
+    const handleBulkAction = async (action, payload) => {
+        if (selectedIds.length === 0) return;
+        try {
+            if (action === 'group') await contactsService.bulkGroupContacts(userId, selectedIds, payload);
+            else if (action === 'category') await contactsService.bulkCategoryContacts(userId, selectedIds, payload);
+            else if (action === 'tag') await contactsService.bulkTagContacts(userId, selectedIds, payload);
+            else if (action === 'delete') await contactsService.bulkDeleteContacts(userId, selectedIds);
+            Toast.show({ type: 'success', text1: `${selectedIds.length} contact(s) updated` });
+            exitSelection();
+            fetchContacts();
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+        }
+    };
+
     const getGroupName = (groupId) => {
         const group = groups.find((g) => g.id === groupId);
         return group?.name || 'Unknown';
@@ -232,12 +284,12 @@ export default function KonnectXContactsScreen() {
                         setOpenRowId(null);
                     }
                 }}
-                onDelete={() => confirmDelete(item)}
-                onPress={() => openEdit(item)}
-                onLongPress={() => confirmDelete(item)}
+                onDelete={() => (selectionMode ? toggleSelect(item.id) : confirmDelete(item))}
+                onPress={() => (selectionMode ? toggleSelect(item.id) : openEdit(item))}
+                onLongPress={() => (selectionMode ? toggleSelect(item.id) : confirmDelete(item))}
             >
                 <View
-                    className="flex-row items-center gap-2.5 rounded-[16px] border p-3"
+                    className={`flex-row items-center gap-2.5 rounded-[16px] border p-3 ${selectionMode && isSelected(item.id) ? 'border-sky-500 bg-sky-500/10' : ''}`}
                     style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
                     <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/20">
                         <Text className="text-[13px] font-bold text-sky-600">
@@ -274,7 +326,7 @@ export default function KonnectXContactsScreen() {
                             ) : null}
                         </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={palette.textMutedColor} />
+                    <Ionicons name={selectionMode ? (isSelected(item.id) ? 'checkmark-circle' : 'ellipse-outline') : 'chevron-forward'} size={16} color={selectionMode ? (isSelected(item.id) ? '#0284c7' : palette.textMutedColor) : palette.textMutedColor} />
                 </View>
             </SwipeableRow>
         );
@@ -330,9 +382,18 @@ export default function KonnectXContactsScreen() {
                         <Text className="text-[22px] font-bold" style={{ color: palette.textColor }}>Audience</Text>
                     </View>
                     {activeTab === 'contacts' && (
-                        <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-3 py-2">
-                            <Ionicons name="add" size={18} color="#fff" />
-                        </TouchableOpacity>
+                        <View className="flex-row items-center gap-2">
+                            <TouchableOpacity onPress={() => (selectionMode ? exitSelection() : setSelectionMode(true))}
+                                className={`flex-row items-center gap-1 rounded-full px-3 py-2 ${selectionMode ? 'bg-sky-600' : 'bg-sky-600/10 border border-sky-600/30'}`}>
+                                <Ionicons name={selectionMode ? 'close' : 'checkbox-outline'} size={16} color={selectionMode ? '#fff' : '#0284c7'} />
+                                <Text className={`text-[11px] font-bold ${selectionMode ? 'text-white' : 'text-sky-600'}`}>
+                                    {selectionMode ? 'Done' : 'Select'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={openAdd} className="rounded-full bg-sky-600 px-3 py-2">
+                                <Ionicons name="add" size={18} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
                     )}
                 </View>
 
@@ -394,6 +455,9 @@ export default function KonnectXContactsScreen() {
                                                     </View>
                                                     <View className="flex-row items-center gap-2">
                                                         <Text className={`text-[11px] ${palette.textMuted}`}>{groupContacts.length}</Text>
+                                                        <TouchableOpacity onPress={() => startRename(group)} className="p-1">
+                                                            <Ionicons name="create-outline" size={16} color="#0284c7" />
+                                                        </TouchableOpacity>
                                                         <TouchableOpacity onPress={() => handleDeleteGroup(group.id, group.name)} className="p-1">
                                                             <Ionicons name="trash-outline" size={16} color="#ef4444" />
                                                         </TouchableOpacity>
@@ -517,6 +581,33 @@ export default function KonnectXContactsScreen() {
                             {groups.length > 0 ? ` · ${groups.length} group${groups.length !== 1 ? 's' : ''}` : ''}
                         </Text>
 
+                        {selectionMode && selectedIds.length > 0 ? (
+                            <View className="mb-2 flex-row items-center justify-between rounded-[14px] border p-2"
+                                style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                <View className="flex-row items-center gap-1.5">
+                                    <Ionicons name="checkmark-circle" size={16} color="#0284c7" />
+                                    <Text className={`text-[12px] font-bold ${palette.text}`}>{selectedIds.length} selected</Text>
+                                </View>
+                                <View className="flex-row items-center gap-1.5">
+                                    <TouchableOpacity onPress={() => setBulkModal('group')}
+                                        className="rounded-lg bg-sky-600/10 px-2.5 py-1.5">
+                                        <Text className="text-[10px] font-bold text-sky-600">Groups</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => setBulkModal('category')}
+                                        className="rounded-lg bg-purple-500/10 px-2.5 py-1.5">
+                                        <Text className="text-[10px] font-bold text-purple-600">Category</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => setBulkModal('tag')}
+                                        className="rounded-lg bg-amber-500/10 px-2.5 py-1.5">
+                                        <Text className="text-[10px] font-bold text-amber-600">Tag</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => setBulkModal('delete')} className="rounded-lg bg-red-500/10 px-2.5 py-1.5">
+                                        <Ionicons name="trash-outline" size={14} color="#dc2626" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ) : null}
+
                         <Animated.FlatList
                             data={contacts}
                             keyExtractor={(item) => item.id?.toString()}
@@ -631,6 +722,104 @@ export default function KonnectXContactsScreen() {
                                 <Text className="text-[14px] font-bold text-white">Delete</Text>
                             </TouchableOpacity>
                         </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
+        {/* Rename Group Modal */}
+            <Modal visible={!!renameGroup} transparent animationType="fade" onRequestClose={() => setRenameGroup(null)}>
+                <Pressable className="flex-1 justify-center bg-black/50 px-6" onPress={() => setRenameGroup(null)}>
+                    <Pressable className="rounded-[24px] p-5" style={{ backgroundColor: palette.colors.surface }}>
+                        <View className="mb-3 items-center">
+                            <View className="mb-2.5 h-12 w-12 items-center justify-center rounded-full bg-sky-500/10">
+                                <Ionicons name="create-outline" size={24} color="#0284c7" />
+                            </View>
+                            <Text className={`text-[18px] font-bold ${palette.text}`}>Rename Group</Text>
+                            <Text className={`mt-1 text-[13px] ${palette.textSoft}`}>Update the name of this contact group.</Text>
+                        </View>
+                        <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[14px]"
+                            style={{ backgroundColor: palette.colors.surfaceAlt, borderColor: palette.colors.border, color: palette.textColor }}
+                            value={renameValue} onChangeText={setRenameValue} placeholder="Group name" placeholderTextColor={palette.textMutedColor} />
+                        <View className="flex-row gap-2.5">
+                            <TouchableOpacity onPress={() => setRenameGroup(null)}
+                                className="flex-1 items-center rounded-xl border py-3" style={{ borderColor: palette.colors.border }}>
+                                <Text className={`text-[14px] font-bold ${palette.text}`}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleRename} disabled={!renameValue.trim()}
+                                className="flex-1 items-center rounded-xl bg-sky-600 py-3">
+                                <Text className="text-[14px] font-bold text-white">Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
+
+            {/* Bulk Assign Modal */}
+            <Modal visible={bulkModal !== null} transparent animationType="fade" onRequestClose={() => setBulkModal(null)}>
+                <Pressable className="flex-1 justify-center bg-black/50 px-6" onPress={() => setBulkModal(null)}>
+                    <Pressable className="max-h-[80%] rounded-[24px] p-5" style={{ backgroundColor: palette.colors.surface }}>
+                        <View className="mb-3 flex-row items-center justify-between">
+                            <View className="flex-1">
+                                <Text className={`text-[18px] font-bold ${palette.text}`}>
+                                    {bulkModal === 'group' ? 'Add to Group'
+                                        : bulkModal === 'category' ? 'Set Category'
+                                            : bulkModal === 'tag' ? 'Add Tag'
+                                                : 'Delete Contacts'}
+                                </Text>
+                                <Text className={`mt-0.5 text-[12px] ${palette.textSoft}`}>
+                                    {selectedIds.length} contact{selectedIds.length !== 1 ? 's' : ''} selected
+                                </Text>
+                            </View>
+                            <TouchableOpacity onPress={() => setBulkModal(null)} className="p-1">
+                                <Ionicons name="close" size={22} color={palette.textColor} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {bulkModal === 'group' ? (
+                            groups.length > 0 ? (
+                                <ScrollView showsVerticalScrollIndicator={false}>
+                                    {groups.map((g) => (
+                                        <TouchableOpacity key={g.id} onPress={() => handleBulkAction('group', g.id)}
+                                            className="mb-1.5 flex-row items-center gap-2.5 rounded-xl border p-3"
+                                            style={{ backgroundColor: palette.colors.surfaceAlt, borderColor: palette.colors.border }}>
+                                            <Ionicons name="folder" size={16} color="#0284c7" />
+                                            <Text className={`flex-1 text-[14px] font-semibold ${palette.text}`}>{g.name}</Text>
+                                            <Ionicons name="add-circle-outline" size={18} color="#0284c7" />
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            ) : (
+                                <Text className={`text-center text-[13px] ${palette.textSoft}`}>No groups. Create a group first.</Text>
+                            )
+                        ) : bulkModal === 'delete' ? (
+                            <View className="items-center py-2">
+                                <View className="mb-2.5 h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                                    <Ionicons name="trash" size={24} color="#dc2626" />
+                                </View>
+                                <Text className={`text-center text-[13px] ${palette.textSoft}`}>
+                                    Remove {selectedIds.length} contact{selectedIds.length !== 1 ? 's' : ''} and all their data? This cannot be undone.
+                                </Text>
+                                <TouchableOpacity onPress={() => handleBulkAction('delete')}
+                                    className="mt-4 w-full items-center rounded-xl bg-red-600 py-3">
+                                    <Text className="text-[14px] font-bold text-white">Delete Selected</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <>
+                                <Text className={`mb-1 text-[12px] font-semibold ${palette.text}`}>
+                                    {bulkModal === 'tag' ? 'Tag name' : 'Category name'}
+                                </Text>
+                                <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[14px]"
+                                    style={{ backgroundColor: palette.colors.surfaceAlt, borderColor: palette.colors.border, color: palette.textColor }}
+                                    placeholder={bulkModal === 'tag' ? 'e.g. vip, lead, support' : 'e.g. Lead, Customer, VIP'}
+                                    placeholderTextColor={palette.textMutedColor}
+                                    value={bulkCatValue} onChangeText={setBulkCatValue} />
+                                <TouchableOpacity onPress={() => handleBulkAction(bulkModal, bulkCatValue.trim())}
+                                    disabled={!bulkCatValue.trim()}
+                                    className="items-center rounded-xl bg-sky-600 py-3">
+                                    <Text className="text-[14px] font-bold text-white">Apply</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </Pressable>
                 </Pressable>
             </Modal>

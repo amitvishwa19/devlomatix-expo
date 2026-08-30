@@ -101,11 +101,19 @@ export default function ChatbotScreen() {
             </View>
             <Text className={`text-[24px] font-bold ${palette.text}`}>Chatbots</Text>
           </View>
-          <TouchableOpacity onPress={() => setShowCreate(true)}
-            className="flex-row items-center gap-1 rounded-full bg-sky-600 px-4 py-2.5 shadow-lg">
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text className="text-[13px] font-bold text-white">New Bot</Text>
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity onPress={() => router.push('/(modules)/konnectx/auto-responder')}
+              className="flex-row items-center gap-1 rounded-full border px-3 py-2.5"
+              style={{ borderColor: palette.colors.border }}>
+              <Ionicons name="flash-outline" size={16} color="#d97706" />
+              <Text className="text-[12px] font-bold text-amber-600">Auto-Replies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowCreate(true)}
+              className="flex-row items-center gap-1 rounded-full bg-sky-600 px-4 py-2.5 shadow-lg">
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text className="text-[13px] font-bold text-white">New Bot</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <FlatList

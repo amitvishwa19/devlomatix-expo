@@ -9,6 +9,7 @@ import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
 
 import { useKonnectx } from '~/providers/KonnectxProvider';
+import AiMessageToolbar from '~/components/konnectx/AiMessageToolbar';
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import * as chatsService from '~/services/konnectx/chats';
 import * as contactsService from '~/services/konnectx/contacts';
@@ -309,11 +310,12 @@ export default function QuickMessageScreen() {
             /* Plain text composer */
             <>
               <Text className={`mb-1 text-[13px] font-semibold ${palette.text}`}>Message</Text>
-              <TextInput className="mb-4 rounded-xl border px-4 py-3 text-[15px]"
+              <TextInput className="mb-3 rounded-xl border px-4 py-3 text-[15px]"
                 style={{ backgroundColor: palette.colors.page, borderColor: palette.colors.border, color: palette.textColor }}
                 placeholder="Type your message..." placeholderTextColor={palette.textMutedColor}
                 value={message} onChangeText={setMessage}
                 multiline numberOfLines={4} textAlignVertical="top" />
+              <AiMessageToolbar text={message} onApply={setMessage} />
             </>
           )}
 

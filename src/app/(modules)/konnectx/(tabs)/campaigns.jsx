@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
 
 import IosConfirmModal from '~/components/IosConfirmModal';
+import AiMessageToolbar from '~/components/konnectx/AiMessageToolbar';
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
 import { SkeletonCard } from '~/components/konnectx/KonnectxLoadingSkeleton';
 import { useKonnectx } from '~/providers/KonnectxProvider';
@@ -47,6 +49,8 @@ const SCHEDULE_PRESETS = [
 
 export default function KonnectXCampaignsScreen() {
     const { palette } = useAppTheme();
+    const router = useRouter();
+    const params = useLocalSearchParams();
     const { userId, selectedCredential } = useKonnectx();
     const { hideLoader } = useUniversalLoader();
 
@@ -105,6 +109,13 @@ export default function KonnectXCampaignsScreen() {
     }, [userId, selectedCredential, hideLoader]);
 
     useEffect(() => { fetchData(); }, [fetchData, selectedCredential]);
+
+    useEffect(() => {
+        if (params?.action === 'new') {
+            setShowCreate(true);
+            router.setParams({ action: undefined });
+        }
+    }, [params, router]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -613,11 +624,18 @@ export default function KonnectXCampaignsScreen() {
 
                         {/* Message Content */}
                         <Text className={`mb-1 text-[12px] font-semibold ${palette.text}`}>Message Content</Text>
-                        <TextInput className="mb-3.5 rounded-xl border px-3 py-2.5 text-[14px]"
-                            style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
-                            placeholder="Enter message text or template content..." placeholderTextColor={palette.textMutedColor}
-                            value={form.messageTemplate} onChangeText={(v) => setForm({ ...form, messageTemplate: v })}
-                            multiline numberOfLines={3} textAlignVertical="top" />
+                        {form.messageType === 'text' ? (
+                          <>
+                            <TextInput className="rounded-xl border px-3 py-2.5 text-[14px]"
+                              style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
+                              placeholder="Enter the message to broadcast..." placeholderTextColor={palette.textMutedColor}
+                              value={form.messageTemplate} onChangeText={(v) => setForm({ ...form, messageTemplate: v })}
+                              multiline numberOfLines={3} textAlignVertical="top" />
+                            <View className="pt-3">
+                              <AiMessageToolbar text={form.messageTemplate} onApply={(v) => setForm({ ...form, messageTemplate: v })} />
+                            </View>
+                          </>
+                        ) : null}
 
                         {/* Schedule Section */}
                         <Text className={`mb-1 text-[12px] font-semibold ${palette.text}`}>Delivery Schedule</Text>

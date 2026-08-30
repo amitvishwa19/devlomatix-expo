@@ -155,6 +155,11 @@ export default function KonnectXDashboardScreen() {
         { icon: 'chatbubble-ellipses', label: 'Quick Message', route: '/(modules)/konnectx/quick-message' },
         { icon: 'hardware-chip', label: 'Chatbots', route: '/(modules)/konnectx/(tabs)/chatbot' },
         { icon: 'layers', label: 'Flows', route: '/(modules)/konnectx/(tabs)/flows' },
+        { icon: 'flash', label: 'Auto-Replies', route: '/(modules)/konnectx/auto-responder' },
+        { icon: 'megaphone', label: 'Broadcast', route: '/(modules)/konnectx/(tabs)/campaigns?action=new' },
+        { icon: 'storefront-outline', label: 'Business Profile', route: '/(modules)/konnectx/business-profile' },
+        { icon: 'qr-code-outline', label: 'Link & QR', route: '/(modules)/konnectx/click-to-chat' },
+        { icon: 'pulse-outline', label: 'System', route: '/(modules)/konnectx/system' },
     ];
 
     return (
@@ -207,15 +212,20 @@ export default function KonnectXDashboardScreen() {
                             <Text className="text-[13px] font-bold text-white">New Campaign</Text>
                         </TouchableOpacity>
 
-                        <View className="mb-3 flex-row flex-wrap gap-2">
-                            {quickNavItems.map((item) => (
-                                <TouchableOpacity key={item.label} onPress={() => router.push(item.route)}
-                                    className={`w-[30%] flex-grow flex-col items-center gap-1.5 rounded-[14px] border px-2 py-3 ${palette.surface} ${palette.border}`}>
-                                    <View className="rounded-lg bg-sky-600/10 p-2">
-                                        <Ionicons name={item.icon} size={18} color="#0284c7" />
-                                    </View>
-                                    <Text className={`text-[11px] font-bold leading-[13px] text-center ${palette.text}`}>{item.label}</Text>
-                                </TouchableOpacity>
+                        <View className="mb-3">
+                            {[quickNavItems.slice(0, 5), quickNavItems.slice(5, 10)].map((rowItems, rowIdx) => (
+                                <View key={rowIdx} className={`flex-row gap-1.5 ${rowIdx === 0 ? 'mb-1.5' : ''}`}>
+                                    {rowItems.map((item) => (
+                                        <TouchableOpacity key={item.label} onPress={() => router.push(item.route)}
+                                            className="flex-1 flex-col items-center justify-center gap-1 rounded-[12px] border px-1 py-2.5"
+                                            style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                            <View className="rounded-lg bg-sky-600/10 p-1.5">
+                                                <Ionicons name={item.icon} size={16} color="#0284c7" />
+                                            </View>
+                                            <Text className={`text-[10px] font-bold leading-[12px] text-center ${palette.text}`} numberOfLines={2}>{item.label}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             ))}
                         </View>
 
