@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { StatusBar } from "expo-status-bar";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import AppScreen from "~/components/AppScreen";
 import UserStatusBar from "~/components/UserStatusBar";
 import { useAppTheme } from "~/theme/AppTheme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -54,10 +53,9 @@ export default function TasksScreen() {
   }, []);
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
+    <AppScreen>
       <UserStatusBar />
-      <View className={`flex-1 ${palette.page}`}>
+      <View className="flex-1">
         <View className="px-5 pb-2 pt-5">
           <View
             className={`mb-2 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}
@@ -90,6 +88,6 @@ export default function TasksScreen() {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

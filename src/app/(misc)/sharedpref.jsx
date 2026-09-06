@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
@@ -10,12 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import AppScreen from "~/components/AppScreen";
 import { useAppTheme } from "~/theme/AppTheme";
 import { getSession } from "~/utils/authStorage";
 
 const STORAGE_KEYS = [
   { key: "devlomatix.user", label: "User Data", secure: false },
+  { key: "devlomatix.app-language", label: "App Language", secure: false },
+  { key: "devlomatix.theme-mode", label: "Theme Mode", secure: false },
   { key: "devlomatix.workspaceId", label: "Workspace ID", secure: false },
   { key: "devlomatix.accessToken", label: "Access Token", secure: true },
   { key: "devlomatix.deviceToken", label: "Device Token", secure: false },
@@ -127,14 +128,9 @@ export default function SharedPrefScreen() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1"
-      style={{ backgroundColor: palette.colors.page }}
-    >
-      <StatusBar style={palette.statusBar} />
+    <AppScreen>
       <ScrollView
         className="flex-1"
-        style={{ backgroundColor: palette.colors.page }}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
@@ -302,6 +298,6 @@ export default function SharedPrefScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

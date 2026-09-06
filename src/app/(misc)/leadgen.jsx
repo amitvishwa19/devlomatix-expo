@@ -1,9 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import AppScreen from '~/components/AppScreen';
 import { useAppTheme } from '~/theme/AppTheme';
 import * as leadgenService from '~/services/leadgen';
 
@@ -141,8 +140,7 @@ export default function LeadGenScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
+    <AppScreen>
       <View className="flex-row items-center justify-between px-4 py-3 border-b" style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
         <Text className={`text-[18px] font-bold ${palette.text}`}>Lead Generator</Text>
         <TouchableOpacity onPress={clearFilters} className="rounded-full border px-3 py-1.5" style={{ borderColor: palette.colors.border }}>
@@ -304,6 +302,6 @@ export default function LeadGenScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

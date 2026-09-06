@@ -6,6 +6,7 @@ export const storageKey = {
   ACCESSTOKEN: "ACCESSTOKEN",
   TERMSNPRIVACY: "TERMSNPRIVACY",
   NOTIFICATION: "NOTIFICATION",
+  APP_LANGUAGE: "devlomatix.app-language",
 };
 
 export const appcolors = {

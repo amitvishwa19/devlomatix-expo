@@ -1,9 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import AppScreen from '~/components/AppScreen';
 import { useAppTheme } from '~/theme/AppTheme';
 import * as quotationService from '~/services/quotation';
 
@@ -175,8 +174,7 @@ export default function QuotationScreen() {
   );
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
+    <AppScreen>
       <View className="flex-row items-center justify-between px-4 py-3 border-b" style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
         <Text className={`text-[18px] font-bold ${palette.text}`}>Quotation Generator</Text>
         <View className="flex-row gap-2">
@@ -384,7 +382,7 @@ export default function QuotationScreen() {
           )
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 

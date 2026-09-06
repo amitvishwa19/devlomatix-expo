@@ -18,8 +18,8 @@ import { saveSession } from "../../utils/authStorage";
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState("amitvishwa19@gmail.com");
-    const [password, setPassword] = useState("password");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -188,7 +188,7 @@ export default function LoginScreen() {
                 className="mb-4 self-end"
                 onPress={() => router.push("./forgot-password")}
             >
-                <Text className="text-sm font-semibold text-teal-700">
+                <Text className="text-xs font-semibold text-emerald-400">
                     Forgot password?
                 </Text>
             </Pressable>
@@ -202,18 +202,18 @@ export default function LoginScreen() {
             />
 
             <View className="mb-4 flex-row items-center">
-                <View className="h-[1px] flex-1 bg-slate-200" />
-                <Text className="mx-4 text-xs font-bold text-slate-400">OR</Text>
-                <View className="h-[1px] flex-1 bg-slate-200" />
+                <View className="h-[1px] flex-1 bg-slate-700/60" />
+                <Text className="mx-4 text-[11px] font-bold tracking-wider text-slate-400">OR</Text>
+                <View className="h-[1px] flex-1 bg-slate-700/60" />
             </View>
 
             <CustomButton
                 title={googleLoading ? "Connecting Google..." : "Continue with Google"}
                 variant="secondary"
-                icon={<FontAwesome name="google" size={18} color="#0f172a" />}
+                icon={<FontAwesome name="google" size={16} color="#ffffff" />}
                 onPress={handleGoogleLogin}
                 disabled={googleLoading || loading}
-                className="mb-4"
+                className="mb-3.5"
             />
 
             <CustomButton
@@ -221,8 +221,7 @@ export default function LoginScreen() {
                 variant="secondary"
                 onPress={() => router.push("./signup")}
             />
-
-
         </>
     );
 }
+

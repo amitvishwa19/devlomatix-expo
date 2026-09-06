@@ -1,5 +1,6 @@
-const DEV_API_URL = "https://dev.devlomatix.com/api/v5";
+//const DEV_API_URL = "https://dev.devlomatix.com/api/v5";
 const PROD_API_URL = "https://devlomatix.com/api/v5";
+const DEV_API_URL = "https://devlomatix.com/api/v5";
 
 const CUREXA_PROD_API_URL = "https://curexa.devlomatix.com/api/v5";
 

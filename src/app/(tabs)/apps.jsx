@@ -1,9 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useAppTheme } from '~/theme/AppTheme';
 
@@ -38,7 +37,7 @@ const tools = [
     icon: 'calendar-outline',
     color: '#d97706',
     bg: 'bg-amber-500/15',
-    description: 'Plan your day with time-blocked scheduling.',
+    description: 'Schedule blocks, sync reminders, and stay on top of daily milestones.',
   },
   {
     id: 'mood',
@@ -82,10 +81,9 @@ export default function ProductivityScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
+    <AppScreen>
       <UserStatusBar scrollY={scrollY} />
-      <Animated.ScrollView className={`flex-1 ${palette.page}`} showsVerticalScrollIndicator={false}
+      <Animated.ScrollView className="flex-1" showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}>
         <View className="px-5 pb-28 pt-5">
@@ -133,6 +131,6 @@ export default function ProductivityScreen() {
           </View>
         </View>
       </Animated.ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -1,6 +1,6 @@
 import { Image, View } from 'react-native';
 
-import logo from '../assets/images/logos/devlomatix_logo.png';
+import logo from '../assets/images/logos/krishimitra-logo.png';
 
 
 
@@ -42,7 +42,7 @@ export default function BrandLogo({ size, variant = 'auth' }) {
         className="shrink-0"
         style={variantImageStyles[variant]}
         resizeMode="contain" />
-      
+
     </View>);
 
 }

@@ -20,10 +20,10 @@ export default function ForgotPasswordScreen() {
         autoCapitalize="none" />
       
 
-      <View className="mb-4 rounded-[18px] bg-sky-50 p-4">
-        <Text className="mb-1.5 text-sm font-bold text-slate-900">Recovery preview</Text>
-        <Text className="text-[13px] leading-5 text-slate-600">
-          This screen is UI only. Continue to the OTP verification screen to preview the next step.
+      <View className="mb-4 rounded-[18px] border border-emerald-500/30 bg-emerald-950/40 p-4">
+        <Text className="mb-1 text-sm font-bold text-emerald-300">Recovery instructions</Text>
+        <Text className="text-[12.5px] leading-5 text-emerald-400/90">
+          Enter your registered email address to receive a secure one-time verification code.
         </Text>
       </View>
 

@@ -78,7 +78,7 @@ export function useAppTheme() {
       statusBar: 'light',
       navigation: 'dark',
       page: 'bg-slate-950',
-      pageBackground: pageBackgroundDark,
+      pageBackground: pageBackground,
       pageAlt: 'bg-slate-900',
       surface: 'bg-slate-900',
       surfaceAlt: 'bg-slate-800',

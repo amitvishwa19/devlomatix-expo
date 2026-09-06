@@ -9,9 +9,9 @@ import { apiUrls } from '../../utils/api';
 
 export default function SignupScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('founder@devlomatix.com');
-    const [password, setPassword] = useState('111111');
-    const [confirmPassword, setConfirmPassword] = useState('111111');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     async function handleRegister() {
@@ -88,7 +88,7 @@ export default function SignupScreen() {
 
 
             <CustomInput
-                label="Work email"
+                label="Email"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="founder@devlomatix.com"
@@ -124,7 +124,7 @@ export default function SignupScreen() {
                 onPress={() => router.replace('./login')} />
 
             <View className="mt-3.5">
-                <Text className="text-center text-[13px] leading-5 text-slate-500">
+                <Text className="text-center text-[13px] leading-5 text-slate-400">
                     Continuing will create a new user profile.
                 </Text>
             </View>
