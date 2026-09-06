@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '~/contexts/LanguageContext';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
@@ -14,6 +15,7 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 
 export default function TabLayout() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -47,11 +49,11 @@ export default function TabLayout() {
 
     return (
         <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
-            <Tabs.Screen name="home" options={{ title: 'Home' }} />
-            <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
-            <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
-            <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
-            <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+            <Tabs.Screen name="home" options={{ title: t('home') }} />
+            <Tabs.Screen name="crop" options={{ title: t('crop') }} />
+            <Tabs.Screen name="videos" options={{ title: t('videos') }} />
+            <Tabs.Screen name="journal" options={{ title: t('journal') }} />
+            <Tabs.Screen name="settings" options={{ title: t('settings') }} />
         </Tabs>);
 
 }
@@ -79,6 +81,12 @@ function CustomTabBar({ state, descriptors, navigation }) {
                         )}
                     </View>
                 );
+            case 'crop':
+                return <Ionicons size={size} name="leaf-outline" color={iconColor} />;
+            case 'videos':
+                return <Ionicons size={size} name="play-circle-outline" color={iconColor} />;
+            case 'journal':
+                return <Ionicons size={size} name="book-outline" color={iconColor} />;
             case 'tasks':
                 return <Ionicons size={size} name="layers-outline" color={iconColor} />;
             case 'apps':

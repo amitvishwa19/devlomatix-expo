@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import Toast from 'react-native-toast-message';
+import { useLanguage } from '~/contexts/LanguageContext';
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
 
 export default function SignupScreen() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,7 +20,7 @@ export default function SignupScreen() {
         if (!email || !password || !confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Missing fields',
+                text1: t('error'),
                 text2: 'Please fill in all inputs before creating an account.'
             });
             return;
@@ -27,13 +29,11 @@ export default function SignupScreen() {
         if (password !== confirmPassword) {
             Toast.show({
                 type: 'error',
-                text1: 'Passwords mismatch',
+                text1: t('error'),
                 text2: 'Ensure both password inputs are identical.'
             });
             return;
         }
-
-
 
         setIsLoading(true);
         try {
@@ -43,7 +43,6 @@ export default function SignupScreen() {
                 body: JSON.stringify({ email, password })
             });
             const data = await response.json();
-
 
             console.log('register', data)
 
@@ -60,7 +59,7 @@ export default function SignupScreen() {
             if (response.ok && (data.status === 200 || !data.status)) {
                 Toast.show({
                     type: 'success',
-                    text1: 'Account Created',
+                    text1: t('success'),
                     text2: 'Welcome aboard! Redirecting to login.'
                 });
                 router.replace('./login');
@@ -74,7 +73,7 @@ export default function SignupScreen() {
         } catch (err) {
             Toast.show({
                 type: 'error',
-                text1: 'Network issue',
+                text1: t('error'),
                 text2: 'Could not reach the server right now.'
             });
             console.log('Registration error:', err);
@@ -85,40 +84,37 @@ export default function SignupScreen() {
 
     return (
         <>
-
-
             <CustomInput
-                label="Email"
+                label={t('email')}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="founder@devlomatix.com"
+                placeholder={t('emailPlaceholder')}
                 keyboardType="email-address"
                 autoCapitalize="none" />
 
             <CustomInput
-                label="Password"
+                label={t('password')}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Create a strong password"
+                placeholder={t('passwordPlaceholder')}
                 secureTextEntry />
 
             <CustomInput
-                label="Confirm Password"
+                label={t('confirmPassword')}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="Re-enter your password"
+                placeholder={t('reEnterPassword')}
                 secureTextEntry />
 
-
             <CustomButton
-                title={isLoading ? "Creating account..." : "Create account"}
+                title={isLoading ? t('creatingAccount') : t('signUp')}
                 variant="primary"
                 className="mt-1"
                 disabled={isLoading}
                 onPress={handleRegister} />
 
             <CustomButton
-                title="Back to sign in"
+                title={t('backToLogin')}
                 variant="secondary"
                 className="mt-3"
                 onPress={() => router.replace('./login')} />
@@ -129,5 +125,4 @@ export default function SignupScreen() {
                 </Text>
             </View>
         </>);
-
 }

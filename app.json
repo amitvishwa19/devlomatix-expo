@@ -4,7 +4,7 @@
     "slug": "devlomatix",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./src/assets/images/app-icon.png",
+    "icon": "./src/assets/images/app-logo/app-logo.png",
     "scheme": "devlomatix",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/app-icon.png",
+        "foregroundImage": "./src/assets/images/app-logo/app-logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -66,7 +66,6 @@
           "isAndroidBackgroundLocationEnabled": "Allow App to use your location in the background"
         }
       ],
-
       "@react-native-firebase/messaging",
       "@react-native-firebase/app"
     ],

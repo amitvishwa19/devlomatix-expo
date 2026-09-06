@@ -23,30 +23,13 @@ import { fetchAccessData } from "~/services/access-management";
 import { useAppTheme } from "~/theme/AppTheme";
 import { clearSession, getSession } from "~/utils/authStorage";
 
-const settingGroups = [
-  {
-    title: "Experience",
-    items: [
-      { label: "Push notifications", value: true },
-      { label: "Email updates", value: false },
-      { label: "Auto sync drafts", value: true },
-    ],
-  },
-  {
-    title: "Workspace",
-    items: [
-      { label: "Usage analytics", value: false },
-      { label: "Experimental features", value: false },
-    ],
-  },
-];
-
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const { themeMode, setThemeMode, isDark, palette } = useAppTheme();
-  const { language, currentLanguage, setLanguage, availableLanguages } = useLanguage();
+  const { language, currentLanguage, setLanguage, availableLanguages, t } =
+    useLanguage();
   const [user, setUser] = useState(null);
   const [permModules, setPermModules] = useState([]);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -54,13 +37,37 @@ export default function SettingsScreen() {
   const [languageSearch, setLanguageSearch] = useState("");
   const [languageCategory, setLanguageCategory] = useState("ALL");
 
-  const categories = [
-    { key: "ALL", label: "All Languages" },
-    { key: "South Indian", label: "South Indian (4)" },
-    { key: "North / Central", label: "Hindi & North" },
-    { key: "Western", label: "Gujarati & Marathi" },
-    { key: "Global", label: "English" },
-  ];
+  const settingGroups = useMemo(
+    () => [
+      {
+        title: t("experience"),
+        items: [
+          { label: t("pushNotifications"), value: true },
+          { label: t("emailUpdates"), value: false },
+          { label: t("autoSyncDrafts"), value: true },
+        ],
+      },
+      {
+        title: t("workspace"),
+        items: [
+          { label: t("usageAnalytics"), value: false },
+          { label: t("experimentalFeatures"), value: false },
+        ],
+      },
+    ],
+    [t]
+  );
+
+  const categories = useMemo(
+    () => [
+      { key: "ALL", label: t("allLanguages") },
+      { key: "South Indian", label: t("southIndianLangs") },
+      { key: "North / Central", label: t("hindiAndNorth") },
+      { key: "Western", label: t("gujaratiAndMarathi") },
+      { key: "Global", label: t("englishLang") },
+    ],
+    [t]
+  );
 
   const filteredLanguages = useMemo(() => {
     return availableLanguages.filter((item) => {
@@ -128,12 +135,14 @@ export default function SettingsScreen() {
     setShowLogoutModal(true);
   };
 
-  const settingsGroups = [
-    { title: "Email", value: user?.email || "hello@devlomatix.com" },
-    { title: "Notifications", value: "Product updates, comments, mentions" },
-    { title: "Security", value: "2-step verification enabled" },
-
-  ];
+  const settingsGroups = useMemo(
+    () => [
+      { title: t("email"), value: user?.email || "hello@devlomatix.com" },
+      { title: t("notifications"), value: t("notificationsDesc") },
+      { title: t("security"), value: t("securityDesc") },
+    ],
+    [t, user?.email]
+  );
 
   return (
     <AppScreen>
@@ -194,7 +203,7 @@ export default function SettingsScreen() {
               className="py-4 text-sm font-bold uppercase tracking-[0.3px]"
               style={{ color: palette.textColor }}
             >
-              Account Details
+              {t("accountDetails")}
             </Text>
             {settingsGroups.map((item, index) => (
               <View
@@ -222,50 +231,6 @@ export default function SettingsScreen() {
             ))}
           </View>
 
-          {/* Appearance setting */}
-          {/* <View
-            className="mb-4 rounded-3xl px-5 py-5"
-            style={{ backgroundColor: palette.colors.surface }}
-          >
-            <Text
-              className="text-sm font-bold uppercase tracking-[0.3px]"
-              style={{ color: palette.textColor }}
-            >
-              Appearance
-            </Text>
-            <Text
-              className="mt-2 text-sm leading-6"
-              style={{ color: palette.textMutedColor }}
-            >
-              Switch between light and dark mode for the settings experience.
-            </Text>
-
-            <View
-              className={`mt-4 flex-row rounded-2xl p-1 ${isDark ? "bg-slate-800" : "bg-slate-100"}`}
-            >
-              {["light", "dark"].map((mode) => {
-                const selected = themeMode === mode;
-
-                return (
-                  <Pressable
-                    key={mode}
-                    className={`flex-1 rounded-xl px-4 py-3 ${selected ? "bg-teal-700" : ""}`}
-                    onPress={() => setThemeMode(mode)}
-                  >
-                    <Text
-                      className="text-center text-sm font-bold"
-                      style={{
-                        color: selected ? "#ffffff" : palette.textColor,
-                      }}
-                    >
-                      {mode === "light" ? "Light" : "Dark"}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View> */}
-
           {/* Language selection card */}
           <Pressable
             className="mb-4 rounded-3xl p-4 shadow-sm"
@@ -282,7 +247,7 @@ export default function SettingsScreen() {
                     className="text-[12px] font-bold uppercase tracking-[0.3px]"
                     style={{ color: palette.textSoftColor }}
                   >
-                    Language / भाषा
+                    {t("languageSubtitle")}
                   </Text>
                   <View className="flex-row items-center gap-2 mt-0.5">
                     <Text
@@ -305,7 +270,7 @@ export default function SettingsScreen() {
                   className="text-[13px] font-medium"
                   style={{ color: palette.textMutedColor }}
                 >
-                  Change
+                  {t("change")}
                 </Text>
                 <Ionicons
                   name="chevron-forward"
@@ -350,7 +315,7 @@ export default function SettingsScreen() {
                       className="mt-1 text-sm"
                       style={{ color: palette.textMutedColor }}
                     >
-                      Placeholder control for the settings tab preview.
+                      {t("controlPreview")}
                     </Text>
                   </View>
                   <Switch
@@ -376,13 +341,13 @@ export default function SettingsScreen() {
               className="py-4 text-sm font-bold uppercase tracking-[0.3px]"
               style={{ color: palette.textColor }}
             >
-              Shared Preferences
+              {t("sharedPreferences")}
             </Text>
             <Text
               className="mt-1 text-[13px] leading-5"
               style={{ color: palette.textMutedColor }}
             >
-              View and manage stored app data
+              {t("sharedPreferencesDesc")}
             </Text>
           </Pressable>
 
@@ -391,7 +356,7 @@ export default function SettingsScreen() {
             className="h-12 flex-row items-center justify-center rounded-2xl bg-rose-600"
             onPress={handleSignOut}
           >
-            <Text className="text-base font-bold text-slate-50">Logout</Text>
+            <Text className="text-base font-bold text-slate-50">{t("logout")}</Text>
           </Pressable>
         </View>
       </Animated.ScrollView>
@@ -427,7 +392,8 @@ export default function SettingsScreen() {
             </View>
 
             {/* Modal Header */}
-            <View className="flex-row items-center justify-between px-5 pt-2 pb-3 border-b"
+            <View
+              className="flex-row items-center justify-between px-5 pt-2 pb-3 border-b"
               style={{ borderColor: palette.colors.border }}
             >
               <View className="flex-row items-center gap-2.5">
@@ -439,13 +405,13 @@ export default function SettingsScreen() {
                     className="text-[17px] font-bold"
                     style={{ color: palette.textColor }}
                   >
-                    Select Language / भाषा
+                    {t("selectLanguageTitle")}
                   </Text>
                   <Text
                     className="text-[12px]"
                     style={{ color: palette.textMutedColor }}
                   >
-                    Choose your preferred regional language
+                    {t("chooseLanguageSub")}
                   </Text>
                 </View>
               </View>
@@ -481,7 +447,7 @@ export default function SettingsScreen() {
                   color={palette.colors.textMuted}
                 />
                 <TextInput
-                  placeholder="Search language (Hindi, Tamil, ગુજરાતી...)"
+                  placeholder={t("searchLanguage")}
                   placeholderTextColor={palette.textMutedColor}
                   value={languageSearch}
                   onChangeText={setLanguageSearch}
@@ -636,7 +602,7 @@ export default function SettingsScreen() {
                       className="mt-2 text-[14px] font-medium"
                       style={{ color: palette.textMutedColor }}
                     >
-                      No language found for "{languageSearch}"
+                      {t("noLanguageFound", { query: languageSearch })}
                     </Text>
                   </View>
                 )}
@@ -668,10 +634,10 @@ export default function SettingsScreen() {
             >
               <View className="items-center px-4 py-3.5 border-b border-gray-500/20">
                 <Text className="text-[13px] font-semibold text-gray-400">
-                  Log Out of Devlomatix?
+                  {t("logoutConfirmTitle")}
                 </Text>
                 <Text className="mt-0.5 text-[11px] text-gray-400">
-                  You will need to sign back in to access your workspace.
+                  {t("logoutConfirmMessage")}
                 </Text>
               </View>
 
@@ -683,7 +649,7 @@ export default function SettingsScreen() {
                 }}
               >
                 <Text className="text-[17px] font-semibold text-red-500">
-                  Log Out
+                  {t("logout")}
                 </Text>
               </Pressable>
             </View>
@@ -696,10 +662,8 @@ export default function SettingsScreen() {
               }}
               onPress={() => setShowLogoutModal(false)}
             >
-              <Text
-                className="text-[17px] font-bold text-sky-500"
-              >
-                Cancel
+              <Text className="text-[17px] font-bold text-sky-500">
+                {t("cancel")}
               </Text>
             </Pressable>
           </Pressable>

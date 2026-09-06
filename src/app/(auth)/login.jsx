@@ -10,6 +10,7 @@ import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
 import { getMessaging, getToken } from "@react-native-firebase/messaging";
+import { useLanguage } from "~/contexts/LanguageContext";
 import { registerForPushNotificationsAsync } from "~/utils/notification";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -18,6 +19,7 @@ import { saveSession } from "../../utils/authStorage";
 
 export default function LoginScreen() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export default function LoginScreen() {
         await saveSession(user);
         Toast.show({
             type: "success",
-            text1: "Success",
+            text1: t("success"),
             text2: successMessage,
         });
         router.replace("/(tabs)/home");
@@ -60,7 +62,7 @@ export default function LoginScreen() {
         if (!email || !password) {
             Toast.show({
                 type: "error",
-                text1: "Error",
+                text1: t("error"),
                 text2: "Please enter email and password",
             });
             return;
@@ -82,7 +84,7 @@ export default function LoginScreen() {
             } else {
                 Toast.show({
                     type: "error",
-                    text1: "Error",
+                    text1: t("error"),
                     text2: res.data?.message || "Invalid credentials",
                 });
             }
@@ -90,7 +92,7 @@ export default function LoginScreen() {
             console.error("Login error:", error);
             Toast.show({
                 type: "error",
-                text1: "Error",
+                text1: t("error"),
                 text2:
                     error?.response?.data?.message ||
                     error.message ||
@@ -154,7 +156,7 @@ export default function LoginScreen() {
             }
             Toast.show({
                 type: "error",
-                text1: "Error",
+                text1: t("error"),
                 text2:
                     error?.response?.data?.message ||
                     error.message ||
@@ -168,19 +170,19 @@ export default function LoginScreen() {
     return (
         <>
             <CustomInput
-                label="Email"
+                label={t("email")}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="name@company.com"
+                placeholder={t("emailPlaceholder")}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
 
             <CustomInput
-                label="Password"
+                label={t("password")}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                placeholder={t("passwordPlaceholder")}
                 secureTextEntry
             />
 
@@ -189,12 +191,12 @@ export default function LoginScreen() {
                 onPress={() => router.push("./forgot-password")}
             >
                 <Text className="text-xs font-semibold text-emerald-400">
-                    Forgot password?
+                    {t("forgotPassword")}
                 </Text>
             </Pressable>
 
             <CustomButton
-                title={loading ? "Signing in..." : "Sign In"}
+                title={loading ? t("signingIn") : t("signIn")}
                 variant="primary"
                 onPress={handleLogin}
                 disabled={loading}
@@ -203,12 +205,12 @@ export default function LoginScreen() {
 
             <View className="mb-4 flex-row items-center">
                 <View className="h-[1px] flex-1 bg-slate-700/60" />
-                <Text className="mx-4 text-[11px] font-bold tracking-wider text-slate-400">OR</Text>
+                <Text className="mx-4 text-[11px] font-bold tracking-wider text-slate-400">{t("or")}</Text>
                 <View className="h-[1px] flex-1 bg-slate-700/60" />
             </View>
 
             <CustomButton
-                title={googleLoading ? "Connecting Google..." : "Continue with Google"}
+                title={googleLoading ? t("connectingGoogle") : t("continueWithGoogle")}
                 variant="secondary"
                 icon={<FontAwesome name="google" size={16} color="#ffffff" />}
                 onPress={handleGoogleLogin}
@@ -217,7 +219,7 @@ export default function LoginScreen() {
             />
 
             <CustomButton
-                title="Create new account"
+                title={t("createNewAccount")}
                 variant="secondary"
                 onPress={() => router.push("./signup")}
             />

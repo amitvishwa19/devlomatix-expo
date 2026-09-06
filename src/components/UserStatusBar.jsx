@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '~/contexts/LanguageContext';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
@@ -9,6 +10,7 @@ import { getSession } from '~/utils/authStorage';
 export default function UserStatusBar({ scrollY }) {
   const router = useRouter();
   const { palette } = useAppTheme();
+  const { t } = useLanguage();
   const { unreadCount } = useNotificationStore();
   const [user, setUser] = useState(null);
 
@@ -79,10 +81,16 @@ export default function UserStatusBar({ scrollY }) {
         </View>
       )}
       <View className="flex-1">
-        <Text className={`text-lg font-semibold ${palette.text}`} numberOfLines={1}>
-          {user?.displayName || user?.name || 'User'}
+        <Text
+          className="text-lg font-semibold"
+          style={{ color: palette.colors.text }}
+          numberOfLines={1}>
+          {user?.displayName || user?.name || t('user')}
         </Text>
-        <Text className={`text-sm ${palette.textMuted}`} numberOfLines={1}>
+        <Text
+          className="text-sm"
+          style={{ color: palette.colors.textMuted || palette.colors.subtext }}
+          numberOfLines={1}>
           {user?.email || ''}
         </Text>
       </View>

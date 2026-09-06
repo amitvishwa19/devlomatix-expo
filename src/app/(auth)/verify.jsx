@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useLanguage } from '~/contexts/LanguageContext';
 import CustomButton from '../../components/CustomButton';
 
 export default function VerifyScreen() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [code, setCode] = useState('');
 
   return (
     <>
-      <Text className="mb-2 text-xs font-semibold text-slate-200">Verification code</Text>
+      <Text className="mb-2 text-xs font-semibold text-slate-200">{t('enterOtp')}</Text>
       <TextInput
         value={code}
         onChangeText={setCode}
@@ -32,19 +34,18 @@ export default function VerifyScreen() {
       </View>
 
       <CustomButton
-        title="Verify and continue"
+        title={t('verify')}
         variant="primary"
         onPress={() => router.replace('/(tabs)/home')} />
 
       <CustomButton
-        title="Use another method"
+        title={t('backToLogin')}
         variant="secondary"
         className="mt-3"
         onPress={() => router.replace('./login')} />
 
       <Text className="mt-3.5 text-center text-[12.5px] leading-5 text-slate-400">
-        Didn&apos;t receive anything? Resend code in 00:21.
+        Didn&apos;t receive anything? {t('resendCode')} in 00:21.
       </Text>
     </>);
-
 }

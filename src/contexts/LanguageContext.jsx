@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
+import { translate } from "~/utils/languages";
 
 const LANGUAGE_STORAGE_KEY = "devlomatix.app-language";
 
@@ -151,6 +152,8 @@ export function LanguageProvider({ children }) {
     );
   }, [selectedLanguageCode]);
 
+  const t = (key, params) => translate(key, selectedLanguageCode, params);
+
   const value = useMemo(
     () => ({
       language: selectedLanguageCode,
@@ -158,6 +161,9 @@ export function LanguageProvider({ children }) {
       setLanguage: changeLanguage,
       availableLanguages: SUPPORTED_LANGUAGES,
       isLanguageReady,
+      t,
+      translate: (key, lang, params) =>
+        translate(key, lang || selectedLanguageCode, params),
     }),
     [selectedLanguageCode, currentLanguage, isLanguageReady]
   );
