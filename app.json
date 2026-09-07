@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Devlomatix",
-    "slug": "devlomatix",
+    "name": "KrishiMitra",
+    "slug": "krishimitra",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./src/assets/images/app-logo/app-logo.png",
-    "scheme": "devlomatix",
+    "scheme": "krishimitra",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
