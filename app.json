@@ -18,7 +18,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.devlomatixsolutions.devlomatix",
+      "package": "com.devlomatixsolutions.krishimitra",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -72,7 +72,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./src/assets/images/favicon.png"
+      "favicon": "./src/assets/images/app-logo/app-logo.png"
     },
     "experiments": {
       "typedRoutes": true
@@ -80,7 +80,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d3465c70-9118-4cfd-939a-ab642c3620ae"
+        "projectId": "8cbe8396-31d0-4792-bbe2-83770f9ca25d"
       }
     },
     "owner": "devlomatix"
