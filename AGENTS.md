@@ -53,7 +53,7 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 - Used via `useAppTheme()` hook
 
 ### EAS Build
-- projectId: `21c77836-9afe-4688-8a56-bffb5dec36e6`, owner: `devlomatix`
+- projectId: `d3465c70-9118-4cfd-939a-ab642c3620ae`, owner: `devlomatix`
 - Profiles: `development` (dev client, internal), `preview` (internal), `production`
 
 ### Patches
