@@ -6,7 +6,6 @@ export const storageKey = {
   ACCESSTOKEN: "ACCESSTOKEN",
   TERMSNPRIVACY: "TERMSNPRIVACY",
   NOTIFICATION: "NOTIFICATION",
-  APP_LANGUAGE: "devlomatix.app-language",
 };
 
 export const appcolors = {
@@ -59,5 +58,5 @@ export const pageBackgroundDark = require("../assets/images/page-background-dark
 
 export const openAiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 export const aiMlApiKey = process.env.EXPO_PUBLIC_AIML_API_KEY;
+export const googleGemeniApiKey = process.env.EXPO_PUBLIC_GOOGLE_GEMENI_API_KEY;
 export const aiApiKey = aiMlApiKey;
-export const videoChannelUrl = "https://www.youtube.com/@AlphaDefenseHindi";

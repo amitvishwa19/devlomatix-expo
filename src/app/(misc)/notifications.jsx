@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useRef } from 'react';
 import { Animated, FlatList, PanResponder, Text, TouchableOpacity, View } from 'react-native';
-import AppScreen from '~/components/AppScreen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 
@@ -42,10 +43,10 @@ function SwipeableRow({ item, onDelete, onPress, palette }) {
         <TouchableOpacity
           onPress={onPress}
           activeOpacity={0.8}
-          className={`flex-row items-center gap-3 p-3.5 rounded-[16px] border ${palette.border}`}
-          style={{ backgroundColor: palette.colors.surface }}>
-          <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: `${item.color || '#0284c7'}15` }}>
-            <Ionicons name={item.icon || 'notifications-outline'} size={18} color={item.color || '#0284c7'} />
+          className={`flex-row items-center gap-3 border p-3 ${!item.read ? palette.surfaceInset : palette.surface} ${palette.border}`}
+          style={!item.read ? { borderLeftWidth: 3, borderLeftColor: '#0d9488', borderRadius: 16 } : { borderRadius: 16 }}>
+          <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${item.color || '#6b7280'}20` }}>
+            <Ionicons name={item.icon || 'notifications'} size={16} color={item.color || '#6b7280'} />
           </View>
           <View className="flex-1">
             <Text className={`text-[13px] font-semibold ${palette.text}`}>{item.title}</Text>
@@ -64,7 +65,8 @@ export default function NotificationsScreen() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, removeNotification } = useNotificationStore();
 
   return (
-    <AppScreen>
+    <SafeAreaView className={`flex-1 ${palette.page}`}>
+      <StatusBar style={palette.statusBar} />
       <View className={`flex-row items-center justify-between px-4 py-3 border-b ${palette.border}`}
         style={{ backgroundColor: palette.colors.surface }}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -100,6 +102,6 @@ export default function NotificationsScreen() {
             onDelete={removeNotification} />
         )}
       />
-    </AppScreen>
+    </SafeAreaView>
   );
 }

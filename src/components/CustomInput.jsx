@@ -6,8 +6,8 @@ export default function CustomInput({ label, value, onChangeText, placeholder, s
     const [isObscured, setIsObscured] = useState(secureTextEntry);
 
     return (
-        <View className="mb-3.5">
-            <Text className="mb-1.5 text-xs font-semibold ">{label}</Text>
+        <View className="mb-4">
+            <Text className="mb-2 text-sm font-semibold text-slate-700">{label}</Text>
             <View className="relative w-full justify-center">
                 <TextInput
                     value={value}
@@ -17,17 +17,16 @@ export default function CustomInput({ label, value, onChangeText, placeholder, s
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
                     secureTextEntry={isObscured}
-                    className={`h-12 w-full rounded-xl border border-slate-200 bg-white pl-4 ${secureTextEntry ? 'pr-12' : 'pr-4'} text-[14px] text-slate-900 shadow-sm`} />
+                    className={`h-12 w-full rounded-lg border border-slate-200 bg-slate-50 pl-4 ${secureTextEntry ? 'pr-12' : 'pr-4'} text-[15px] text-slate-900`} />
 
                 {secureTextEntry && (
                     <Pressable
                         className="absolute right-0 h-full w-12 items-center justify-center opacity-70"
                         onPress={() => setIsObscured(!isObscured)}>
-                        <FontAwesome name={isObscured ? 'eye-slash' : 'eye'} size={15} color="#64748b" />
+                        <FontAwesome name={isObscured ? 'eye-slash' : 'eye'} size={16} />
                     </Pressable>
                 )}
             </View>
         </View>
     );
 }
-

@@ -1,0 +1,943 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator, Animated, FlatList, Image, KeyboardAvoidingView, Modal, Platform,
+    RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { useAppTheme } from '~/theme/AppTheme';
+
+import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
+import ChatSkeleton from '~/components/konnectx/ChatSkeleton';
+import TemplateMessageBubble from '~/components/konnectx/TemplateMessageBubble';
+import { useKonnectx } from '~/providers/KonnectxProvider';
+import * as chatsService from '~/services/konnectx/chats';
+import * as contactsService from '~/services/konnectx/contacts';
+import * as templatesService from '~/services/konnectx/templates';
+import TemplatePreview from '../template/_components/TemplatePreview';
+
+function formatTime(ts) {
+    if (!ts) return '';
+    const d = new Date(ts * 1000);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return 'now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function formatDistance(ts) {
+    if (!ts) return '';
+    const d = new Date(ts * 1000);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return d.toLocaleDateString();
+}
+
+function renderMessagePreview(lastMessage) {
+    if (!lastMessage) return '';
+    try {
+        const parsed = typeof lastMessage === 'string' ? JSON.parse(lastMessage) : lastMessage;
+        if (typeof parsed === 'object' && parsed !== null) {
+            const type = (parsed.type || 'text').toLowerCase();
+            const text = parsed.text || '';
+            if (type === 'text') return text;
+            if (['image', 'video', 'audio', 'document', 'sticker'].includes(type)) {
+                return `[${type.toUpperCase()}] ${parsed.caption || text || ''}`.trim();
+            }
+            if (type === 'template') {
+                const clean = text.replace(/^\[Template:[^\]]+\]\s*/, '').trim();
+                return `📋 ${clean || parsed.templateName || text || 'Template message'}`;
+            }
+            return text || `[${type.toUpperCase()}]`;
+        }
+    } catch { }
+    if (typeof lastMessage === 'string' && lastMessage.startsWith('[Template:')) {
+        const clean = lastMessage.replace(/^\[Template:[^\]]+\]\s*/, '').trim();
+        return `📋 ${clean || 'Template message'}`;
+    }
+    return String(lastMessage);
+}
+
+function SkeletonRow() {
+    const { palette, isDark } = useAppTheme();
+    const pulse = useRef(new Animated.Value(0.3)).current;
+    useEffect(() => {
+        const anim = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+                Animated.timing(pulse, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+            ])
+        );
+        anim.start();
+        return () => anim.stop();
+    }, []);
+    const skeletonBlock = isDark ? '#334155' : '#e2e8f0';
+    return (
+        <Animated.View className="mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3"
+            style={{
+                opacity: pulse,
+                backgroundColor: palette.colors.surface,
+                borderColor: palette.colors.border
+            }}>
+            <View className="h-9 w-9 rounded-full" style={{ backgroundColor: skeletonBlock }} />
+            <View className="flex-1 gap-2">
+                <View className="h-3 w-2/5 rounded" style={{ backgroundColor: skeletonBlock }} />
+                <View className="h-2.5 w-4/5 rounded" style={{ backgroundColor: skeletonBlock }} />
+            </View>
+        </Animated.View>
+    );
+}
+
+function MessageStatus({ status }) {
+    const size = 14;
+    switch (status) {
+        case 'PENDING':
+            return <ActivityIndicator size={10} color="#94a3b8" />;
+        case 'READ':
+            return <Ionicons name="checkmark-done" size={size} color="#60a5fa" />;
+        case 'DELIVERED':
+            return <Ionicons name="checkmark-done" size={size} color="#6ee7b7" />;
+        case 'SENT':
+            return <Ionicons name="checkmark" size={size} color="#6ee7b7" />;
+        case 'FAILED':
+            return <Ionicons name="alert-circle" size={size} color="#ef4444" />;
+        default:
+            return <Ionicons name="time" size={size} color="#94a3b8" />;
+    }
+}
+
+function MediaBubble({ msg }) {
+    const type = msg.metadata?.type || 'text';
+    const mediaUrl = msg.metadata?.mediaUrl || msg.text;
+
+    if (type === 'image') {
+        return (
+            <View className="rounded-xl overflow-hidden">
+                <Image source={{ uri: mediaUrl }} className="h-40 w-52" resizeMode="cover" />
+                {msg.metadata?.caption ? (
+                    <View className="px-2.5 py-1.5 bg-black/40">
+                        <Text className="text-[12px] text-white">{msg.metadata.caption}</Text>
+                    </View>
+                ) : null}
+            </View>
+        );
+    }
+    return (
+        <View className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl border"
+            style={{ borderColor: '#334155' }}>
+            <Ionicons name={
+                type === 'video' ? 'videocam' :
+                    type === 'audio' ? 'musical-notes' :
+                        type === 'document' ? 'document' : 'image'
+            } size={18} color="#94a3b8" />
+            <View className="flex-1">
+                <Text className="text-[12px] font-medium text-gray-200">{msg.metadata?.filename || type}</Text>
+                <Text className="text-[9px] text-gray-400">{type.toUpperCase()}</Text>
+            </View>
+        </View>
+    );
+}
+
+function fillTemplatePreview(body, vars) {
+    let text = body || '';
+    Object.entries(vars).forEach(([key, val]) => {
+        text = text.replace(key, val || key);
+    });
+    return text;
+}
+
+export default function KonnectXChatsScreen() {
+    const { palette } = useAppTheme();
+    const { userId, selectedCredential } = useKonnectx();
+
+    const [conversations, setConversations] = useState([]);
+    const [selectedJid, setSelectedJid] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [inputText, setInputText] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [messagesLoading, setMessagesLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const [contacts, setContacts] = useState([]);
+    const [templates, setTemplates] = useState([]);
+    const [activeTab, setActiveTab] = useState('chats');
+
+    const [aiSuggestions, setAiSuggestions] = useState([]);
+    const [isAiLoading, setIsAiLoading] = useState(false);
+
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
+    const [templateVars, setTemplateVars] = useState({});
+    const [templateMediaUrl, setTemplateMediaUrl] = useState('');
+
+    const [previewTemplate, setPreviewTemplate] = useState(null);
+    const [previewModalVisible, setPreviewModalVisible] = useState(false);
+
+    const flatListRef = useRef(null);
+    const pollRef = useRef(null);
+
+    const selectedChat = conversations.find((c) => c.jid === selectedJid);
+    const activeName = selectedChat?.name || selectedJid?.split('@')[0] || 'Unknown';
+
+    const fetchConversations = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const credParams = {
+                credentialId: selectedCredential?.id || selectedCredential?._id,
+                wabaId: selectedCredential?.wabaId,
+                phoneNumberId: selectedCredential?.phoneNumberId
+            };
+            const data = await chatsService.getConversations(userId, credParams);
+            const list = Array.isArray(data) ? data : data?.conversations ?? [];
+            setConversations((prev) => {
+                const incomingMap = new Map(list.map((c) => [c.jid, c]));
+                const merged = list.map((newConv) => {
+                    const prevConv = prev.find((p) => p.jid === newConv.jid);
+                    if (!prevConv) return newConv;
+                    const localTemp = (prevConv.messages || []).filter(
+                        (m) => String(m.id).startsWith('temp_') &&
+                            !(newConv.messages || []).some(
+                                (nm) => nm.text === m.text && Math.abs(nm.timestamp - m.timestamp) < 30
+                            )
+                    );
+                    return { ...newConv, messages: [...localTemp, ...(newConv.messages || [])] };
+                });
+                prev.forEach((prevConv) => {
+                    if (!incomingMap.has(prevConv.jid) && (prevConv.messages || []).some((m) => String(m.id).startsWith('temp_'))) {
+                        merged.push(prevConv);
+                    }
+                });
+                return merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            });
+            setLoading(false);
+        } catch (err) {
+            console.error('Conversations error:', err);
+            setLoading(false);
+        }
+    }, [userId, selectedCredential]);
+
+    const fetchMessages = useCallback(async (jid) => {
+        if (!jid || !userId) return;
+        try {
+            const credParams = {
+                credentialId: selectedCredential?.id || selectedCredential?._id,
+                wabaId: selectedCredential?.wabaId,
+                phoneNumberId: selectedCredential?.phoneNumberId
+            };
+            const data = await chatsService.getMessages(userId, jid.replace('@s.whatsapp.net', ''), credParams);
+            const msgs = Array.isArray(data) ? data : data?.messages ?? data?.data ?? [];
+            setMessages(msgs);
+        } catch { }
+        finally {
+            setMessagesLoading(false);
+        }
+    }, [userId, selectedCredential]);
+
+    const fetchContacts = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const data = await contactsService.getContacts(userId);
+            const list = Array.isArray(data) ? data : data?.contacts ?? data?.data ?? [];
+            setContacts(list);
+        } catch { }
+    }, [userId]);
+
+    const fetchTemplates = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const credParams = {
+                credentialId: selectedCredential?.id || selectedCredential?._id,
+                wabaId: selectedCredential?.wabaId,
+                phoneNumberId: selectedCredential?.phoneNumberId
+            };
+            const data = await templatesService.getTemplates(userId, credParams);
+            const rawList = Array.isArray(data) ? data : data?.templates ?? data?.data ?? data?.items ?? data?.result ?? [];
+            const parsed = rawList.map((t) => {
+                const n = { ...t };
+                if (typeof n.metadata === 'string' && n.metadata.trim().startsWith('{')) {
+                    try { n.metadata = JSON.parse(n.metadata); } catch { }
+                }
+                if (typeof n.buttons === 'string' && n.buttons.trim().startsWith('[')) {
+                    try { n.buttons = JSON.parse(n.buttons); } catch { }
+                }
+                return n;
+            });
+            setTemplates(parsed);
+        } catch { }
+    }, [userId, selectedCredential]);
+
+    useEffect(() => {
+        fetchConversations();
+        fetchTemplates();
+        fetchContacts();
+        pollRef.current = setInterval(fetchConversations, 5000);
+        return () => clearInterval(pollRef.current);
+    }, [fetchConversations, fetchTemplates, fetchContacts]);
+
+    useEffect(() => {
+        if (selectedJid) {
+            fetchMessages(selectedJid);
+            const msgPoll = setInterval(() => fetchMessages(selectedJid), 5000);
+            return () => clearInterval(msgPoll);
+        }
+    }, [selectedJid, fetchMessages]);
+
+    useEffect(() => {
+        if (flatListRef.current && messages.length > 0) {
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+    }, [messages]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchConversations();
+        if (selectedJid) await fetchMessages(selectedJid);
+        await fetchContacts();
+        setRefreshing(false);
+    }, [fetchConversations, fetchMessages, fetchContacts, selectedJid]);
+
+    const handleSendMessage = async (textToSend) => {
+        if (!textToSend?.trim() || !selectedJid || isSending) return;
+
+        const tempId = `temp_${Date.now()}`;
+        const optimisticMsg = {
+            id: tempId, text: textToSend, fromMe: true,
+            timestamp: Math.floor(Date.now() / 1000), status: 'PENDING',
+            metadata: { type: 'text' }
+        };
+
+        setMessages((prev) => [...prev, optimisticMsg]);
+        setConversations((prev) => prev.map((conv) =>
+            conv.jid === selectedJid
+                ? { ...conv, lastMessage: textToSend, timestamp: optimisticMsg.timestamp, messages: [optimisticMsg, ...(conv.messages || [])] }
+                : conv
+        ));
+        setInputText('');
+        setIsSending(true);
+
+        try {
+            await chatsService.sendMessage(userId, {
+                to: selectedJid.replace('@s.whatsapp.net', ''),
+                type: 'text', body: textToSend
+            });
+            setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, status: 'SENT' } : m));
+            fetchMessages(selectedJid);
+        } catch (err) {
+            setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, status: 'FAILED' } : m));
+            Toast.show({ type: 'error', text1: 'Send failed', text2: err?.response?.data?.error || err.message });
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleGetAiSuggestions = async () => {
+        if (!selectedChat || !selectedChat.messages?.length) return;
+        setIsAiLoading(true);
+        try {
+            const data = await chatsService.getAiSuggestions(selectedChat.messages.slice(-10));
+            const suggestions = Array.isArray(data) ? data : data?.suggestions ?? [];
+            setAiSuggestions(suggestions);
+        } catch {
+            setAiSuggestions(['Sure, let me check on that.', 'Could you share more details?', 'I\'ll get back to you shortly.']);
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
+
+    const handleApplySuggestion = (text) => {
+        setInputText(text);
+        setAiSuggestions([]);
+    };
+
+    const handleOpenTemplatePicker = () => {
+        setSelectedTemplate(null);
+        setTemplateVars({});
+        setTemplateMediaUrl('');
+        setShowTemplatePicker(true);
+        fetchTemplates();
+    };
+
+    const handleSelectTemplate = (tpl) => {
+        setSelectedTemplate(tpl);
+        const matches = (tpl.body || '').match(/\{\{(\d+)\}\}/g) || [];
+        const vars = {};
+        matches.forEach((m) => { vars[m] = ''; });
+        setTemplateVars(vars);
+
+        let meta = tpl.metadata;
+        if (typeof meta === 'string') {
+            try { meta = JSON.parse(meta); } catch { }
+        }
+        setTemplateMediaUrl(meta?.mediaUrl || '');
+    };
+
+    const handleSendTemplate = async () => {
+        if (!selectedTemplate || !selectedJid) return;
+
+        const templateName = selectedTemplate.templateName || selectedTemplate.name;
+        const bodyParams = Object.entries(templateVars).map(([, val]) => ({
+            type: 'text', text: val || ' '
+        }));
+        const components = [];
+
+        const templateType = (selectedTemplate.type || 'TEXT').toUpperCase();
+        if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(templateType)) {
+            let finalMediaUrl = templateMediaUrl || '';
+            if (!finalMediaUrl) {
+                finalMediaUrl = {
+                    IMAGE: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809',
+                    VIDEO: 'https://www.w3schools.com/html/mov_bbb.mp4',
+                    DOCUMENT: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+                }[templateType];
+            }
+            if (finalMediaUrl) {
+                const mediaType = templateType.toLowerCase();
+                const isHandle = /^\d+$/.test(finalMediaUrl.toString()) || finalMediaUrl.toString().startsWith('4');
+                components.push({
+                    type: 'header',
+                    parameters: [
+                        {
+                            type: mediaType,
+                            [mediaType]: isHandle ? { id: finalMediaUrl } : { link: finalMediaUrl }
+                        }
+                    ]
+                });
+            }
+        }
+
+        if (bodyParams.length > 0) {
+            components.push({ type: 'body', parameters: bodyParams });
+        }
+
+        let previewText = selectedTemplate.body || `[Template: ${templateName}]`;
+        Object.entries(templateVars).forEach(([key, val]) => {
+            previewText = previewText.replace(key, val || key);
+        });
+
+        const tempId = `temp_${Date.now()}`;
+        const optimisticMsg = {
+            id: tempId, text: previewText, fromMe: true,
+            timestamp: Math.floor(Date.now() / 1000), status: 'PENDING',
+            metadata: { type: 'template', templateName, mediaUrl: templateMediaUrl || undefined }
+        };
+
+        setMessages((prev) => [...prev, optimisticMsg]);
+        setShowTemplatePicker(false);
+        setSelectedTemplate(null);
+        setTemplateVars({});
+        setTemplateMediaUrl('');
+        setIsSending(true);
+
+        try {
+            await chatsService.sendMessage(userId, {
+                to: selectedJid.replace('@s.whatsapp.net', ''),
+                type: 'template',
+                template: { name: templateName, language: { code: selectedTemplate.language || 'en_US' }, components }
+            });
+            setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, status: 'SENT' } : m));
+            fetchMessages(selectedJid);
+        } catch (err) {
+            setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, status: 'FAILED' } : m));
+            Toast.show({ type: 'error', text1: 'Template send failed', text2: err?.response?.data?.error || err.message });
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleTemplatePreview = (msg) => {
+        const templateName =
+            msg.metadata?.templateName ||
+            msg.metadata?.originalPayload?.template?.name ||
+            (typeof msg.text === 'string' && msg.text.startsWith('[Template:')
+                ? msg.text.split('[Template:')[1]?.split(']')[0]?.trim()
+                : null);
+        if (!templateName) return;
+
+        const found = templates.find((t) => t.templateName === templateName || t.name === templateName);
+        if (found) {
+            setPreviewTemplate(found);
+        } else {
+            setPreviewTemplate({
+                name: templateName,
+                templateName: templateName,
+                body: msg.text?.replace(/^\[Template:[^\]]+\]\s*/, '') || msg.text || 'WhatsApp Template Message',
+                type: 'TEXT',
+                status: 'APPROVED',
+                metadata: msg.metadata || {}
+            });
+        }
+        setPreviewModalVisible(true);
+    };
+
+    const selectConversation = (jid) => {
+        setSelectedJid(jid);
+        setMessages([]);
+        setMessagesLoading(true);
+        setAiSuggestions([]);
+    };
+
+    const deleteConversation = async (jid) => {
+        try {
+            await chatsService.deleteConversation(userId, jid);
+            if (selectedJid === jid) { setSelectedJid(null); setMessages([]); }
+            setConversations((prev) => prev.filter((c) => c.jid !== jid));
+            Toast.show({ type: 'success', text1: 'Conversation deleted' });
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.error || err.message });
+        }
+    };
+
+    const filteredConversations = conversations.filter((c) =>
+        (c.jid || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredContacts = contacts.filter((c) => {
+        const name = c.name || '';
+        const phone = c.phone || '';
+        return name.toLowerCase().includes(searchTerm.toLowerCase()) || phone.includes(searchTerm);
+    });
+
+    const STATUS_ORDER = {
+        APPROVED: 0,
+        ACTIVE: 0,
+        PAUSED: 1,
+        PENDING_APPROVAL: 2,
+        PENDING: 2,
+        IN_APPEAL: 3,
+        REJECTED: 4,
+        DRAFT: 5
+    };
+    const STATUS_STYLES = {
+        APPROVED: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
+        ACTIVE: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
+        PENDING_APPROVAL: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+        PENDING: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+        IN_APPEAL: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+        REJECTED: { color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
+        DRAFT: { color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
+        PAUSED: { color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' }
+    };
+    const pickerTemplates = [...templates].sort((a, b) => {
+        const sa = STATUS_ORDER[(a.status || '').toUpperCase()] ?? 9;
+        const sb = STATUS_ORDER[(b.status || '').toUpperCase()] ?? 9;
+        return sa - sb;
+    });
+
+    if (!selectedJid) {
+        return (
+            <SafeAreaView className={`flex-1 ${palette.page}`}>
+                <StatusBar style={palette.statusBar} />
+                <View className="flex-1 px-3 pt-3">
+                    <View className="mb-2.5">
+                        <View className="mb-1.5 self-start rounded-full bg-sky-600 px-2.5 py-1">
+                            <Text className="text-[10px] font-bold uppercase tracking-[1px] text-white">CHATS</Text>
+                        </View>
+                        <Text className={`text-[22px] font-bold ${palette.text}`}>Inbox</Text>
+                        <Text className={`mt-0.5 text-[13px] ${palette.textSoft}`}>
+                            {activeTab === 'chats' ? `${conversations.length} conversations` : `${contacts.length} contacts`}
+                        </Text>
+                    </View>
+
+                    <View className={`mb-2.5 flex-row items-center gap-2 rounded-[16px] border px-3 py-2 ${palette.border}`}
+                        style={{ backgroundColor: palette.colors.surface }}>
+                        <Ionicons name="search" size={16} color={palette.textMutedColor} />
+                        <TextInput
+                            className="flex-1 text-[13px]" style={{ color: palette.textColor }}
+                            placeholder={`Search ${activeTab}...`} placeholderTextColor={palette.textMutedColor}
+                            value={searchTerm} onChangeText={setSearchTerm} />
+                    </View>
+
+                    <View className="mb-2.5 flex-row gap-2">
+                        {['chats', 'contacts'].map((tab) => (
+                            <TouchableOpacity key={tab} onPress={() => { setActiveTab(tab); setSearchTerm(''); }}
+                                className={`flex-1 items-center rounded-xl py-2 ${activeTab === tab ? 'bg-sky-600' : 'border'}`}
+                                style={activeTab !== tab ? { borderColor: palette.colors.border } : {}}>
+                                <Text className={`text-[12px] font-bold ${activeTab === tab ? 'text-white' : palette.text}`}>
+                                    {tab === 'chats' ? 'Chats' : 'Contacts'}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {activeTab === 'chats' ? (
+                        loading && filteredConversations.length === 0 ? (
+                            <FlatList
+                                data={[1, 2, 3, 4, 5, 6]}
+                                keyExtractor={(item) => String(item)}
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 80 }}
+                                renderItem={() => <SkeletonRow />}
+                            />
+                        ) : (
+                            <FlatList
+                                data={filteredConversations}
+                                keyExtractor={(item) => item.jid}
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 80 }}
+                                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.textColor} />}
+                                ListEmptyComponent={
+                                    <KonnectxEmptyState icon="chatbubbles-outline" title="No conversations"
+                                        description="Start a conversation by selecting a contact." />
+                                }
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        onPress={() => selectConversation(item.jid)}
+                                        onLongPress={() => deleteConversation(item.jid)}
+                                        className={`mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3 ${palette.surface} ${palette.border}`}>
+                                        <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/20">
+                                            <Text className="text-[13px] font-bold text-sky-600">
+                                                {(item.name || item.jid)?.[0]?.toUpperCase() || '?'}
+                                            </Text>
+                                        </View>
+                                        <View className="flex-1">
+                                            <View className="flex-row items-center justify-between">
+                                                <Text className={`text-[14px] font-bold flex-1 ${palette.text}`} numberOfLines={1}>
+                                                    {item.name || item.jid?.split('@')[0]}
+                                                </Text>
+                                                <Text className={`text-[10px] ${palette.textMuted}`}>{formatTime(item.timestamp)}</Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-1 mt-0.5">
+                                                {item.fromMe ? (
+                                                    <Text className="text-[10px] font-semibold text-sky-500">You: </Text>
+                                                ) : null}
+                                                <Text className={`text-[12px] flex-1 ${palette.textSoft}`} numberOfLines={1}>
+                                                    {renderMessagePreview(item.lastMessage || item.messages?.[0]?.text || '')}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        )
+                    ) : (
+                        <FlatList
+                            data={filteredContacts}
+                            keyExtractor={(item) => item.id || item.phone}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 80 }}
+                            ListEmptyComponent={
+                                <KonnectxEmptyState icon="people-outline" title="No contacts"
+                                    description="Contacts will appear here once imported." />
+                            }
+                            renderItem={({ item }) => {
+                                const normalizedJid = item.phone?.replace(/\D/g, '') + '@s.whatsapp.net';
+                                return (
+                                    <TouchableOpacity
+                                        onPress={() => selectConversation(normalizedJid)}
+                                        className={`mb-1.5 flex-row items-center gap-2.5 rounded-[16px] border p-3 ${palette.surface} ${palette.border}`}>
+                                        <View className="h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20">
+                                            <Text className="text-[13px] font-bold text-emerald-600">
+                                                {(item.name || item.phone)?.[0]?.toUpperCase() || '?'}
+                                            </Text>
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className={`text-[14px] font-bold ${palette.text}`}>{item.name || item.phone}</Text>
+                                            <Text className={`mt-0.5 text-[12px] ${palette.textSoft}`}>{item.phone}</Text>
+                                        </View>
+                                        <Ionicons name="chatbubble-ellipses-outline" size={16} color={palette.textMutedColor} />
+                                    </TouchableOpacity>
+                                );
+                            }}
+                        />
+                    )}
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    // Chat View
+    return (
+        <SafeAreaView className={`flex-1 ${palette.page}`}>
+            <StatusBar style={palette.statusBar} />
+            <View className="flex-1" style={{ backgroundColor: palette.colors.page }}>
+                {/* Header */}
+                <View className={`flex-row items-center gap-2.5 border-b px-3 py-2.5 ${palette.surface} ${palette.border}`}>
+                    <TouchableOpacity onPress={() => { setSelectedJid(null); setMessages([]); setAiSuggestions([]); }}>
+                        <Ionicons name="arrow-back" size={22} color={palette.textColor} />
+                    </TouchableOpacity>
+                    <View className="h-8 w-8 items-center justify-center rounded-full bg-sky-500/20">
+                        <Text className="text-[12px] font-bold text-sky-600">{activeName?.[0]?.toUpperCase() || '?'}</Text>
+                    </View>
+                    <View className="flex-1">
+                        <Text className={`text-[15px] font-bold ${palette.text}`} numberOfLines={1}>{activeName}</Text>
+                        <Text className={`text-[9px] text-emerald-500 font-bold uppercase tracking-tight`}>
+                            {selectedChat ? 'Active Conversation' : 'New Chat'}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => deleteConversation(selectedJid)}>
+                        <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                    </TouchableOpacity>
+                </View>
+
+                <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+                    {/* Messages */}
+                    <FlatList
+                        ref={flatListRef}
+                        data={messages}
+                        keyExtractor={(item) => item.id?.toString()}
+                        className="flex-1"
+                        contentContainerStyle={{ padding: 12, paddingBottom: 12 }}
+                        showsVerticalScrollIndicator={false}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                        initialNumToRender={20}
+                        maxToRenderPerBatch={15}
+                        windowSize={10}
+                        ListEmptyComponent={
+                            messagesLoading ? (
+                                <ChatSkeleton />
+                            ) : (
+                                <KonnectxEmptyState icon="chatbubble-ellipses-outline" title="No messages yet"
+                                    description="Send a message to start the conversation." />
+                            )
+                        }
+                        renderItem={({ item }) => {
+                            const isFromMe = item.fromMe;
+                            const isTemplate =
+                                item.metadata?.type === 'template' ||
+                                item.metadata?.type === 'TEMPLATE' ||
+                                Boolean(item.metadata?.templateName) ||
+                                Boolean(item.metadata?.originalPayload?.template?.name) ||
+                                (typeof item.text === 'string' && item.text.startsWith('[Template:'));
+                            const type = item.metadata?.type || (isTemplate ? 'template' : 'text');
+                            const isMedia = !isTemplate && ['image', 'video', 'audio', 'document'].includes(type);
+
+                            const templateName =
+                                item.metadata?.templateName ||
+                                item.metadata?.originalPayload?.template?.name ||
+                                (typeof item.text === 'string' && item.text.startsWith('[Template:')
+                                    ? item.text.split('[Template:')[1]?.split(']')[0]?.trim()
+                                    : null);
+                            const templateDef = (isTemplate && templateName)
+                                ? templates.find((t) => t.templateName === templateName || t.name === templateName)
+                                : null;
+
+                            return (
+                                <View className={`mb-2 max-w-[85%] ${isFromMe ? 'self-end' : 'self-start'}`}>
+                                    {isTemplate ? (
+                                        <TemplateMessageBubble
+                                            msg={item}
+                                            templateDefinition={templateDef}
+                                            onPress={() => handleTemplatePreview(item)}
+                                        />
+                                    ) : isMedia ? (
+                                        <MediaBubble msg={item} />
+                                    ) : (
+                                        <View className="rounded-[18px] px-3 py-2" style={{
+                                            backgroundColor: isFromMe ? '#0284c7' : palette.colors.surface,
+                                            borderColor: isFromMe ? 'transparent' : palette.colors.border,
+                                            borderWidth: isFromMe ? 0 : 1,
+                                        }}>
+                                            <Text className={`text-[14px] leading-5 ${isFromMe ? 'text-white' : palette.text}`}>
+                                                {item.text}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    {!isTemplate ? (
+                                        <View className={`mt-0.5 flex-row items-center gap-1 ${isFromMe ? 'justify-end' : 'justify-start'}`}>
+                                            <Text className={`text-[9px] ${palette.textMuted}`}>{formatDistance(item.timestamp)}</Text>
+                                            {isFromMe ? <MessageStatus status={item.status} /> : null}
+                                        </View>
+                                    ) : null}
+                                </View>
+                            );
+                        }}
+                    />
+
+                    {/* AI Suggestions */}
+                    {aiSuggestions.length > 0 ? (
+                        <View className={`flex-row flex-wrap gap-1.5 px-3 py-1.5 border-t ${palette.border}`}>
+                            {aiSuggestions.map((s, idx) => (
+                                <TouchableOpacity key={idx} onPress={() => handleApplySuggestion(s)}
+                                    className="rounded-full bg-sky-600/15 border border-sky-600/30 px-2.5 py-1">
+                                    <Text className="text-[10px] font-medium text-sky-600" numberOfLines={1}>{s}</Text>
+                                </TouchableOpacity>
+                            ))}
+                            <TouchableOpacity onPress={() => setAiSuggestions([])} className="px-2 py-1">
+                                <Text className="text-[10px] text-gray-400">Clear</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
+
+                    {/* Input */}
+                    <View className='p-0'>
+                        <View className={`flex-row items-center gap-2 border rounded-xl border-t px-3 py-2.5 ${palette.surface} ${palette.border}`}>
+                            <TouchableOpacity onPress={handleGetAiSuggestions} disabled={isAiLoading || !selectedChat}
+                                className="h-8 w-8 items-center justify-center rounded-full">
+                                {isAiLoading ? (
+                                    <ActivityIndicator size="small" color="#0284c7" />
+                                ) : (
+                                    <Ionicons name="sparkles" size={18} color="#0284c7" />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleOpenTemplatePicker}
+                                className="h-8 w-8 items-center justify-center rounded-full">
+                                <Ionicons name="layers-outline" size={18} color={palette.textMutedColor} />
+                            </TouchableOpacity>
+                            <TextInput
+                                className={`flex-1 rounded-xl border px-3 py-2 text-[14px] ${palette.page}`}
+                                style={{ borderColor: palette.colors.border, color: palette.textColor, maxHeight: 80 }}
+                                placeholder="Type a message..."
+                                placeholderTextColor={palette.textMutedColor}
+                                value={inputText}
+                                onChangeText={setInputText}
+                                multiline
+                            />
+                            <TouchableOpacity
+                                onPress={() => handleSendMessage(inputText)}
+                                disabled={!inputText.trim() || isSending}
+                                className="h-9 w-9 items-center justify-center rounded-full bg-sky-600"
+                                style={{ opacity: inputText.trim() && !isSending ? 1 : 0.5 }}>
+                                {isSending ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Ionicons name="send" size={16} color="#fff" />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Clearance spacer so the floating konnectx tab bar doesn't cover the input */}
+                    <View style={{ height: 76 }} />
+                </KeyboardAvoidingView>
+            </View>
+
+            {/* Template Picker Modal */}
+            <Modal visible={showTemplatePicker} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowTemplatePicker(false)}>
+                <View className="flex-1" style={{ backgroundColor: palette.colors.page }}>
+                    <View className="flex-row items-center justify-between px-4 py-3" style={{ backgroundColor: palette.colors.surface }}>
+                        <View className="flex-row items-center gap-2">
+                            <Ionicons name="layers-outline" size={18} color="#0284c7" />
+                            <Text className={`text-[16px] font-bold ${palette.text}`}>
+                                {selectedTemplate ? 'Fill Variables' : 'Select a Template'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={() => { setShowTemplatePicker(false); setSelectedTemplate(null); }}>
+                            <Text className="text-[14px] font-bold text-sky-600">Close</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {!selectedTemplate ? (
+                        <FlatList
+                            data={pickerTemplates}
+                            keyExtractor={(item) => item.id}
+                            contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
+                            ListEmptyComponent={
+                                <KonnectxEmptyState icon="layers-outline" title="No templates found"
+                                    description="Create or sync templates from the Templates page first." />
+                            }
+                            renderItem={({ item }) => {
+                                const statusKey = (item.status || 'DRAFT').toUpperCase();
+                                const badge = STATUS_STYLES[statusKey] || { color: '#6b7280', bg: 'rgba(107,114,128,0.1)' };
+                                return (
+                                    <TouchableOpacity onPress={() => handleSelectTemplate(item)}
+                                        className="mb-2 rounded-[16px] border p-3"
+                                        style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border }}>
+                                        <View className="flex-row items-start justify-between gap-2">
+                                            <View className="flex-1">
+                                                <Text className={`text-[14px] font-bold ${palette.text}`}>{item.name}</Text>
+                                                {item.body ? (
+                                                    <Text className={`mt-1 text-[11px] leading-[16px] ${palette.textSoft}`} numberOfLines={2}>
+                                                        {item.body}
+                                                    </Text>
+                                                ) : null}
+                                            </View>
+                                            <View className="items-end gap-1">
+                                                <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: badge.bg }}>
+                                                    <Text className="text-[8px] font-bold" style={{ color: badge.color }}>
+                                                        {statusKey}
+                                                    </Text>
+                                                </View>
+                                                <Text className={`text-[8px] ${palette.textMuted}`}>{item.language || 'en'}</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            }}
+                        />
+                    ) : (
+                        <ScrollView className="flex-1 px-4 pt-4">
+                            <View className={`mb-3 rounded-[16px] border p-3 ${palette.surface} ${palette.border}`}>
+                                <Text className={`mb-1 text-[9px] font-semibold uppercase tracking-wide ${palette.textMuted}`}>Preview</Text>
+                                <Text className={`text-[12px] leading-5 ${palette.text}`}>
+                                    {fillTemplatePreview(selectedTemplate.body || '', templateVars)}
+                                </Text>
+                            </View>
+
+                            {/* Media Header Input if required */}
+                            {['IMAGE', 'VIDEO', 'DOCUMENT'].includes((selectedTemplate.type || '').toUpperCase()) ? (
+                                <View className="mb-3 rounded-[16px] border border-sky-500/30 bg-sky-500/10 p-3">
+                                    <Text className="mb-1 text-[9px] font-bold uppercase tracking-wide text-sky-500">
+                                        {selectedTemplate.type} Header Required
+                                    </Text>
+                                    <TextInput
+                                        className="rounded-xl border px-3 py-2 text-[12px]"
+                                        style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
+                                        placeholder="https://... or media link"
+                                        placeholderTextColor={palette.textMutedColor}
+                                        value={templateMediaUrl}
+                                        onChangeText={setTemplateMediaUrl}
+                                    />
+                                </View>
+                            ) : null}
+
+                            {Object.keys(templateVars).length > 0 ? (
+                                <View className="gap-2 mb-4">
+                                    <Text className={`text-[11px] font-medium ${palette.textMuted}`}>Fill in the variables:</Text>
+                                    {Object.keys(templateVars).map((key, idx) => (
+                                        <View key={key}>
+                                            <Text className={`mb-0.5 text-[9px] font-semibold uppercase tracking-wide ${palette.textMuted}`}>
+                                                Variable {idx + 1} <Text className="text-sky-500">{key}</Text>
+                                            </Text>
+                                            <TextInput
+                                                className="rounded-xl border px-3 py-2.5 text-[13px]"
+                                                style={{ backgroundColor: palette.colors.surface, borderColor: palette.colors.border, color: palette.textColor }}
+                                                placeholder={`Enter value for ${key}...`} placeholderTextColor={palette.textMutedColor}
+                                                value={templateVars[key]} onChangeText={(v) => setTemplateVars((prev) => ({ ...prev, [key]: v }))}
+                                                autoFocus={idx === 0} />
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : (
+                                <Text className={`text-center py-3 text-[11px] ${palette.textSoft}`}>No variables required for this template.</Text>
+                            )}
+
+                            <View className="flex-row gap-2 mb-6">
+                                <TouchableOpacity onPress={() => setSelectedTemplate(null)}
+                                    className="flex-1 items-center rounded-xl border py-3" style={{ borderColor: palette.colors.border }}>
+                                    <Text className={`text-[14px] font-bold ${palette.text}`}>Back</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleSendTemplate} disabled={isSending}
+                                    className="flex-1 items-center rounded-xl bg-sky-600 py-3">
+                                    <Text className="text-[14px] font-bold text-white">
+                                        {isSending ? 'Sending...' : 'Send Template'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    )}
+                </View>
+            </Modal>
+
+            {/* Full Template Preview Modal */}
+            <TemplatePreview
+                visible={previewModalVisible}
+                onClose={() => {
+                    setPreviewModalVisible(false);
+                    setPreviewTemplate(null);
+                }}
+                template={previewTemplate}
+            />
+        </SafeAreaView>
+    );
+}
