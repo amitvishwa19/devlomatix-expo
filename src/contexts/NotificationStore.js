@@ -5,12 +5,10 @@ const STORAGE_KEY = 'devlomatix.notifications';
 const MAX_NOTIFICATIONS = 50;
 
 const SEED_NOTIFICATIONS = [
-  { id: 'seed_1', module: 'konnectx', title: 'Campaign completed', description: 'Welcome offer sent to 1,240 contacts with 68% open rate.', icon: 'chatbubble-ellipses', color: '#0284c7', time: new Date(Date.now() - 600000).toISOString(), read: false },
-  { id: 'seed_2', module: 'curexa', title: 'New appointment booked', description: 'Dr. Sharma confirmed for patient Priya Mehta at 4:30 PM.', icon: 'medkit', color: '#059669', time: new Date(Date.now() - 1800000).toISOString(), read: false },
-  { id: 'seed_3', module: 'solarbright', title: 'Energy report ready', description: 'Monthly generation report for Jaipur installations is ready to view.', icon: 'flash', color: '#d97706', time: new Date(Date.now() - 3600000).toISOString(), read: false },
-  { id: 'seed_4', module: 'crystalaura', title: 'Low stock alert', description: '3 products are running low on inventory across 2 stores.', icon: 'warning', color: '#9333ea', time: new Date(Date.now() - 7200000).toISOString(), read: true },
-  { id: 'seed_5', module: 'konnectx', title: 'Template approved', description: 'Your "Order Confirmation" template was approved by Meta.', icon: 'document-text', color: '#0284c7', time: new Date(Date.now() - 14400000).toISOString(), read: true },
-  { id: 'seed_6', module: 'curexa', title: 'Prescription refill requested', description: 'Patient Amit Verma requested a refill for blood pressure medication.', icon: 'medkit', color: '#059669', time: new Date(Date.now() - 28800000).toISOString(), read: true },
+  { id: 'seed_1', module: 'krishimitra', title: 'Remedy schedule ready', description: 'Your homeopathic bio-treatment schedule for crop cycle 1 is ready.', icon: 'leaf', color: '#10b981', time: new Date(Date.now() - 600000).toISOString(), read: false },
+  { id: 'seed_2', module: 'krishimitra', title: 'Soil testing report', description: 'Soil analysis report uploaded with natural mineral recommendations.', icon: 'water', color: '#059669', time: new Date(Date.now() - 1800000).toISOString(), read: false },
+  { id: 'seed_3', module: 'krishimitra', title: 'Organic dosage guide', description: 'Updated homeopathic immunity spray dosage chart available.', icon: 'shield-checkmark', color: '#047857', time: new Date(Date.now() - 3600000).toISOString(), read: false },
+  { id: 'seed_4', module: 'krishimitra', title: 'Order dispatched', description: 'Your KrishiMitra natural remedy pack has been dispatched.', icon: 'checkmark-circle', color: '#0d9488', time: new Date(Date.now() - 7200000).toISOString(), read: true },
 ];
 
 const NotificationStoreContext = createContext(null);

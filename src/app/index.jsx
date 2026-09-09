@@ -1,1 +1,1 @@
-export { default } from './(misc)/SplashScreen';
+export { default } from './(misc)/onboarding';

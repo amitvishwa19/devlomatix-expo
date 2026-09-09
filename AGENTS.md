@@ -53,11 +53,11 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 - Used via `useAppTheme()` hook
 
 ### EAS Build
-- projectId: `c0b6af7f-b1a3-4846-a68a-09987207d53d`, owner: `devlomatix-solutions`
+- projectId: `d3465c70-9118-4cfd-939a-ab642c3620ae`, owner: `devlomatix`
 - Profiles: `development` (dev client, internal), `preview` (internal), `production`
 
 ### Patches
-- `patches/@react-native-google-signin+google-signin+16.1.2.patch` — applied via `postinstall` script
+- `patches/@react-native-google-signin+google-signin+16.1.4.patch` — applied via `postinstall` script
 
 ### VS Code
 - On-save: fix all, organize imports, sort members

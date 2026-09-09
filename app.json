@@ -1,11 +1,17 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "Devlomatix",
     "slug": "devlomatix",
     "version": "4.0.0",
+=======
+    "name": "KrishiMitra",
+    "slug": "krishimitra",
+    "version": "1.0.0",
+>>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
     "orientation": "default",
-    "icon": "./src/assets/images/app-icon.png",
-    "scheme": "devlomatix",
+    "icon": "./src/assets/images/app-logo/app-logo.png",
+    "scheme": "krishimitra",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,12 +19,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/app-icon.png",
+        "foregroundImage": "./src/assets/images/app-logo/app-logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.devlomatixsolutions.devlomatix",
+      "package": "com.devlomatixsolutions.krishimitra",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -69,13 +75,25 @@
       "@react-native-firebase/messaging",
       "@react-native-firebase/app"
     ],
+<<<<<<< HEAD
+=======
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./src/assets/images/app-logo/app-logo.png"
+    },
+>>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
       "eas": {
+<<<<<<< HEAD
         "projectId": "c31305dc-b6b6-4e27-99d1-69cbb565f7f1"
+=======
+        "projectId": "8cbe8396-31d0-4792-bbe2-83770f9ca25d"
+>>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
       }
     },
     "owner": "devlomatix"

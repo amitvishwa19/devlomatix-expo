@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:245235062421:android:a2268bb0eed59d86eeed9c",
         "android_client_info": {
-          "package_name": "com.devlomatixsolutions.devlomatix"
+          "package_name": "com.devlomatixsolutions.krishimitra"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "245235062421-75p46ssdbihbr2rgi5l9ujhro78tvirf.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.devlomatixsolutions.devlomatix",
+            "package_name": "com.devlomatixsolutions.krishimitra",
             "certificate_hash": "a7811cc21e5453104b152286ccf17a1c330909df"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "245235062421-i7id2c7s1esl1ad899n7afucc34rf9m6.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.devlomatixsolutions.devlomatix",
+            "package_name": "com.devlomatixsolutions.krishimitra",
             "certificate_hash": "79cec58b0e6388cb08e26fbd4698d61340c47958"
           }
         },
