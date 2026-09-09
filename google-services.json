@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "245235062421-ritrtimgaga167ftk3v52glbq0sjc61j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.devlomatixsolutions.devlomatix",
+            "certificate_hash": "841fc09dded58b13cf3c2a7280a0cba52412fbfa"
+          }
+        },
+        {
           "client_id": "245235062421-rugl7hdlgdfqieia79tjeqar9m1j2tvf.apps.googleusercontent.com",
           "client_type": 3
         }
