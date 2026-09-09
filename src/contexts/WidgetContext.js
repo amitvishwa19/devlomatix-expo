@@ -4,12 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 const STORAGE_KEY = 'devlomatix.widgets';
 
 const DEFAULT_WIDGETS = {
-  konnectx: true,
-  solarbright: true,
-  curexa: true,
-  crystalaura: true,
-  hireflow: true,
-  kabadx: true,
+  krishimitra: true,
+  orders: true,
+  soil: true,
+  weather: true,
 };
 
 const WidgetContext = createContext(null);

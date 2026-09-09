@@ -1,429 +1,439 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, Switch, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
 import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
-import { useNotificationStore } from '~/contexts/NotificationStore';
-import { useWidgets } from '~/contexts/WidgetContext';
-import * as hireflowService from '~/services/hireflow';
-import * as analyticsService from '~/services/konnectx/analytics';
-import * as campaignsService from '~/services/konnectx/campaigns';
+import { BOOK_METADATA, BOOK_PRINCIPLES } from '~/constants/agrohomeopathyData';
+import { CROPS_DATA } from '~/constants/cropsData';
+import { useLanguage } from '~/contexts/LanguageContext';
 import { useAppTheme } from '~/theme/AppTheme';
-import { getSession } from '~/utils/authStorage';
-import { resolveWorkspaceId } from '~/utils/workspace';
 
-const appMeta = {
-    konnectx: {
-        name: 'KonnectX',
-        badge: 'WhatsApp Platform',
-        route: '/(modules)/konnectx',
-        accentBg: 'bg-sky-600',
-        accentBgLight: 'bg-sky-500/15',
-        accentText: 'text-sky-600',
-        dot: 'bg-sky-500',
-        stats: [
-            { label: 'Total Campaigns', value: '--' },
-            { label: 'Messages Sent', value: '--' },
-            { label: 'Active Contacts', value: '--' },
-            { label: 'Approved Templates', value: '--' },
-        ],
-        description: 'WhatsApp Cloud API management for messaging, campaigns, and contacts.',
-    },
-    solarbright: {
-        name: 'SolarBright',
-        badge: 'Solar Panel Cleaning',
-        route: '/solarbright',
-        accentBg: 'bg-amber-600',
-        accentBgLight: 'bg-amber-500/15',
-        accentText: 'text-amber-600',
-        dot: 'bg-amber-500',
-        stats: [
-            { label: 'Cities Served', value: '50+' },
-            { label: 'Panels Cleaned', value: '10K+' },
-            { label: 'Efficiency Boost', value: '30%' },
-        ],
-        description: 'Premium solar panel cleaning and maintenance service.',
-    },
-    curexa: {
-        name: 'Curexa',
-        badge: 'Hospital Management',
-        route: '/(modules)/curexa',
-        accentBg: 'bg-emerald-600',
-        accentBgLight: 'bg-emerald-500/15',
-        accentText: 'text-emerald-600',
-        dot: 'bg-emerald-500',
-        stats: [
-            { label: 'Active Beds', value: '0' },
-            { label: "Today's Appointments", value: '0' },
-            { label: 'CRM Automations', value: '0' },
-        ],
-        description: 'Complete hospital management system with AI powered CRM.',
-    },
-    crystalaura: {
-        name: 'CrystalAura',
-        badge: 'E-Commerce Admin',
-        route: '/(modules)/crystalaura',
-        accentBg: 'bg-purple-600',
-        accentBgLight: 'bg-purple-500/15',
-        accentText: 'text-purple-600',
-        dot: 'bg-purple-500',
-        stats: [
-            { label: 'Total Revenue', value: '$12.4K' },
-            { label: 'Orders', value: '89' },
-            { label: 'Products', value: '156' },
-            { label: 'Stores', value: '3' },
-        ],
-        description: 'E-commerce admin for managing products, orders, and connected stores.',
-    },
-    hireflow: {
-        name: 'HireFlow',
-        badge: 'ATS Platform',
-        route: '/(modules)/hireflow',
-        accentBg: 'bg-indigo-600',
-        accentBgLight: 'bg-indigo-500/15',
-        accentText: 'text-indigo-600',
-        dot: 'bg-indigo-500',
-        stats: [
-            { label: 'Active Jobs', value: '--' },
-            { label: 'Candidates', value: '--' },
-            { label: 'Interviews', value: '--' },
-        ],
-        description: 'Full-featured applicant tracking and recruitment management system.',
-    },
-    kabadx: {
-        name: 'KabadX',
-        badge: 'Scrap & Recycling',
-        route: '/(modules)/kabadx',
-        accentBg: 'bg-teal-600',
-        accentBgLight: 'bg-teal-500/15',
-        accentText: 'text-teal-600',
-        dot: 'bg-teal-500',
-        stats: [
-            { label: 'Scrap Pickups', value: '42' },
-            { label: 'Recycled Today', value: '1.2 Tons' },
-            { label: 'Active Collectors', value: '18' },
-        ],
-        description: 'Doorstep scrap pickup & eco-friendly recycling management for kabadi walas & households.',
-    },
-};
+const JOURNAL_STORAGE_KEY = 'devlomatix.farm_journal_entries';
 
-const widgetColors = {
-    konnectx: { label: 'KonnectX', color: '#0284c7' },
-    solarbright: { label: 'SolarBright', color: '#d97706' },
-    curexa: { label: 'Curexa', color: '#059669' },
-    crystalaura: { label: 'CrystalAura', color: '#9333ea' },
-    hireflow: { label: 'HireFlow', color: '#6366f1' },
-    kabadx: { label: 'KabadX', color: '#0d9488' },
-};
-
-const MODULE_COLORS = {
-    solarbright: '#d97706',
-    curexa: '#059669',
-    konnectx: '#0284c7',
-    crystalaura: '#9333ea',
-};
+const EMERGENCY_SYMPTOMS = [
+  { label: 'Stripe Rust', remedy: 'Belladonna 6X', icon: 'leaf-circle-outline', color: '#f59e0b' },
+  { label: 'Aphids / Jassids', remedy: 'Coccinella 6X', icon: 'bug-outline', color: '#ef4444' },
+  { label: 'Snails & Slugs', remedy: 'Helix Tosta 6X', icon: 'shield-alert-outline', color: '#10b981' },
+  { label: 'Blossom-End Rot', remedy: 'Ocymum 6X', icon: 'fruit-cherries', color: '#ec4899' },
+  { label: 'Pruning / Broken Limb', remedy: 'Arnica 6X', icon: 'bandage', color: '#06b6d4' },
+  { label: 'Sudden Frost / Cold', remedy: 'Aconitum 6X', icon: 'snowflake', color: '#8b5cf6' },
+];
 
 export default function HomeScreen() {
-    const router = useRouter();
-    const { palette } = useAppTheme();
-    const { widgets, toggleWidget, setAll } = useWidgets();
-    const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
-    const [showCustomize, setShowCustomize] = useState(false);
-    const [hireflowStats, setHireflowStats] = useState(null);
-    const [konnectxStats, setKonnectxStats] = useState(null);
+  const router = useRouter();
+  const { palette, isDark } = useAppTheme();
+  const { t } = useLanguage();
 
-    const scrollY = useRef(new Animated.Value(0)).current;
-    const enabledKeys = Object.keys(appMeta).filter((k) => widgets[k]);
-    const allEnabled = enabledKeys.length === Object.keys(widgets).length;
+  const [entries, setEntries] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        let mounted = true;
+  // Load journal entries from storage
+  const loadRecentEntries = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem(JOURNAL_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setEntries(Array.isArray(parsed) ? parsed : []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
-        async function fetchWidgetData() {
-            try {
-                const wsId = await resolveWorkspaceId();
-                if (wsId) {
-                    const res = await hireflowService.getSummary(wsId).catch(() => null);
-                    if (mounted && res?.data) {
-                        const s = res.data;
-                        setHireflowStats([
-                            { label: 'Active Jobs', value: String(s.activeJobs ?? s.stats?.[1]?.value ?? 0) },
-                            { label: 'Candidates', value: String(s.totalCandidates ?? s.stats?.[0]?.value ?? 0) },
-                            { label: 'Interviews', value: String(s.upcomingInterviews ?? s.interviews?.length ?? 0) },
-                        ]);
-                    }
-                }
-            } catch (e) {
-                // Silently handle unauthorized/network errors for widget background fetch
-            }
+  useEffect(() => {
+    loadRecentEntries();
+  }, [loadRecentEntries]);
 
-            try {
-                const session = await getSession();
-                const userId = session?.user?.userId || session?.user?.id;
-                const [camps, statsRes] = await Promise.all([
-                    campaignsService.getCampaigns(userId).catch(() => []),
-                    analyticsService.getStats(userId).catch(() => null)
-                ]);
-                if (mounted) {
-                    const campsList = Array.isArray(camps) ? camps : camps?.campaigns ?? [];
-                    const st = statsRes?.stats ?? statsRes;
-                    setKonnectxStats([
-                        { label: 'Total Campaigns', value: String(campsList.length) },
-                        { label: 'Messages Sent', value: String(st?.messages?.sent ?? 0) },
-                        { label: 'Active Contacts', value: String(st?.contacts?.total ?? 0) },
-                        { label: 'Approved Templates', value: String(st?.templates?.approved ?? 0) },
-                    ]);
-                }
-            } catch (e) {
-                console.error('Error fetching KonnectX widget data:', e);
-            }
-        }
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadRecentEntries();
+  };
 
-        fetchWidgetData();
-        return () => { mounted = false; };
-    }, []);
+  const activeCount = entries.filter((e) => e.status !== 'Resolved').length;
+  const resolvedCount = entries.filter((e) => e.status === 'Resolved').length;
+  const featuredCrops = CROPS_DATA.slice(0, 5);
 
-    return (
-        <AppScreen>
-            <View className="flex-1">
-                <UserStatusBar scrollY={scrollY} />
+  return (
+    <AppScreen>
+      <View className="flex-1 pb-16">
+        <UserStatusBar />
 
-                <Animated.ScrollView className="flex-1" showsVerticalScrollIndicator={false}
-                    onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
-                    scrollEventThrottle={16}>
-                    <View className="px-5 pb-44 pt-5">
-                        <View className={`mb-4 rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-1">
-                                    <Text className={`text-[12px] font-bold uppercase tracking-[1.8px] ${palette.accentText}`}>
-                                        DASHBOARD
-                                    </Text>
-                                    <Text className={`mt-2.5 text-[32px] font-bold leading-[38px] ${palette.text}`}>
-                                        Your team command center
-                                    </Text>
-                                    <Text className={`mt-2.5 text-[15px] leading-6 ${palette.textSoft}`}>
-                                        Overview of all active products, key metrics, and quick access to every module.
-                                    </Text>
-                                </View>
-                                <Pressable
-                                    onPress={() => setShowCustomize(true)}
-                                    className={`rounded-2xl p-3 ${palette.surfaceAlt}`}
-                                >
-                                    <Ionicons name="options-outline" size={22} color={palette.textColor} />
-                                </Pressable>
-                            </View>
-                        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 6, paddingBottom: 28 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#14b8a6" />
+          }>
+          {/* Farm Dashboard Hero Banner */}
+          <View
+            className="rounded-3xl border p-4 mb-3"
+            style={{
+              backgroundColor: palette.colors.card,
+              borderColor: palette.colors.border,
+            }}>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-2">
+                <View className="flex-row items-center gap-1.5">
+                  <MaterialCommunityIcons name="sprout" size={22} color="#10b981" />
+                  <Text className="text-[18px] font-bold" style={{ color: palette.colors.text }}>
+                    {t('welcomeBack')}
+                  </Text>
+                </View>
+                <Text className="mt-0.5 text-[12px] opacity-75" style={{ color: palette.colors.subtext }}>
+                  {t('dashboardSubtitle')}
+                </Text>
+              </View>
 
-                        {enabledKeys.length === 0 && (
-                            <View className={`mb-4 rounded-[24px] p-6 items-center ${palette.surface}`}>
-                                <Ionicons name="eye-off-outline" size={36} color={palette.textMutedColor} />
-                                <Text className={`mt-3 text-[16px] font-bold ${palette.text}`}>No widgets visible</Text>
-                                <Text className={`mt-1 text-[13px] text-center ${palette.textSoft}`}>
-                                    Tap the customize button above to show app widgets on your dashboard.
-                                </Text>
-                            </View>
-                        )}
-
-                        {/* <View className={`mb-4 rounded-[24px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
-                            <View className="mb-3 flex-row items-center justify-between">
-                                <View>
-                                    <Text className={`text-[12px] font-bold uppercase tracking-[1.8px] ${palette.accentText}`}>
-                                        NOTIFICATIONS
-                                    </Text>
-                                    <Text className={`mt-1 text-[16px] font-bold ${palette.text}`}>Recent activity</Text>
-                                </View>
-                                {unreadCount > 0 && (
-                                    <View className="items-center justify-center rounded-full bg-teal-600 px-2.5 py-0.5">
-                                        <Text className="text-[11px] font-bold text-white">{unreadCount} new</Text>
-                                    </View>
-                                )}
-                            </View>
-
-                            {notifications.length > 0 && (
-                                <View className="mb-3 flex-row gap-2">
-                                    {unreadCount > 0 && (
-                                        <Pressable
-                                            onPress={markAllAsRead}
-                                            className="flex-row items-center gap-1.5 rounded-full bg-teal-700/10 px-4 py-2"
-                                        >
-                                            <Ionicons name="checkmark-done" size={16} color="#0d9488" />
-                                            <Text className="text-[12px] font-bold text-teal-700">Mark all read</Text>
-                                        </Pressable>
-                                    )}
-                                    <Pressable
-                                        onPress={clearAll}
-                                        className="flex-row items-center gap-1.5 rounded-full bg-rose-500/10 px-4 py-2"
-                                    >
-                                        <Ionicons name="trash-outline" size={16} color="#e11d48" />
-                                        <Text className="text-[12px] font-bold text-rose-600">Clear all</Text>
-                                    </Pressable>
-                                </View>
-                            )}
-
-                            {notifications.length > 0 ? (
-                                notifications.map((item) => {
-                                    const color = MODULE_COLORS[item.module] || item.color || '#6b7280';
-                                    return (
-                                        <Pressable
-                                            key={item.id}
-                                            onPress={() => markAsRead(item.id)}
-                                            className={`mb-2 flex-row items-center gap-3 rounded-[16px] p-3 ${palette.surfaceInset} ${!item.read ? 'border-l-4' : ''}`}
-                                            style={!item.read ? { borderLeftColor: color } : undefined}
-                                        >
-                                            <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${color}20` }}>
-                                                <Ionicons name={item.icon || 'notifications'} size={14} color={color} />
-                                            </View>
-                                            <View className="flex-1">
-                                                <View className="flex-row items-center gap-2">
-                                                    <Text className={`flex-1 text-[13px] font-semibold ${palette.text}`}>{item.title}</Text>
-                                                    {!item.read && <View className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />}
-                                                </View>
-                                                {item.description ? (
-                                                    <Text className={`text-[11px] ${palette.textMuted}`}>{item.description}</Text>
-                                                ) : null}
-                                                <Text className={`mt-0.5 text-[11px] ${palette.textMuted}`}>
-                                                    {item.module ? `${item.module.charAt(0).toUpperCase() + item.module.slice(1)} · ` : ''}
-                                                    {formatRelativeTime(item.time)}
-                                                </Text>
-                                            </View>
-                                        </Pressable>
-                                    );
-                                })
-                            ) : (
-                                <View className={`rounded-[16px] p-6 items-center ${palette.surfaceInset}`}>
-                                    <Ionicons name="notifications-off-outline" size={28} color={palette.textMutedColor} />
-                                    <Text className={`mt-3 text-[14px] font-bold ${palette.text}`}>All caught up</Text>
-                                    <Text className={`mt-1 text-[12px] text-center ${palette.textSoft}`}>
-                                        No new notifications. Activity from your apps will appear here.
-                                    </Text>
-                                </View>
-                            )}
-                        </View> */}
-
-                        {enabledKeys.map((key) => {
-                            const app = appMeta[key];
-                            if (!app) return null;
-
-                            let statsToDisplay = app.stats;
-                            if (key === 'hireflow' && hireflowStats) statsToDisplay = hireflowStats;
-                            if (key === 'konnectx' && konnectxStats) statsToDisplay = konnectxStats;
-
-                            const onPress = async () => {
-                                if (key === 'hireflow') {
-                                    const workspaceId = await resolveWorkspaceId();
-                                    if (workspaceId) {
-                                        router.push({ pathname: app.route, params: { workspaceId } });
-                                    } else {
-                                        router.push(app.route);
-                                    }
-                                } else {
-                                    router.push(app.route);
-                                }
-                            };
-
-                            return (
-                                <Pressable
-                                    key={key}
-                                    className={`mb-4 rounded-[24px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}
-                                    onPress={onPress}
-                                >
-                                    <View className="mb-3.5 flex-row items-center justify-between">
-                                        <View className="flex-row items-center gap-2.5">
-                                            <View className={`h-2.5 w-2.5 rounded-full ${app.dot}`} />
-                                            <Text className={`text-[18px] font-bold ${palette.text}`}>{app.name}</Text>
-                                        </View>
-                                        <View className={`rounded-full px-3 py-1.5 ${app.accentBg}`}>
-                                            <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                                                {app.badge}
-                                            </Text>
-                                        </View>
-                                    </View>
-
-                                    <View className="mb-3 flex-row flex-wrap gap-2">
-                                        {statsToDisplay.map((stat) => (
-                                            <View
-                                                key={stat.label}
-                                                className={`flex-1 rounded-[16px] p-3 ${app.accentBgLight}`}
-                                            >
-                                                <Text className={`text-[18px] font-bold ${palette.text}`}>{stat.value}</Text>
-                                                <Text className={`text-[11px] ${palette.textMuted}`}>{stat.label}</Text>
-                                            </View>
-                                        ))}
-                                    </View>
-
-                                    <Text className={`text-[13px] leading-5 ${palette.textSoft}`}>{app.description}</Text>
-                                </Pressable>
-                            );
-                        })}
-                    </View>
-                </Animated.ScrollView>
-
-                {/* Customize Modal */}
-                <Modal visible={showCustomize} transparent animationType="slide">
-                    <View className="flex-1 justify-end bg-black/50">
-                        <View className={`rounded-t-[32px] p-6 ${palette.surface}`}>
-                            <View className="mb-4 flex-row items-center justify-between">
-                                <Text className={`text-[20px] font-bold ${palette.text}`}>Customize Widgets</Text>
-                                <Pressable onPress={() => setShowCustomize(false)}>
-                                    <Ionicons name="close-circle" size={26} color={palette.textMutedColor} />
-                                </Pressable>
-                            </View>
-
-                            <Text className={`mb-4 text-[13px] ${palette.textSoft}`}>
-                                Choose which app widgets appear on your home screen.
-                            </Text>
-
-                            <View className="mb-4 flex-row gap-2">
-                                <Pressable
-                                    onPress={() => setAll(!allEnabled)}
-                                    className={`rounded-xl px-4 py-2 bg-indigo-600`}
-                                >
-                                    <Text className="text-[12px] font-bold text-white">
-                                        {allEnabled ? 'Hide All' : 'Show All'}
-                                    </Text>
-                                </Pressable>
-                            </View>
-
-                            {Object.entries(widgetColors).map(([key, meta]) => (
-                                <View key={key} className={`mb-2 flex-row items-center justify-between rounded-2xl p-4 ${palette.surfaceAlt}`}>
-                                    <View className="flex-row items-center gap-3">
-                                        <View className="h-3 w-3 rounded-full" style={{ backgroundColor: meta.color }} />
-                                        <Text className={`text-[15px] font-semibold ${palette.text}`}>{meta.label}</Text>
-                                    </View>
-                                    <Switch
-                                        value={widgets[key]}
-                                        onValueChange={() => toggleWidget(key)}
-                                        trackColor={{ false: '#d1d5db', true: meta.color }}
-                                    />
-                                </View>
-                            ))}
-
-                            <Pressable
-                                onPress={() => setShowCustomize(false)}
-                                className="mt-4 rounded-2xl bg-indigo-600 py-3.5 items-center"
-                            >
-                                <Text className="text-[14px] font-bold text-white">Done</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </Modal>
+              <View className="rounded-2xl bg-emerald-500/15 px-3 py-1.5 border border-emerald-500/25">
+                <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  {t('activeSeason')}
+                </Text>
+              </View>
             </View>
-        </AppScreen>
-    );
-}
 
-function formatRelativeTime(isoString) {
-    if (!isoString) return '';
-    const now = Date.now();
-    const diff = now - new Date(isoString).getTime();
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+            {/* Quick Metrics Bar */}
+            <View className="mt-3 flex-row gap-2">
+              <View className="flex-1 rounded-2xl bg-teal-500/10 p-2.5 border border-teal-500/20">
+                <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                  {t('totalCrops')}
+                </Text>
+                <Text className="mt-0.5 text-[17px] font-bold text-teal-600 dark:text-teal-400">
+                  {CROPS_DATA.length}
+                </Text>
+              </View>
 
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins} min ago`;
-    if (hours < 24) return `${hours} hr ago`;
-    if (days < 7) return `${days} day ago`;
-    return new Date(isoString).toLocaleDateString();
+              <View className="flex-1 rounded-2xl bg-rose-500/10 p-2.5 border border-rose-500/20">
+                <Text className="text-[10.5px] text-rose-500 font-medium">
+                  {t('activeTreatments')}
+                </Text>
+                <Text className="mt-0.5 text-[17px] font-bold text-rose-500">
+                  {activeCount}
+                </Text>
+              </View>
+
+              <View className="flex-1 rounded-2xl bg-emerald-500/10 p-2.5 border border-emerald-500/20">
+                <Text className="text-[10.5px] text-emerald-500 font-medium">
+                  {t('healthyPlots')}
+                </Text>
+                <Text className="mt-0.5 text-[17px] font-bold text-emerald-500">
+                  {resolvedCount}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Seasonal Advisory Callout */}
+          <View
+            className="mb-3.5 flex-row items-center gap-2.5 rounded-2xl border p-3"
+            style={{
+              backgroundColor: isDark ? '#0f291e' : '#ecfdf5',
+              borderColor: '#10b98133',
+            }}>
+            <MaterialCommunityIcons name="weather-partly-cloudy" size={24} color="#10b981" />
+            <View className="flex-1">
+              <Text
+                className="text-[12px] font-bold"
+                style={{ color: isDark ? '#6ee7b7' : '#065f46' }}>
+                {t('seasonalAdvisory')}
+              </Text>
+              <Text
+                className="mt-0.5 text-[11px] leading-4"
+                style={{ color: isDark ? '#a7f3d0' : '#047857' }}>
+                {t('bestSprayTime')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Quick Hub Navigation Cards */}
+          <Text className="mb-2 text-[13px] font-bold opacity-80" style={{ color: palette.colors.text }}>
+            {t('navigationHub')}
+          </Text>
+          <View className="mb-3.5 flex-row flex-wrap gap-2">
+            {/* 1. Crops Guide */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/crop')}
+              className="flex-1 min-w-[46%] rounded-2xl border p-3 shadow-sm"
+              style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+              <View className="flex-row items-center justify-between">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15">
+                  <MaterialCommunityIcons name="sprout" size={18} color="#10b981" />
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={palette.colors.subtext} />
+              </View>
+              <Text className="mt-2 text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                {t('cropGuide')}
+              </Text>
+              <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                {t('cultivationSubtitle')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 2. Field Journal */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/journal')}
+              className="flex-1 min-w-[46%] rounded-2xl border p-3 shadow-sm"
+              style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+              <View className="flex-row items-center justify-between">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-teal-500/15">
+                  <MaterialCommunityIcons name="notebook" size={18} color="#14b8a6" />
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={palette.colors.subtext} />
+              </View>
+              <Text className="mt-2 text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                {t('myJournal')}
+              </Text>
+              <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                {t('activeTreatmentsSubtitle')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 3. Video Tutorials */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/videos')}
+              className="flex-1 min-w-[46%] rounded-2xl border p-3 shadow-sm"
+              style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+              <View className="flex-row items-center justify-between">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-500/15">
+                  <Ionicons name="play-circle" size={18} color="#a855f7" />
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={palette.colors.subtext} />
+              </View>
+              <Text className="mt-2 text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                {t('videos')}
+              </Text>
+              <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                {t('videoSubtitle')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 4. Diseases & Repertory */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/journal')}
+              className="flex-1 min-w-[46%] rounded-2xl border p-3 shadow-sm"
+              style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+              <View className="flex-row items-center justify-between">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15">
+                  <MaterialCommunityIcons name="book-open-page-variant" size={18} color="#f59e0b" />
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={palette.colors.subtext} />
+              </View>
+              <Text className="mt-2 text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                {t('repertoryBook')}
+              </Text>
+              <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                {t('repertorySubtitle')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 5. Materia Medica */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/journal')}
+              className="flex-1 min-w-[46%] rounded-2xl border p-3 shadow-sm"
+              style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+              <View className="flex-row items-center justify-between">
+                <View className="h-8 w-8 items-center justify-center rounded-xl bg-rose-500/15">
+                  <MaterialCommunityIcons name="pill" size={18} color="#ef4444" />
+                </View>
+                <Ionicons name="arrow-forward" size={14} color={palette.colors.subtext} />
+              </View>
+              <Text className="mt-2 text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                {t('materiaEncyclopedia')}
+              </Text>
+              <Text className="text-[10.5px] opacity-70" style={{ color: palette.colors.subtext }}>
+                {t('materiaSubtitle')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Emergency Symptom Diagnostic Quick Bar */}
+          <View
+            className="mb-3.5 rounded-2xl border p-3.5"
+            style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-1.5">
+                <Ionicons name="flash-outline" size={16} color="#f59e0b" />
+                <Text className="text-[13px] font-bold" style={{ color: palette.colors.text }}>
+                  {t('quickRemedyFinder')}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/journal')}>
+                <Text className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                  {t('openFinder')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row flex-wrap gap-1.5">
+              {EMERGENCY_SYMPTOMS.map((sym) => (
+                <TouchableOpacity
+                  key={sym.label}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/(tabs)/journal')}
+                  className="flex-row items-center gap-1 rounded-xl bg-slate-500/5 px-2.5 py-1.5 border border-slate-500/15">
+                  <MaterialCommunityIcons name={sym.icon} size={14} color={sym.color} />
+                  <Text className="text-[11px] font-semibold" style={{ color: palette.colors.text }}>
+                    {sym.label}: <Text className="font-bold text-teal-600 dark:text-teal-400">{sym.remedy}</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Featured Seasonal Crops */}
+          <View className="mb-3.5">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-[13px] font-bold opacity-80" style={{ color: palette.colors.text }}>
+                {t('featuredCrops')}
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/crop')}>
+                <Text className="text-[11.5px] font-bold text-teal-600 dark:text-teal-400">
+                  {t('viewAll')} ({CROPS_DATA.length}) →
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 6 }}
+              className="py-0.5">
+              {featuredCrops.map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  activeOpacity={0.85}
+                  onPress={() => router.push('/(tabs)/crop')}
+                  className="w-44 mr-3 rounded-2xl border p-3"
+                  style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-[14px] font-bold" style={{ color: palette.colors.text }}>
+                      {t(c.id) !== c.id ? t(c.id) : c.name}
+                    </Text>
+                    <View className="rounded-full bg-teal-500/15 px-1.5 py-0.5">
+                      <Text className="text-[9.5px] font-bold text-teal-600 dark:text-teal-400">
+                        {c.season.split(' ')[0]}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text className="mt-0.5 text-[11px] opacity-70" style={{ color: palette.colors.subtext }}>
+                    {c.botanicalName}
+                  </Text>
+
+                  <View className="mt-2 rounded-xl bg-slate-500/5 p-1.5">
+                    <Text className="text-[10px] opacity-60" style={{ color: palette.colors.subtext }}>
+                      🌱 {t('duration')}: {c.duration}
+                    </Text>
+                    <Text className="mt-0.5 text-[10.5px] font-medium text-emerald-600 dark:text-emerald-400" numberOfLines={1}>
+                      💊 {c.homeopathyPlan.seedTreatment.split('(')[0]}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Recent Active Field Treatments */}
+          <View className="mb-3.5">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-[13px] font-bold opacity-80" style={{ color: palette.colors.text }}>
+                {t('recentActivity')}
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/journal')}>
+                <Text className="text-[11.5px] font-bold text-teal-600 dark:text-teal-400">
+                  {t('myJournal')} →
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {entries.length === 0 ? (
+              <View
+                className="items-center justify-center rounded-2xl border p-4"
+                style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+                <MaterialCommunityIcons name="notebook-outline" size={28} color={palette.colors.subtext} />
+                <Text className="mt-1 text-[12px] opacity-60 text-center" style={{ color: palette.colors.text }}>
+                  {t('noRecentTreatments')}
+                </Text>
+              </View>
+            ) : (
+              entries.slice(0, 3).map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => router.push('/(tabs)/journal')}
+                  className="mb-2 rounded-2xl border p-3"
+                  style={{ backgroundColor: palette.colors.card, borderColor: palette.colors.border }}>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-[13.5px] font-bold" style={{ color: palette.colors.text }}>
+                      {item.crop}
+                    </Text>
+                    <View
+                      className={`rounded-full px-2 py-0.5 ${
+                        item.status === 'Resolved'
+                          ? 'bg-emerald-500/15 text-emerald-500'
+                          : 'bg-rose-500/15 text-rose-500'
+                      }`}>
+                      <Text
+                        className={`text-[10px] font-bold ${
+                          item.status === 'Resolved' ? 'text-emerald-500' : 'text-rose-500'
+                        }`}>
+                        {item.status}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text className="mt-1 text-[11.5px] leading-4 opacity-85" numberOfLines={2} style={{ color: palette.colors.text }}>
+                    {item.symptoms}
+                  </Text>
+
+                  <View className="mt-1.5 flex-row items-center justify-between">
+                    <Text className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                      💊 {item.remedy} ({item.potency})
+                    </Text>
+                    <Text className="text-[10px] opacity-50" style={{ color: palette.colors.subtext }}>
+                      {item.date}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+
+          {/* Book Wisdom Banner */}
+          <View
+            className="rounded-2xl border p-3.5 border-teal-500/30"
+            style={{ backgroundColor: palette.colors.card }}>
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <MaterialCommunityIcons name="book-open-variant" size={18} color="#14b8a6" />
+              <Text className="text-[13px] font-bold text-teal-600 dark:text-teal-400">
+                {BOOK_METADATA.title}
+              </Text>
+            </View>
+            <Text className="text-[11.5px] leading-4 opacity-85" style={{ color: palette.colors.text }}>
+              "{BOOK_PRINCIPLES[0].description}"
+            </Text>
+            <Text className="mt-1.5 text-[10.5px] font-bold opacity-60 text-right" style={{ color: palette.colors.subtext }}>
+              — {BOOK_METADATA.author}
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </AppScreen>
+  );
 }

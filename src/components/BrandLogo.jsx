@@ -1,8 +1,12 @@
 import { Image } from 'react-native';
 
+<<<<<<< HEAD
 import darkLogo from '../assets/images/logos/dark_logo.png';
 import lightLogo from '../assets/images/logos/light_logo.png';
 import { useAppTheme } from '~/theme/AppTheme';
+=======
+import logo from '../assets/images/logos/krishimitra-logo.png';
+>>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
 
 const variantDimensions = {
   auth: { width: 220, height: 32 },
@@ -29,8 +33,22 @@ export default function BrandLogo({
     isDark = false;
   }
 
+<<<<<<< HEAD
   const activeTheme = theme ?? (isDark ? 'dark' : 'light');
   const logoSource = activeTheme === 'dark' ? darkLogo : lightLogo;
+=======
+  return (
+    <View
+      className="items-center justify-center bg-white shadow-lg shadow-slate-900/10"
+      style={variantShellStyles[variant]}>
+      <Image
+        source={logo}
+        className="shrink-0"
+        style={variantImageStyles[variant]}
+        resizeMode="contain" />
+
+    </View>);
+>>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
 
   const defaultDimensions = variantDimensions[variant] ?? variantDimensions.auth;
   const targetWidth = width ?? size ?? defaultDimensions.width;

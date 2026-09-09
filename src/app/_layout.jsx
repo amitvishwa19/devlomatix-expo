@@ -15,12 +15,12 @@ import "react-native-reanimated";
 import { setNotificationHandler } from "expo-notifications";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "~/components/CustomToast";
+import { LanguageProvider } from "~/contexts/LanguageContext";
 import { NotificationProvider } from "~/contexts/NotificationContext";
 import { NotificationStoreProvider } from "~/contexts/NotificationStore";
 import { WidgetProvider } from "~/contexts/WidgetContext";
-import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
-
 import { UniversalLoaderProvider } from "~/providers/UniversalLoaderProvider";
+import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
 setNotificationHandler({
     handleNotification: async () => ({
@@ -64,9 +64,11 @@ export default function RootLayout() {
 
     return (
         <AppThemeProvider>
-            <UniversalLoaderProvider>
-                <RootLayoutNav />
-            </UniversalLoaderProvider>
+            <LanguageProvider>
+                <UniversalLoaderProvider>
+                    <RootLayoutNav />
+                </UniversalLoaderProvider>
+            </LanguageProvider>
         </AppThemeProvider>
     );
 }

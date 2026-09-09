@@ -1,5 +1,6 @@
-const DEV_API_URL = "https://dev.devlomatix.com/api/v5";
+//const DEV_API_URL = "https://dev.devlomatix.com/api/v5";
 const PROD_API_URL = "https://devlomatix.com/api/v5";
+const DEV_API_URL = "https://devlomatix.com/api/v5";
 
 const CUREXA_PROD_API_URL = "https://curexa.devlomatix.com/api/v5";
 
@@ -62,13 +63,7 @@ export const apiUrls = {
     );
   },
 
-  //Quotation
-  quotation: baseApi + "/misc/quotation",
-  quotationById: baseApi + "/misc/quotation",
 
-  //Lead Gen
-  leadgen: baseApi + "/misc/lead-gen",
-  leadgenSave: baseApi + "/misc/lead-gen/save",
 
   //Access Management
   accessManagement: baseApi + "/auth/access-management", // GET
