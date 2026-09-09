@@ -53,8 +53,8 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 - Used via `useAppTheme()` hook
 
 ### EAS Build
-- projectId: `d3465c70-9118-4cfd-939a-ab642c3620ae`, owner: `devlomatix`
-- Profiles: `development` (dev client, internal), `preview` (internal), `production`
+- projectId: `8f5ef678-be7b-4d55-b0a8-90096d1d6a77`, owner: `devlomatixsolutions`
+- Profiles: `development` (dev client APK, internal), `preview` (standalone APK, internal), `production`
 
 ### Patches
 - `patches/@react-native-google-signin+google-signin+16.1.4.patch` — applied via `postinstall` script

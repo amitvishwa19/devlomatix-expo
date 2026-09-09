@@ -7,7 +7,11 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
+        "APP_VARIANT": "development",
         "EXPO_PUBLIC_BASE_API": "https://dev.devlomatix.com/api/v5"
       }
     },
@@ -17,11 +21,13 @@
         "buildType": "apk"
       },
       "env": {
+        "APP_VARIANT": "preview",
         "EXPO_PUBLIC_BASE_API": "https://devlomatix.com/api/v5"
       }
     },
     "production": {
       "env": {
+        "APP_VARIANT": "production",
         "EXPO_PUBLIC_BASE_API": "https://devlomatix.com/api/v5"
       }
     }

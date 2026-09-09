@@ -1,5 +1,5 @@
 {
-  "name": "krishimitra",
+  "name": "devlomatix-expo",
   "main": "expo-router/entry",
   "version": "2.0.0",
   "scripts": {
@@ -59,11 +59,7 @@
     "typescript": "~5.9.2"
   },
   "overrides": {
-<<<<<<< HEAD
     "lightningcss": "^1.33.0"
-=======
-    "lightningcss": "$lightningcss"
->>>>>>> 4d55017624c67ee4f061413f722c5826a7077a6e
   },
   "private": true
 }
