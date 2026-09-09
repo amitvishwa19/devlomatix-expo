@@ -8,6 +8,7 @@ import {
 
 import AppScreen from '~/components/AppScreen';
 import BrandLogo from '~/components/BrandLogo';
+import { useAppTheme } from '~/theme/AppTheme';
 
 const authRouteCopy = {
   login: {
@@ -35,6 +36,7 @@ const authRouteCopy = {
 };
 
 export default function AuthLayout() {
+  const { palette } = useAppTheme();
   const segments = useSegments();
   const routeKey = segments[segments.length - 1];
   const copy = authRouteCopy[routeKey] ?? authRouteCopy.login;
@@ -51,23 +53,22 @@ export default function AuthLayout() {
           <View className="flex-1">
             <View className="min-h-full justify-center px-6 py-7">
               <View className="mb-6 items-center">
-                
                 <BrandLogo size={200} />
-                <Text className="mt-5 text-center text-3xl font-bold text-slate-900">
+                <Text className={`mt-5 text-center text-3xl font-bold ${palette.text}`}>
                   {copy.title}
                 </Text>
-                <Text className="mt-2.5 max-w-80 text-center text-[15px] leading-6 text-slate-600">
+                <Text className={`mt-2.5 max-w-80 text-center text-[15px] leading-6 ${palette.textSoft}`}>
                   {copy.subtitle}
                 </Text>
               </View>
 
-              <View className="rounded-[28px] p-5 shadow-xl shadow-slate-900/10">
+              <View className={`rounded-[28px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}>
                 <Slot />
               </View>
             </View>
           </View>
         </View>
       </KeyboardAvoidingView>
-    </AppScreen>);
-
+    </AppScreen>
+  );
 }

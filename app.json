@@ -2,7 +2,7 @@
   "expo": {
     "name": "Devlomatix",
     "slug": "devlomatix",
-    "version": "1.0.0",
+    "version": "4.0.0",
     "orientation": "default",
     "icon": "./src/assets/images/app-icon.png",
     "scheme": "devlomatix",
@@ -66,24 +66,18 @@
           "isAndroidBackgroundLocationEnabled": "Allow App to use your location in the background"
         }
       ],
-
       "@react-native-firebase/messaging",
       "@react-native-firebase/app"
     ],
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./src/assets/images/favicon.png"
-    },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c0b6af7f-b1a3-4846-a68a-09987207d53d"
+        "projectId": "c31305dc-b6b6-4e27-99d1-69cbb565f7f1"
       }
     },
-    "owner": "devlomatix-solutions"
+    "owner": "devlomatix"
   }
 }

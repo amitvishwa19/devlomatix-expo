@@ -1,48 +1,47 @@
-import { Image, View } from 'react-native';
+import { Image } from 'react-native';
 
-import logo from '../assets/images/logos/devlomatix_logo.png';
+import darkLogo from '../assets/images/logos/dark_logo.png';
+import lightLogo from '../assets/images/logos/light_logo.png';
+import { useAppTheme } from '~/theme/AppTheme';
 
-
-
-
-
-
-
-
-const variantShellStyles = {
-  auth: { width: 156, height: 156, borderRadius: 44 },
-  home: { width: 72, height: 72, borderRadius: 22 },
-  profile: { width: 72, height: 72, borderRadius: 22 }
+const variantDimensions = {
+  auth: { width: 220, height: 32 },
+  home: { width: 140, height: 22 },
+  profile: { width: 140, height: 22 },
+  compact: { width: 100, height: 16 }
 };
 
-const variantImageStyles = {
-  auth: { width: 68, height: 68 },
-  home: { width: 38, height: 38 },
-  profile: { width: 38, height: 38 }
-};
-
-export default function BrandLogo({ size, variant = 'auth' }) {
-  if (size !== undefined) {
-    return (
-      <Image
-        source={logo}
-        className="shrink-0"
-        style={{ width: size, height: size }}
-        resizeMode="contain" />);
-
-
+export default function BrandLogo({
+  size,
+  width,
+  height,
+  variant = 'auth',
+  theme,
+  style,
+  className = '',
+  resizeMode = 'contain'
+}) {
+  let isDark = false;
+  try {
+    const themeContext = useAppTheme();
+    isDark = themeContext?.isDark ?? false;
+  } catch {
+    isDark = false;
   }
 
-  return (
-    <View
-      className="items-center justify-center bg-white shadow-lg shadow-slate-900/10"
-      style={variantShellStyles[variant]}>
-      <Image
-        source={logo}
-        className="shrink-0"
-        style={variantImageStyles[variant]}
-        resizeMode="contain" />
-      
-    </View>);
+  const activeTheme = theme ?? (isDark ? 'dark' : 'light');
+  const logoSource = activeTheme === 'dark' ? darkLogo : lightLogo;
 
+  const defaultDimensions = variantDimensions[variant] ?? variantDimensions.auth;
+  const targetWidth = width ?? size ?? defaultDimensions.width;
+  const targetHeight = height ?? (size !== undefined || width !== undefined ? Math.round(targetWidth * (100 / 800)) : defaultDimensions.height);
+
+  return (
+    <Image
+      source={logoSource}
+      className={`shrink-0 ${className}`}
+      style={[{ width: targetWidth, height: targetHeight }, style]}
+      resizeMode={resizeMode}
+    />
+  );
 }
