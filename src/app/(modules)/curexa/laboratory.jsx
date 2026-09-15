@@ -1,295 +1,228 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
 import CurexaHeader from './_components/CurexaHeader';
-import { createLabOrder, getLaboratoryOrders, updateLabOrder } from '~/services/curexa';
-
-const initialLabRequests = [
-  { id: 'LAB-501', patient: 'Robert Fox', testName: 'Comprehensive Blood Panel (CBC, Lipid, KFT)', doctor: 'Dr. Sarah Jenkins', date: '2026-08-02', status: 'Pending Sample', result: null },
-  { id: 'LAB-502', patient: 'Eleanor Vance', testName: 'Chest X-Ray & Arterial Blood Gas', doctor: 'Dr. Alan Vance', date: '2026-08-01', status: 'In Analysis', result: null },
-  { id: 'LAB-503', patient: 'Marcus Brody', testName: 'Right Knee Joint MRI Scan', doctor: 'Dr. Emily Watson', date: '2026-07-31', status: 'Completed', result: 'Moderate osteoarthritis. Intact cruciate ligaments.' },
-  { id: 'LAB-504', patient: 'Clara Oswald', testName: 'Stool Culture & Electrolyte Panel', doctor: 'Dr. Alan Vance', date: '2026-07-30', status: 'Completed', result: 'Normal bacterial flora. Electrolytes within normal limits.' },
-];
+import { CreateLabOrderModal } from './_components/CurexaModals';
 
 export default function CurexaLaboratoryScreen() {
   const { palette } = useAppTheme();
-  const [labRequests, setLabRequests] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedLab, setSelectedLab] = useState(null);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+  const { labOrders, setLabOrders, addLabOrderLocally } = useCurexa();
 
-  // Form states
-  const [resultText, setResultText] = useState('');
-  const [newPatient, setNewPatient] = useState('');
-  const [newTest, setNewTest] = useState('Full Lipid Profile');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [resultNotes, setResultNotes] = useState('');
 
-  useEffect(() => {
-    async function loadLabOrders() {
-      const res = await getLaboratoryOrders();
-      if (res && res.labOrders) {
-        const formatted = res.labOrders.map((o) => ({
-          id: o.id.slice(-4),
-          patient: o.patient?.displayName || 'Patient',
-          testName: o.notes || 'Diagnostic Lab Order',
-          doctor: o.requester?.displayName || 'Dr. Sarah Jenkins',
-          date: o.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-          status: o.status === 'COMPLETED' ? 'Completed' : o.status === 'SAMPLE_COLLECTED' ? 'In Analysis' : 'Pending Sample',
-          result: o.results?.[0]?.value || null,
-        }));
-        setLabRequests(formatted);
-      } else {
-        setLabRequests([]);
-      }
-    }
-    loadLabOrders();
-  }, []);
+  const statuses = ['ALL', 'PENDING_COLLECTION', 'IN_PROCESSING', 'COMPLETED'];
 
-  const filteredRequests = useMemo(() => {
-    return labRequests.filter((r) => statusFilter === 'All' || r.status === statusFilter);
-  }, [labRequests, statusFilter]);
+  const filteredOrders = useMemo(() => {
+    return labOrders.filter((o) => {
+      return selectedStatus === 'ALL' || o.status === selectedStatus;
+    });
+  }, [labOrders, selectedStatus]);
 
-  const handleUpdateStatus = async (id, nextStatus) => {
-    setLabRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: nextStatus } : r))
-    );
-    const apiStatus = nextStatus === 'In Analysis' ? 'SAMPLE_COLLECTED' : nextStatus === 'Completed' ? 'COMPLETED' : 'ORDERED';
-    await updateLabOrder({ orderId: id, status: apiStatus });
-  };
-
-  const handleSaveResult = async () => {
-    if (!selectedLab || !resultText.trim()) return;
-    setLabRequests((prev) =>
-      prev.map((r) =>
-        r.id === selectedLab.id
-          ? { ...r, status: 'Completed', result: resultText }
-          : r
+  const updateOrderStatus = (id, newStatus, results = null) => {
+    setLabOrders((prev) =>
+      prev.map((o) =>
+        o.id === id
+          ? {
+              ...o,
+              status: newStatus,
+              resultsReady: newStatus === 'COMPLETED',
+              resultNotes: results || o.resultNotes || 'Values within normal physiological reference ranges.',
+            }
+          : o
       )
     );
-    await updateLabOrder({ orderId: selectedLab.id, status: 'COMPLETED', testName: selectedLab.testName, resultText });
-    setResultText('');
-    setShowResultModal(false);
-    setSelectedLab(null);
-  };
-
-
-  const handleCreateRequest = () => {
-    if (!newPatient.trim()) return;
-    const req = {
-      id: `LAB-${Date.now().toString().slice(-3)}`,
-      patient: newPatient,
-      testName: newTest,
-      doctor: 'Dr. Sarah Jenkins',
-      date: new Date().toISOString().split('T')[0],
-      status: 'Pending Sample',
-      result: null,
-    };
-    setLabRequests((prev) => [req, ...prev]);
-    setNewPatient('');
-    setShowNewRequestModal(false);
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Pending Sample':
-        return { bg: 'bg-amber-500/20', text: 'text-amber-600' };
-      case 'In Analysis':
-        return { bg: 'bg-sky-500/20', text: 'text-sky-600' };
-      case 'Completed':
-        return { bg: 'bg-emerald-500/20', text: 'text-emerald-600' };
-      default:
-        return { bg: 'bg-amber-500/20', text: 'text-amber-600' };
-    }
+    setSelectedOrder(null);
   };
 
   return (
     <AppScreen>
       <CurexaHeader
-        title="Diagnostics & Lab"
-        showBack={true}
+        title="Diagnostics & Lab Tests"
+        subtitle={`${filteredOrders.length} Diagnostic Orders`}
+        showBack
         rightAction={
           <Pressable
-            onPress={() => setShowNewRequestModal(true)}
-            className="flex-row items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2"
+            onPress={() => setShowOrderModal(true)}
+            className="flex-row items-center gap-1 rounded-[12px] bg-cyan-600 px-2.5 py-1.5"
           >
-            <Ionicons name="flask" size={16} color="#ffffff" />
+            <Ionicons name="add" size={15} color="#ffffff" />
             <Text className="text-[11px] font-bold text-white">Order Test</Text>
           </Pressable>
         }
       />
-      <View className="flex-1 px-4 pt-3 pb-4">
 
-        {/* Status Filter Tabs */}
-        <View className="mb-3 flex-row gap-1.5">
-          {['All', 'Pending Sample', 'In Analysis', 'Completed'].map((st) => (
-            <Pressable
-              key={st}
-              onPress={() => setStatusFilter(st)}
-              className={`rounded-full px-3.5 py-1.5 ${
-                statusFilter === st ? 'bg-emerald-600' : palette.surfaceInset
-              }`}
-            >
-              <Text
-                className={`text-[11px] font-semibold ${
-                  statusFilter === st ? 'text-white' : palette.textMuted
+      <View className="flex-1 px-3 pt-2">
+        {/* Status Filter */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2 max-h-8">
+          <View className="flex-row gap-1.5">
+            {statuses.map((st) => (
+              <Pressable
+                key={st}
+                onPress={() => setSelectedStatus(st)}
+                className={`rounded-[10px] px-2.5 py-1 ${
+                  selectedStatus === st ? 'bg-cyan-600' : palette.surface
                 }`}
               >
-                {st}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+                <Text
+                  className={`text-[10px] font-semibold ${
+                    selectedStatus === st ? 'text-white font-bold' : palette.text
+                  }`}
+                >
+                  {st}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
 
-        {/* Lab Requests List */}
-        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-          <View className="gap-2.5 pb-8">
-            {filteredRequests.map((req) => {
-              const badge = getStatusBadge(req.status);
-              return (
-                <View key={req.id} className={`rounded-[22px] p-4 shadow-sm ${palette.surface}`}>
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2">
-                      <Text className={`text-[16px] font-bold ${palette.text}`}>{req.patient}</Text>
-                      <Text className={`text-[11px] ${palette.textMuted}`}>#{req.id}</Text>
+        {/* Orders List */}
+        <ScrollView showsVerticalScrollIndicator={false} className="flex-1 pb-24">
+          <View className="gap-2">
+            {filteredOrders.map((order) => (
+              <View
+                key={order.id}
+                className={`rounded-[16px] p-3 shadow-sm ${palette.surface}`}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-row items-center gap-2.5">
+                    <View className="h-9 w-9 items-center justify-center rounded-[12px] bg-cyan-500/15">
+                      <Ionicons name="flask" size={17} color="#06b6d4" />
                     </View>
-                    <View className={`rounded-full px-2.5 py-0.5 ${badge.bg}`}>
-                      <Text className={`text-[10px] font-bold ${badge.text}`}>{req.status}</Text>
+                    <View>
+                      <View className="flex-row items-center gap-1.5">
+                        <Text className={`text-[13px] font-bold ${palette.text}`}>
+                          {order.patientName}
+                        </Text>
+                        <View className="rounded bg-cyan-500/15 px-1 py-0.2">
+                          <Text className="text-[9px] font-bold text-cyan-700">{order.orderNumber}</Text>
+                        </View>
+                      </View>
+                      <Text className={`text-[10px] ${palette.textMuted}`}>
+                        By {order.doctorName} • {order.sampleType || 'Whole Blood'}
+                      </Text>
                     </View>
                   </View>
 
-                  <Text className={`mt-1 text-[13px] font-semibold text-emerald-600`}>
-                    {req.testName}
-                  </Text>
-                  <Text className={`mt-0.5 text-[11px] ${palette.textSoft}`}>
-                    Ordered by: {req.doctor} • Date: {req.date}
-                  </Text>
-
-                  {req.result ? (
-                    <View className="mt-2.5 rounded-xl bg-emerald-500/10 p-3">
-                      <Text className="text-[11px] font-bold text-emerald-600">Lab Result / Findings:</Text>
-                      <Text className={`mt-0.5 text-[12px] ${palette.text}`}>{req.result}</Text>
-                    </View>
-                  ) : null}
-
-                  {/* Actions */}
-                  <View className="mt-3 flex-row items-center justify-end gap-2 border-t border-gray-200/10 pt-2.5">
-                    {req.status === 'Pending Sample' && (
-                      <Pressable
-                        onPress={() => handleUpdateStatus(req.id, 'In Analysis')}
-                        className="rounded-lg bg-sky-600 px-3 py-1.5"
-                      >
-                        <Text className="text-[11px] font-bold text-white">Collect Sample</Text>
-                      </Pressable>
-                    )}
-
-                    {req.status === 'In Analysis' && (
-                      <Pressable
-                        onPress={() => {
-                          setSelectedLab(req);
-                          setShowResultModal(true);
-                        }}
-                        className="rounded-lg bg-emerald-600 px-3 py-1.5"
-                      >
-                        <Text className="text-[11px] font-bold text-white">Enter Lab Results</Text>
-                      </Pressable>
-                    )}
+                  <View
+                    className={`rounded-full px-2 py-0.5 ${
+                      order.status === 'COMPLETED'
+                        ? 'bg-emerald-500/20'
+                        : order.status === 'IN_PROCESSING'
+                        ? 'bg-amber-500/20'
+                        : 'bg-cyan-500/20'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[9px] font-bold ${
+                        order.status === 'COMPLETED'
+                          ? 'text-emerald-700'
+                          : order.status === 'IN_PROCESSING'
+                          ? 'text-amber-700'
+                          : 'text-cyan-700'
+                      }`}
+                    >
+                      {order.status}
+                    </Text>
                   </View>
                 </View>
-              );
-            })}
+
+                {/* Tests Tags */}
+                <View className="mt-2 flex-row flex-wrap gap-1">
+                  {(order.tests || ['Complete Blood Count']).map((t, idx) => (
+                    <View key={idx} className={`rounded-[8px] px-2 py-0.5 ${palette.surfaceInset}`}>
+                      <Text className={`text-[10px] font-medium ${palette.text}`}>{t}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Workflow Actions */}
+                <View className="mt-2.5 flex-row items-center justify-end gap-1.5 border-t border-gray-200/15 pt-2">
+                  {order.status === 'PENDING_COLLECTION' && (
+                    <Pressable
+                      onPress={() => updateOrderStatus(order.id, 'IN_PROCESSING')}
+                      className="rounded-[10px] bg-amber-500/20 px-2.5 py-1"
+                    >
+                      <Text className="text-[10px] font-bold text-amber-700">Sample Collected</Text>
+                    </Pressable>
+                  )}
+                  {order.status === 'IN_PROCESSING' && (
+                    <Pressable
+                      onPress={() => {
+                        setSelectedOrder(order);
+                      }}
+                      className="rounded-[10px] bg-cyan-600 px-2.5 py-1"
+                    >
+                      <Text className="text-[10px] font-bold text-white">Enter Results</Text>
+                    </Pressable>
+                  )}
+                  {order.status === 'COMPLETED' && (
+                    <View className="flex-row items-center gap-1">
+                      <Ionicons name="checkmark-circle" size={14} color="#059669" />
+                      <Text className="text-[10px] font-bold text-emerald-600">Report Published</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
           </View>
         </ScrollView>
       </View>
 
-      {/* Enter Result Modal */}
-      <Modal visible={showResultModal} transparent animationType="slide" onRequestClose={() => setShowResultModal(false)}>
+      {/* Result Entry Modal */}
+      <Modal visible={!!selectedOrder} transparent animationType="slide" onRequestClose={() => setSelectedOrder(null)}>
         <View className="flex-1 justify-end bg-black/60">
-          <View className={`rounded-t-[28px] p-5 ${palette.surface}`}>
-            <View className="mb-3 flex-row items-center justify-between border-b border-gray-200/20 pb-3">
-              <Text className={`text-[17px] font-bold ${palette.text}`}>
-                Enter Findings: {selectedLab?.patient}
+          <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+            <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
+              <Text className={`text-[15px] font-bold ${palette.text}`}>
+                Submit Lab Results ({selectedOrder?.orderNumber})
               </Text>
-              <Pressable onPress={() => setShowResultModal(false)} className={`rounded-full p-1.5 ${palette.surfaceAlt}`}>
-                <Ionicons name="close" size={20} color={palette.textMutedColor} />
+              <Pressable onPress={() => setSelectedOrder(null)} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
+                <Ionicons name="close" size={18} color={palette.textMutedColor} />
               </Pressable>
             </View>
 
-            <View className="gap-3">
-              <Text className={`text-[12px] font-semibold text-emerald-600`}>{selectedLab?.testName}</Text>
-              <View>
-                <Text className={`mb-1 text-[11px] font-semibold ${palette.textMuted}`}>Lab Observations & Findings *</Text>
-                <TextInput
-                  value={resultText}
-                  onChangeText={setResultText}
-                  multiline
-                  numberOfLines={4}
-                  placeholder="Enter lab readings and pathologist notes..."
-                  placeholderTextColor={palette.textMutedColor}
-                  className={`min-h-[90px] rounded-xl border p-3 text-[13px] ${palette.text} ${palette.border} ${palette.surfaceInset}`}
-                />
-              </View>
+            <View className="gap-2 mb-3">
+              <Text className={`text-[12px] font-semibold ${palette.text}`}>
+                Patient: {selectedOrder?.patientName}
+              </Text>
+              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Diagnostic Findings / Values</Text>
+              <TextInput
+                value={resultNotes}
+                onChangeText={setResultNotes}
+                placeholder="e.g. Hemoglobin: 14.2 g/dL, WBC: 6,800 /uL, Platelets: 240,000 /uL. All normal."
+                placeholderTextColor={palette.textMutedColor}
+                multiline
+                numberOfLines={4}
+                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+              />
             </View>
 
-            <View className="mt-4 flex-row gap-2">
-              <Pressable onPress={() => setShowResultModal(false)} className="flex-1 rounded-xl bg-gray-500/15 py-3 items-center">
-                <Text className={`text-[13px] font-bold ${palette.text}`}>Cancel</Text>
+            <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
+              <Pressable onPress={() => setSelectedOrder(null)} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+                <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
               </Pressable>
-              <Pressable onPress={handleSaveResult} className="flex-1 rounded-xl bg-emerald-600 py-3 items-center">
-                <Text className="text-[13px] font-bold text-white">Save Results</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Order Test Modal */}
-      <Modal visible={showNewRequestModal} transparent animationType="slide" onRequestClose={() => setShowNewRequestModal(false)}>
-        <View className="flex-1 justify-end bg-black/60">
-          <View className={`rounded-t-[28px] p-5 ${palette.surface}`}>
-            <View className="mb-3 flex-row items-center justify-between border-b border-gray-200/20 pb-3">
-              <Text className={`text-[17px] font-bold ${palette.text}`}>Order Diagnostic Lab Test</Text>
-              <Pressable onPress={() => setShowNewRequestModal(false)} className={`rounded-full p-1.5 ${palette.surfaceAlt}`}>
-                <Ionicons name="close" size={20} color={palette.textMutedColor} />
-              </Pressable>
-            </View>
-
-            <View className="gap-3">
-              <View>
-                <Text className={`mb-1 text-[11px] font-semibold ${palette.textMuted}`}>Patient Name *</Text>
-                <TextInput
-                  value={newPatient}
-                  onChangeText={setNewPatient}
-                  placeholder="Enter patient name"
-                  placeholderTextColor={palette.textMutedColor}
-                  className={`rounded-xl border px-3 py-2.5 text-[13px] ${palette.text} ${palette.border} ${palette.surfaceInset}`}
-                />
-              </View>
-
-              <View>
-                <Text className={`mb-1 text-[11px] font-semibold ${palette.textMuted}`}>Lab Test Name</Text>
-                <TextInput
-                  value={newTest}
-                  onChangeText={setNewTest}
-                  placeholder="e.g. Thyroid Panel (T3, T4, TSH)"
-                  placeholderTextColor={palette.textMutedColor}
-                  className={`rounded-xl border px-3 py-2.5 text-[13px] ${palette.text} ${palette.border} ${palette.surfaceInset}`}
-                />
-              </View>
-            </View>
-
-            <View className="mt-4 flex-row gap-2">
-              <Pressable onPress={() => setShowNewRequestModal(false)} className="flex-1 rounded-xl bg-gray-500/15 py-3 items-center">
-                <Text className={`text-[13px] font-bold ${palette.text}`}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={handleCreateRequest} className="flex-1 rounded-xl bg-emerald-600 py-3 items-center">
-                <Text className="text-[13px] font-bold text-white">Submit Order</Text>
+              <Pressable
+                onPress={() => updateOrderStatus(selectedOrder.id, 'COMPLETED', resultNotes)}
+                className="flex-1 rounded-[12px] bg-emerald-600 py-2.5 items-center"
+              >
+                <Text className="text-[12px] font-bold text-white">Publish Report</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
+
+      <CreateLabOrderModal
+        visible={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        onSave={(newOrder) => addLabOrderLocally(newOrder)}
+      />
     </AppScreen>
   );
 }

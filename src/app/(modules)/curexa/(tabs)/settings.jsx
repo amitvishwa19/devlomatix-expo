@@ -3,179 +3,156 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
 import CurexaHeader from '../_components/CurexaHeader';
-import { BedStatusModal, BillingSummaryModal } from '../_components/CurexaModals';
-
-const doctorsRoster = [
-  { id: 1, name: 'Dr. Sarah Jenkins', specialty: 'Chief of Cardiology', hours: '09:00 AM - 02:00 PM', status: 'On Duty' },
-  { id: 2, name: 'Dr. Alan Vance', specialty: 'General & Emergency Medicine', hours: '08:00 AM - 04:00 PM', status: 'On Duty' },
-  { id: 3, name: 'Dr. Emily Watson', specialty: 'Orthopedics & Spine', hours: '10:00 AM - 03:00 PM', status: 'On Call' },
-  { id: 4, name: 'Dr. Jonathan Reed', specialty: 'Neurology & Stroke Unit', hours: '01:00 PM - 07:00 PM', status: 'Off Duty' },
-];
 
 export default function CurexaSettingsScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
-  const [showBedModal, setShowBedModal] = useState(false);
-  const [showBillingModal, setShowBillingModal] = useState(false);
+  const { hospitalInfo } = useCurexa();
 
   // Settings Toggles
   const [smsReminders, setSmsReminders] = useState(true);
-  const [aiScoring, setAiScoring] = useState(true);
-  const [emergencyAlerts, setEmergencyAlerts] = useState(true);
+  const [criticalLabAlerts, setCriticalLabAlerts] = useState(true);
+  const [bedAutoClean, setBedAutoClean] = useState(true);
+  const [drugInteractionWarning, setDrugInteractionWarning] = useState(true);
 
   return (
     <AppScreen>
-      <CurexaHeader title="System Settings" />
-      <ScrollView className="flex-1 px-4 pt-3 pb-28" showsVerticalScrollIndicator={false}>
-        {/* Header Profile */}
-        <View className={`mb-3.5 rounded-[24px] p-4.5 ${palette.surface}`}>
-          <View className="flex-row items-center gap-3.5">
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600">
-              <Ionicons name="medical" size={24} color="#ffffff" />
+      <CurexaHeader title="Hospital Settings" subtitle="Clinical & System Configuration" />
+      <ScrollView className="flex-1 px-3 pt-2 pb-24" showsVerticalScrollIndicator={false}>
+        {/* Hospital Profile Banner */}
+        <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
+          <View className="flex-row items-center gap-3">
+            <View className="h-10 w-10 items-center justify-center rounded-[14px] bg-emerald-600">
+              <Ionicons name="medical" size={20} color="#ffffff" />
             </View>
             <View className="flex-1">
-              <Text className={`text-[18px] font-bold ${palette.text}`}>Curexa Medical Center</Text>
-              <Text className={`text-[12px] ${palette.textMuted}`}>License #HMS-8849-NY • Multi-Specialty</Text>
-              <Text className="mt-0.5 text-[11px] font-semibold text-emerald-600">Helpline: 1800-555-CURE</Text>
+              <Text className={`text-[15px] font-bold ${palette.text}`}>{hospitalInfo.name}</Text>
+              <Text className={`text-[11px] ${palette.textMuted}`}>{hospitalInfo.tagline}</Text>
+              <Text className="mt-0.5 text-[10px] font-semibold text-emerald-600">
+                NABH Accredited • License #HMS-8849-US
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Hospital Sub-Module Shortcuts */}
-        <Text className={`mb-2 text-[13px] font-bold ${palette.text}`}>Hospital Modules & Operations</Text>
-        <View className="mb-3.5 flex-row flex-wrap gap-2">
-          <Pressable
-            onPress={() => router.push('/(modules)/curexa/beds')}
-            className={`w-[48%] flex-row items-center gap-3 rounded-[20px] p-3.5 ${palette.surface}`}
-          >
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15">
-              <Ionicons name="bed-outline" size={18} color="#059669" />
-            </View>
-            <View>
-              <Text className={`text-[13px] font-bold ${palette.text}`}>Wards & Beds</Text>
-              <Text className={`text-[10px] ${palette.textMuted}`}>Live Occupancy</Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(modules)/curexa/billing')}
-            className={`w-[48%] flex-row items-center gap-3 rounded-[20px] p-3.5 ${palette.surface}`}
-          >
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-purple-500/15">
-              <Ionicons name="receipt-outline" size={18} color="#9333ea" />
-            </View>
-            <View>
-              <Text className={`text-[13px] font-bold ${palette.text}`}>Billing Hub</Text>
-              <Text className={`text-[10px] ${palette.textMuted}`}>Invoices & Claims</Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(modules)/curexa/pharmacy')}
-            className={`w-[48%] flex-row items-center gap-3 rounded-[20px] p-3.5 ${palette.surface}`}
-          >
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15">
-              <Ionicons name="medkit-outline" size={18} color="#0284c7" />
-            </View>
-            <View>
-              <Text className={`text-[13px] font-bold ${palette.text}`}>Pharmacy</Text>
-              <Text className={`text-[10px] ${palette.textMuted}`}>Active Rx & Stock</Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(modules)/curexa/laboratory')}
-            className={`w-[48%] flex-row items-center gap-3 rounded-[20px] p-3.5 ${palette.surface}`}
-          >
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15">
-              <Ionicons name="flask-outline" size={18} color="#d97706" />
-            </View>
-            <View>
-              <Text className={`text-[13px] font-bold ${palette.text}`}>Diagnostics</Text>
-              <Text className={`text-[10px] ${palette.textMuted}`}>Lab Test Queue</Text>
-            </View>
-          </Pressable>
-        </View>
-
-        {/* Doctor & Consultant Roster */}
-        <View className={`mb-3.5 rounded-[24px] p-4 ${palette.surface}`}>
-          <View className="mb-2.5 flex-row items-center justify-between">
-            <Text className={`text-[14px] font-bold ${palette.text}`}>Doctor & Consultant Roster</Text>
-            <Pressable onPress={() => router.push('/(modules)/curexa/departments')}>
-              <Text className="text-[11px] font-bold text-emerald-600">Departments →</Text>
-            </Pressable>
-          </View>
-          <View className="gap-2">
-            {doctorsRoster.map((doc) => (
-              <View key={doc.id} className={`flex-row items-center justify-between rounded-xl p-3 ${palette.surfaceInset}`}>
-                <View className="flex-1">
-                  <Text className={`text-[13px] font-bold ${palette.text}`}>{doc.name}</Text>
-                  <Text className={`text-[11px] ${palette.textMuted}`}>{doc.specialty}</Text>
-                  <Text className={`mt-0.5 text-[10px] ${palette.textSoft}`}>{doc.hours}</Text>
-                </View>
-                <View
-                  className={`rounded-full px-2.5 py-0.5 ${
-                    doc.status === 'On Duty'
-                      ? 'bg-emerald-500/20'
-                      : doc.status === 'On Call'
-                      ? 'bg-amber-500/20'
-                      : 'bg-gray-500/20'
-                  }`}
-                >
-                  <Text
-                    className={`text-[10px] font-bold ${
-                      doc.status === 'On Duty'
-                        ? 'text-emerald-600'
-                        : doc.status === 'On Call'
-                        ? 'text-amber-600'
-                        : 'text-gray-500'
-                    }`}
-                  >
-                    {doc.status}
-                  </Text>
-                </View>
+        {/* Clinical Operations Controls */}
+        <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
+          <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1px] text-emerald-600">
+            Clinical Safety & Notifications
+          </Text>
+          <View className="gap-2.5">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-2">
+                <Text className={`text-[13px] font-bold ${palette.text}`}>Drug Interaction Checker</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>
+                  Warn when contra-indicated medicines are co-prescribed
+                </Text>
               </View>
+              <Switch
+                value={drugInteractionWarning}
+                onValueChange={setDrugInteractionWarning}
+                trackColor={{ false: '#767577', true: '#059669' }}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-2">
+              <View className="flex-1 pr-2">
+                <Text className={`text-[13px] font-bold ${palette.text}`}>Critical Lab Value Alerts</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>
+                  Instant push notification when urgent lab tests finish
+                </Text>
+              </View>
+              <Switch
+                value={criticalLabAlerts}
+                onValueChange={setCriticalLabAlerts}
+                trackColor={{ false: '#767577', true: '#059669' }}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-2">
+              <View className="flex-1 pr-2">
+                <Text className={`text-[13px] font-bold ${palette.text}`}>Auto Bed Cleaning Workflow</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>
+                  Move discharged beds to CLEANING status automatically
+                </Text>
+              </View>
+              <Switch
+                value={bedAutoClean}
+                onValueChange={setBedAutoClean}
+                trackColor={{ false: '#767577', true: '#059669' }}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-2">
+              <View className="flex-1 pr-2">
+                <Text className={`text-[13px] font-bold ${palette.text}`}>Automated SMS Reminders</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>
+                  Send OPD appointment reminder SMS 2 hours prior
+                </Text>
+              </View>
+              <Switch
+                value={smsReminders}
+                onValueChange={setSmsReminders}
+                trackColor={{ false: '#767577', true: '#059669' }}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Hospital Hub Module Jump Links */}
+        <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
+          <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1px] text-emerald-600">
+            Hospital Operations Hub
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {[
+              { label: 'Wards & Beds', route: '/(modules)/curexa/beds', icon: 'bed-outline', color: '#059669' },
+              { label: 'Pharmacy', route: '/(modules)/curexa/pharmacy', icon: 'medkit-outline', color: '#8b5cf6' },
+              { label: 'Laboratory', route: '/(modules)/curexa/laboratory', icon: 'flask-outline', color: '#06b6d4' },
+              { label: 'Invoices', route: '/(modules)/curexa/billing', icon: 'receipt-outline', color: '#f59e0b' },
+              { label: 'Workflow', route: '/(modules)/curexa/workflow', icon: 'git-network-outline', color: '#ec4899' },
+              { label: 'Reports', route: '/(modules)/curexa/reports', icon: 'bar-chart-outline', color: '#6366f1' },
+            ].map((m, i) => (
+              <Pressable
+                key={i}
+                onPress={() => router.push(m.route)}
+                className={`w-[48%] flex-1 min-w-[140px] flex-row items-center gap-2 rounded-[12px] p-2.5 ${palette.surfaceInset}`}
+              >
+                <Ionicons name={m.icon} size={16} color={m.color} />
+                <Text className={`text-[11px] font-bold ${palette.text}`}>{m.label}</Text>
+              </Pressable>
             ))}
           </View>
         </View>
 
-        {/* System & Automation Preferences */}
-        <View className={`mb-6 rounded-[24px] p-4 ${palette.surface}`}>
-          <Text className={`mb-2.5 text-[14px] font-bold ${palette.text}`}>System & Automation Controls</Text>
-
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-2">
-                <Text className={`text-[13px] font-semibold ${palette.text}`}>Automated SMS Reminders</Text>
-                <Text className={`text-[11px] ${palette.textSoft}`}>Send WhatsApp/SMS 2 hours prior to OPD visits</Text>
-              </View>
-              <Switch value={smsReminders} onValueChange={setSmsReminders} trackColor={{ true: '#059669' }} />
+        {/* Onboarding Tour Replay */}
+        <Pressable
+          onPress={() => router.push('/(modules)/curexa/onboarding')}
+          className={`mb-2.5 flex-row items-center justify-between rounded-[16px] p-3 shadow-sm ${palette.surface}`}
+        >
+          <View className="flex-row items-center gap-2.5">
+            <View className="h-8 w-8 items-center justify-center rounded-[10px] bg-emerald-500/15">
+              <Ionicons name="sparkles-outline" size={16} color="#059669" />
             </View>
-
-            <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-3">
-              <View className="flex-1 pr-2">
-                <Text className={`text-[13px] font-semibold ${palette.text}`}>AI Lead Scoring & Routing</Text>
-                <Text className={`text-[11px] ${palette.textSoft}`}>Automatically score prospective CRM patient inquiries</Text>
-              </View>
-              <Switch value={aiScoring} onValueChange={setAiScoring} trackColor={{ true: '#059669' }} />
-            </View>
-
-            <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-3">
-              <View className="flex-1 pr-2">
-                <Text className={`text-[13px] font-semibold ${palette.text}`}>Emergency Escalation Alerts</Text>
-                <Text className={`text-[11px] ${palette.textSoft}`}>Push notifications for ICU bed updates & triage</Text>
-              </View>
-              <Switch value={emergencyAlerts} onValueChange={setEmergencyAlerts} trackColor={{ true: '#059669' }} />
+            <View>
+              <Text className={`text-[12px] font-bold ${palette.text}`}>Replay Onboarding Tour</Text>
+              <Text className={`text-[10px] ${palette.textMuted}`}>View features walkthrough and slide guide</Text>
             </View>
           </View>
-        </View>
-      </ScrollView>
+          <Ionicons name="chevron-forward" size={15} color="#059669" />
+        </Pressable>
 
-      {/* Modals */}
-      <BedStatusModal visible={showBedModal} onClose={() => setShowBedModal(false)} />
-      <BillingSummaryModal visible={showBillingModal} onClose={() => setShowBillingModal(false)} />
+        {/* Return Button */}
+        <Pressable
+          onPress={() => router.replace('/(tabs)/home')}
+          className="rounded-[14px] bg-emerald-600 py-3 items-center justify-center shadow-sm"
+        >
+          <Text className="text-[12px] font-bold text-white">Return to Main Devlomatix Apps</Text>
+        </Pressable>
+      </ScrollView>
     </AppScreen>
   );
 }

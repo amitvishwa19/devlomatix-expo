@@ -1,215 +1,323 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
-import { getAppointments, getBeds, getBillingInvoices, getCrmLeads, getDepartmentsAndDoctors } from '~/services/curexa';
 
 import CurexaHeader from '../_components/CurexaHeader';
 import {
   AddPatientModal,
-  BedStatusModal,
-  BillingSummaryModal,
   BookAppointmentModal,
+  CreatePrescriptionModal,
+  CreateLabOrderModal,
+  CreateInvoiceModal,
+  PatientDetailModal,
 } from '../_components/CurexaModals';
 
 export default function CurexaOverviewScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
+  const {
+    patients,
+    appointments,
+    wards,
+    departments,
+    invoices,
+    labOrders,
+    selectedPatient,
+    showPatientDetail,
+    setShowPatientDetail,
+    viewPatientDetails,
+    addPatientLocally,
+    addAppointmentLocally,
+    addLabOrderLocally,
+    addInvoiceLocally,
+  } = useCurexa();
+
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [showBookVisit, setShowBookVisit] = useState(false);
-  const [showBedStatus, setShowBedStatus] = useState(false);
-  const [showBilling, setShowBilling] = useState(false);
+  const [showRxModal, setShowRxModal] = useState(false);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
-  const [departments, setDepartments] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  // Computed metrics
+  const totalBeds = wards.reduce((sum, w) => sum + (w.totalBeds || 0), 0) || 40;
+  const occupiedBeds = wards.reduce((sum, w) => sum + (w.occupiedBeds || 0), 0) || 30;
+  const occupancyRate = Math.round((occupiedBeds / totalBeds) * 100);
+  const todayVisits = appointments.length || 4;
+  const totalRev = invoices.reduce((sum, i) => sum + (i.paidAmount || 0), 0) || 1650.0;
+  const pendingLabs = labOrders.filter((l) => l.status !== 'COMPLETED').length || 2;
 
-  const [statsData, setStatsData] = useState([
-    { label: 'Active Beds', value: '0', total: '0', tone: 'bg-emerald-500/15', color: '#059669', icon: 'bed-outline' },
-    { label: "Today's Visits", value: '0', total: '0', tone: 'bg-sky-500/15', color: '#0284c7', icon: 'calendar-outline' },
-    { label: 'Revenue (Today)', value: '$0.00', tone: 'bg-amber-500/15', color: '#d97706', icon: 'wallet-outline' },
-    { label: 'CRM Leads', value: '0', tone: 'bg-purple-500/15', color: '#9333ea', icon: 'sparkles-outline' },
-  ]);
+  const quickStats = [
+    {
+      label: 'IPD Bed Occupancy',
+      value: `${occupiedBeds}/${totalBeds}`,
+      badge: `${occupancyRate}% Full`,
+      icon: 'bed-outline',
+      color: '#059669',
+      tone: 'bg-emerald-500/15',
+      route: '/(modules)/curexa/beds',
+    },
+    {
+      label: "Today's OPD Queue",
+      value: `${todayVisits}`,
+      badge: 'Live',
+      icon: 'calendar-outline',
+      color: '#0284c7',
+      tone: 'bg-sky-500/15',
+      route: '/(modules)/curexa/(tabs)/appointments',
+    },
+    {
+      label: 'Collected Revenue',
+      value: `$${totalRev.toFixed(0)}`,
+      badge: 'Today',
+      icon: 'wallet-outline',
+      color: '#d97706',
+      tone: 'bg-amber-500/15',
+      route: '/(modules)/curexa/billing',
+    },
+    {
+      label: 'Pending Diagnostics',
+      value: `${pendingLabs}`,
+      badge: 'Active',
+      icon: 'flask-outline',
+      color: '#06b6d4',
+      tone: 'bg-cyan-500/15',
+      route: '/(modules)/curexa/laboratory',
+    },
+  ];
 
-  useEffect(() => {
-    async function loadStats() {
-      const [bedsRes, appRes, billRes, crmRes, deptRes] = await Promise.all([
-        getBeds(),
-        getAppointments(),
-        getBillingInvoices(),
-        getCrmLeads(),
-        getDepartmentsAndDoctors(),
-      ]);
-
-      const activeBedsCount = bedsRes?.summary?.occupied || bedsRes?.beds?.filter(b => b.status === 'OCCUPIED')?.length || 0;
-      const totalBedsCount = bedsRes?.summary?.total || bedsRes?.beds?.length || 0;
-
-      const visitsCount = appRes?.appointments?.length || 0;
-      const revTotal = billRes?.summary?.totalCollected || 0;
-      const crmCount = crmRes?.leads?.length || 0;
-
-      setStatsData([
-        { label: 'Active Beds', value: `${activeBedsCount}`, total: `${totalBedsCount}`, tone: 'bg-emerald-500/15', color: '#059669', icon: 'bed-outline' },
-        { label: "Today's Visits", value: `${visitsCount}`, total: `${visitsCount}`, tone: 'bg-sky-500/15', color: '#0284c7', icon: 'calendar-outline' },
-        { label: 'Revenue (Today)', value: `$${revTotal.toFixed(2)}`, tone: 'bg-amber-500/15', color: '#d97706', icon: 'wallet-outline' },
-        { label: 'CRM Leads', value: `${crmCount}`, tone: 'bg-purple-500/15', color: '#9333ea', icon: 'sparkles-outline' },
-      ]);
-
-      if (deptRes && deptRes.departments && deptRes.departments.length > 0) {
-        const formattedDepts = deptRes.departments.map((d) => ({
-          name: d.name,
-          doctors: d.users?.length || 0,
-          occupiedBeds: d.bedCount || 0,
-          totalBeds: (d.bedCount || 0) + 10,
-          color: d.color || '#3b82f6',
-        }));
-        setDepartments(formattedDepts);
-      } else {
-        setDepartments([]);
-      }
-    }
-    loadStats();
-  }, []);
-
+  const quickActions = [
+    { label: 'Add Patient', icon: 'person-add-outline', color: '#059669', action: () => setShowAddPatient(true) },
+    { label: 'Book OPD', icon: 'calendar-outline', color: '#0284c7', action: () => setShowBookVisit(true) },
+    { label: 'Write e-Rx', icon: 'document-text-outline', color: '#8b5cf6', action: () => setShowRxModal(true) },
+    { label: 'Order Lab', icon: 'flask-outline', color: '#06b6d4', action: () => setShowLabModal(true) },
+    { label: 'Quick Bill', icon: 'receipt-outline', color: '#f59e0b', action: () => setShowInvoiceModal(true) },
+    { label: 'Bed Grid', icon: 'bed-outline', color: '#10b981', action: () => router.push('/(modules)/curexa/beds') },
+    { label: 'Workflow', icon: 'git-network-outline', color: '#ec4899', action: () => router.push('/(modules)/curexa/workflow') },
+    { label: 'Reports', icon: 'bar-chart-outline', color: '#6366f1', action: () => router.push('/(modules)/curexa/reports') },
+  ];
 
   return (
     <AppScreen>
-      <CurexaHeader title="Overview Command Center" />
-      <ScrollView className="flex-1 px-4 pt-3 pb-28" showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className={`mb-3.5 rounded-[24px] p-4 shadow-sm ${palette.surface}`}>
+      <CurexaHeader title="Hospital Command Center" subtitle="Real-time Clinical Operations" />
+
+      <ScrollView className="flex-1 px-3 pt-2 pb-24" showsVerticalScrollIndicator={false}>
+        {/* Hospital Banner */}
+        <View className={`mb-2.5 rounded-[16px] p-3 shadow-sm ${palette.surface}`}>
           <View className="flex-row items-center justify-between">
             <View>
-              <View className="flex-row items-center gap-2">
-                <Text className={`text-[12px] font-bold uppercase tracking-[1.5px] text-emerald-600`}>
-                  CUREXA HEALTHCARE
+              <View className="flex-row items-center gap-1.5">
+                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-emerald-600">
+                  CUREXA SUPER SPECIALTY
                 </Text>
-                <View className="rounded-full bg-emerald-500/20 px-2 py-0.5">
-                  <Text className="text-[10px] font-bold text-emerald-600">LIVE HMS</Text>
+                <View className="rounded-full bg-emerald-500/20 px-1.5 py-0.2">
+                  <Text className="text-[9px] font-bold text-emerald-600">MAIN CAMPUS</Text>
                 </View>
               </View>
-              <Text className={`mt-1 text-[24px] font-bold leading-7 ${palette.text}`}>
-                Hospital Command Center
+              <Text className={`mt-0.5 text-[18px] font-bold ${palette.text}`}>
+                Emergency & Clinical Operations
               </Text>
-              <Text className={`mt-1 text-[12px] ${palette.textSoft}`}>
-                Real-time ward occupancy, OPD scheduling, and patient EMR overview.
+              <Text className={`text-[11px] ${palette.textMuted}`}>
+                Tertiary Care • 40 Beds • 5 Specialties Active
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Stats Grid */}
-        <View className="mb-3.5 flex-row flex-wrap gap-2">
-          {statsData.map((item) => (
-            <View key={item.label} className={`w-[48%] rounded-[20px] p-3.5 ${item.tone}`}>
+        {/* 4 Core KPI Cards */}
+        <View className="mb-2.5 flex-row flex-wrap gap-2">
+          {quickStats.map((st, idx) => (
+            <Pressable
+              key={idx}
+              onPress={() => router.push(st.route)}
+              className={`w-[48%] flex-1 rounded-[16px] p-2.5 shadow-sm ${palette.surface}`}
+            >
               <View className="flex-row items-center justify-between">
-                <Text className={`text-[11px] font-semibold ${palette.textMuted}`}>{item.label}</Text>
-                <Ionicons name={item.icon} size={16} color={item.color} />
+                <View className={`h-7 w-7 items-center justify-center rounded-[10px] ${st.tone}`}>
+                  <Ionicons name={st.icon} size={15} color={st.color} />
+                </View>
+                <View className={`rounded-full px-1.5 py-0.2 ${st.tone}`}>
+                  <Text style={{ color: st.color }} className="text-[9px] font-bold">
+                    {st.badge}
+                  </Text>
+                </View>
               </View>
-              <Text className={`mt-1 text-[22px] font-bold ${palette.text}`}>{item.value}</Text>
-              {item.total ? (
-                <Text className={`text-[10px] ${palette.textSoft}`}>Out of {item.total} total</Text>
-              ) : null}
-            </View>
+              <Text className={`mt-2 text-[17px] font-bold ${palette.text}`}>{st.value}</Text>
+              <Text className={`text-[10px] font-medium ${palette.textMuted}`}>{st.label}</Text>
+            </Pressable>
           ))}
         </View>
 
-        {/* Quick Action Shortcuts */}
-        <View className={`mb-3.5 rounded-[24px] p-4 ${palette.surface}`}>
-          <Text className={`mb-2.5 text-[13px] font-bold ${palette.text}`}>Quick Hospital Actions</Text>
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => setShowBookVisit(true)}
-              className="flex-1 items-center rounded-2xl bg-emerald-600 py-2.5"
-            >
-              <Ionicons name="calendar" size={16} color="#ffffff" />
-              <Text className="mt-1 text-[10px] font-bold text-white">Book Visit</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setShowAddPatient(true)}
-              className="flex-1 items-center rounded-2xl bg-sky-600 py-2.5"
-            >
-              <Ionicons name="person-add" size={16} color="#ffffff" />
-              <Text className="mt-1 text-[10px] font-bold text-white">Add Patient</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.push('/(modules)/curexa/beds')}
-              className="flex-1 items-center rounded-2xl bg-amber-600 py-2.5"
-            >
-              <Ionicons name="bed" size={16} color="#ffffff" />
-              <Text className="mt-1 text-[10px] font-bold text-white">Check Beds</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.push('/(modules)/curexa/billing')}
-              className="flex-1 items-center rounded-2xl bg-purple-600 py-2.5"
-            >
-              <Ionicons name="receipt" size={16} color="#ffffff" />
-              <Text className="mt-1 text-[10px] font-bold text-white">Invoices</Text>
-            </Pressable>
+        {/* Quick Clinical Launchpad */}
+        <View className={`mb-2.5 rounded-[16px] p-3 shadow-sm ${palette.surface}`}>
+          <Text className={`mb-2 text-[12px] font-bold uppercase tracking-[0.8px] text-emerald-600`}>
+            Quick Clinical Actions
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {quickActions.map((qa, i) => (
+              <Pressable
+                key={i}
+                onPress={qa.action}
+                className={`w-[22%] flex-1 min-w-[70px] items-center rounded-[12px] p-2 ${palette.surfaceInset}`}
+              >
+                <View
+                  style={{ backgroundColor: `${qa.color}20` }}
+                  className="h-8 w-8 items-center justify-center rounded-[10px] mb-1"
+                >
+                  <Ionicons name={qa.icon} size={16} color={qa.color} />
+                </View>
+                <Text className={`text-[10px] font-bold text-center ${palette.text}`} numberOfLines={1}>
+                  {qa.label}
+                </Text>
+              </Pressable>
+            ))}
           </View>
         </View>
 
-        {/* Department Occupancy Breakdown */}
-        <View className={`mb-3.5 rounded-[24px] p-4 ${palette.surface}`}>
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className={`text-[14px] font-bold ${palette.text}`}>Department Occupancy</Text>
-            <Pressable onPress={() => router.push('/(modules)/curexa/beds')}>
-              <Text className="text-[11px] font-bold text-emerald-600">View Wards →</Text>
+        {/* Live OPD Schedule Strip */}
+        <View className={`mb-2.5 rounded-[16px] p-3 shadow-sm ${palette.surface}`}>
+          <View className="mb-2 flex-row items-center justify-between">
+            <View>
+              <Text className={`text-[13px] font-bold ${palette.text}`}>Live OPD Visits Queue</Text>
+              <Text className={`text-[10px] ${palette.textMuted}`}>Tokens & In-Consultation Queue</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(modules)/curexa/(tabs)/appointments')}
+              className="flex-row items-center gap-0.5"
+            >
+              <Text className="text-[11px] font-semibold text-emerald-600">View All</Text>
+              <Ionicons name="chevron-forward" size={12} color="#059669" />
             </Pressable>
           </View>
 
-          <View className="gap-2.5">
-            {departments.map((dept) => {
-              const occPct = Math.round((dept.occupiedBeds / dept.totalBeds) * 100);
-              return (
-                <View key={dept.name} className={`rounded-xl p-2.5 ${palette.surfaceInset}`}>
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2">
-                      <View className="h-2 w-2 rounded-full" style={{ backgroundColor: dept.color }} />
-                      <Text className={`text-[12px] font-semibold ${palette.text}`}>{dept.name}</Text>
-                    </View>
-                    <Text className={`text-[11px] font-bold ${palette.text}`}>
-                      {dept.occupiedBeds}/{dept.totalBeds} beds ({occPct}%)
+          <View className="gap-1.5">
+            {appointments.slice(0, 3).map((apt) => (
+              <Pressable
+                key={apt.id}
+                onPress={() => router.push('/(modules)/curexa/(tabs)/appointments')}
+                className={`flex-row items-center justify-between rounded-[12px] p-2.5 ${palette.surfaceInset}`}
+              >
+                <View className="flex-row items-center gap-2">
+                  <View className="h-7 w-7 items-center justify-center rounded-full bg-sky-500/20">
+                    <Text className="text-[10px] font-bold text-sky-700">{apt.token || 'OPD'}</Text>
+                  </View>
+                  <View>
+                    <Text className={`text-[12px] font-bold ${palette.text}`}>{apt.patientName}</Text>
+                    <Text className={`text-[10px] ${palette.textMuted}`}>
+                      {apt.doctorName} • {apt.timeSlot}
                     </Text>
                   </View>
-                  {/* Mini Progress bar */}
-                  <View className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-500/20">
-                    <View className="h-full rounded-full" style={{ width: `${occPct}%`, backgroundColor: dept.color }} />
-                  </View>
                 </View>
-              );
-            })}
+                <View
+                  className={`rounded-full px-2 py-0.5 ${
+                    apt.status === 'IN_PROGRESS'
+                      ? 'bg-amber-500/20'
+                      : apt.status === 'COMPLETED'
+                      ? 'bg-emerald-500/20'
+                      : 'bg-sky-500/20'
+                  }`}
+                >
+                  <Text
+                    className={`text-[9px] font-bold ${
+                      apt.status === 'IN_PROGRESS'
+                        ? 'text-amber-700'
+                        : apt.status === 'COMPLETED'
+                        ? 'text-emerald-700'
+                        : 'text-sky-700'
+                    }`}
+                  >
+                    {apt.status}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
           </View>
         </View>
 
-        {/* Recent Hospital Activity Log */}
-        <View className={`mb-6 rounded-[24px] p-4 ${palette.surface}`}>
-          <Text className={`mb-2.5 text-[14px] font-bold ${palette.text}`}>Recent Clinical Activity</Text>
-          <View className="gap-2">
-            {recentActivity.map((act) => (
-              <View key={act.id} className={`flex-row items-center gap-3 rounded-xl p-2.5 ${palette.surfaceInset}`}>
-                <View className="h-8 w-8 items-center justify-center rounded-xl" style={{ backgroundColor: `${act.color}20` }}>
-                  <Ionicons name={act.icon} size={15} color={act.color} />
+        {/* Admitted Patients EMR Snapshot */}
+        <View className={`mb-3 rounded-[16px] p-3 shadow-sm ${palette.surface}`}>
+          <View className="mb-2 flex-row items-center justify-between">
+            <View>
+              <Text className={`text-[13px] font-bold ${palette.text}`}>Admitted Inpatients (IPD)</Text>
+              <Text className={`text-[10px] ${palette.textMuted}`}>Live Ward & Vitals Monitoring</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(modules)/curexa/(tabs)/patients')}
+              className="flex-row items-center gap-0.5"
+            >
+              <Text className="text-[11px] font-semibold text-emerald-600">All Patients</Text>
+              <Ionicons name="chevron-forward" size={12} color="#059669" />
+            </Pressable>
+          </View>
+
+          <View className="gap-1.5">
+            {patients.slice(0, 3).map((p) => (
+              <Pressable
+                key={p.id}
+                onPress={() => viewPatientDetails(p)}
+                className={`flex-row items-center justify-between rounded-[12px] p-2.5 ${palette.surfaceInset}`}
+              >
+                <View className="flex-row items-center gap-2">
+                  <View className="h-8 w-8 items-center justify-center rounded-[10px] bg-emerald-500/15">
+                    <Ionicons name="person" size={15} color="#059669" />
+                  </View>
+                  <View>
+                    <View className="flex-row items-center gap-1.5">
+                      <Text className={`text-[12px] font-bold ${palette.text}`}>
+                        {p.displayName || p.name}
+                      </Text>
+                      <View className="rounded bg-emerald-500/15 px-1">
+                        <Text className="text-[9px] font-bold text-emerald-700">{p.bloodGroup || 'O+'}</Text>
+                      </View>
+                    </View>
+                    <Text className={`text-[10px] ${palette.textMuted}`}>
+                      {p.ward || 'General'} • {p.vitals?.bp ? `BP: ${p.vitals.bp}` : 'Vitals Recorded'}
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className={`text-[12px] font-semibold ${palette.text}`}>{act.text}</Text>
-                  <Text className={`text-[10px] ${palette.textMuted}`}>{act.time}</Text>
+                <View className="items-end">
+                  <Text className="text-[10px] font-bold text-emerald-600">{p.status || 'Stable'}</Text>
+                  <Text className={`text-[9px] ${palette.textMuted}`}>Tap for EMR</Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
       </ScrollView>
 
-      {/* Action Modals */}
-      <AddPatientModal visible={showAddPatient} onClose={() => setShowAddPatient(false)} onAdd={() => {}} />
-      <BookAppointmentModal visible={showBookVisit} onClose={() => setShowBookVisit(false)} onBook={() => {}} />
-      <BedStatusModal visible={showBedStatus} onClose={() => setShowBedStatus(false)} />
-      <BillingSummaryModal visible={showBilling} onClose={() => setShowBilling(false)} />
+      {/* Modals */}
+      <AddPatientModal
+        visible={showAddPatient}
+        onClose={() => setShowAddPatient(false)}
+        onSave={(newP) => addPatientLocally(newP)}
+      />
+      <BookAppointmentModal
+        visible={showBookVisit}
+        onClose={() => setShowBookVisit(false)}
+        onSave={(newApt) => addAppointmentLocally(newApt)}
+      />
+      <CreatePrescriptionModal
+        visible={showRxModal}
+        onClose={() => setShowRxModal(false)}
+      />
+      <CreateLabOrderModal
+        visible={showLabModal}
+        onClose={() => setShowLabModal(false)}
+        onSave={(newOrder) => addLabOrderLocally(newOrder)}
+      />
+      <CreateInvoiceModal
+        visible={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+        onSave={(newInv) => addInvoiceLocally(newInv)}
+      />
+      <PatientDetailModal
+        patient={selectedPatient}
+        visible={showPatientDetail}
+        onClose={() => setShowPatientDetail(false)}
+      />
     </AppScreen>
   );
 }

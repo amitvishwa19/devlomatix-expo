@@ -113,5 +113,6 @@ export const apiUrls = {
   curexaService: curexaBaseApi + "/service",
   curexaInventory: curexaBaseApi + "/inventory",
   curexaInvoice: curexaBaseApi + "/invoice",
+  curexaReports: curexaBaseApi + "/reports",
 };
 

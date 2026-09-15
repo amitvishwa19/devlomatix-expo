@@ -4,9 +4,7 @@ module.exports = ({ config }) => {
     process.env.EAS_BUILD_PROFILE === 'development';
 
   const name = isDev ? 'Devlomatix (Dev)' : 'Devlomatix';
-  const packageName = isDev
-    ? 'com.devlomatixsolutions.devlomatix.dev'
-    : 'com.devlomatixsolutions.devlomatix';
+  const packageName = 'com.devlomatixsolutions.devlomatix';
   const scheme = isDev ? 'devlomatix-dev' : 'devlomatix';
 
   return {

@@ -1,262 +1,283 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useAppTheme } from '~/theme/AppTheme';
 import CurexaHeader from './_components/CurexaHeader';
-import { AddLeadModal } from './_components/CurexaModals';
-import { createCrmLead, getCrmLeads, updateCrmLeadStage } from '~/services/curexa';
-
-const initialLeads = [
-  {
-    id: '301',
-    name: 'Samantha Wright',
-    phone: '+1 (555) 392-1049',
-    treatment: 'Full Cardiac Health Package',
-    source: 'Website',
-    value: '$2,400',
-    stage: 'New Lead',
-    score: '92',
-    date: '2026-08-01',
-  },
-  {
-    id: '302',
-    name: 'David Miller',
-    phone: '+1 (555) 481-9021',
-    treatment: 'Knee Replacement Surgery Consult',
-    source: 'Google Ads',
-    value: '$12,500',
-    stage: 'Consulted',
-    score: '88',
-    date: '2026-07-29',
-  },
-  {
-    id: '303',
-    name: 'Jessica Alba',
-    phone: '+1 (555) 712-4091',
-    treatment: 'Comprehensive MRI & Spine Check',
-    source: 'Referral Desk',
-    value: '$1,800',
-    stage: 'Follow-up',
-    score: '75',
-    date: '2026-07-30',
-  },
-  {
-    id: '304',
-    name: 'Thomas Wayne',
-    phone: '+1 (555) 201-9843',
-    treatment: 'Bariatric Consultation & Plan',
-    source: 'Website',
-    value: '$8,200',
-    stage: 'Converted',
-    score: '98',
-    date: '2026-07-28',
-  },
-  {
-    id: '305',
-    name: 'Rachel Green',
-    phone: '+1 (555) 654-3210',
-    treatment: 'Pediatric Allergy Panel',
-    source: 'Facebook Campaign',
-    value: '$950',
-    stage: 'New Lead',
-    score: '80',
-    date: '2026-08-02',
-  },
-];
-
-const STAGES = ['New Lead', 'Consulted', 'Follow-up', 'Converted'];
 
 export default function CurexaCrmScreen() {
   const { palette } = useAppTheme();
-  const [leads, setLeads] = useState([]);
-  const [stageFilter, setStageFilter] = useState('All');
+  const [selectedStage, setSelectedStage] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  useEffect(() => {
-    async function loadLeads() {
-      const res = await getCrmLeads();
-      if (res && res.leads) {
-        const formatted = res.leads.map((l) => ({
-          id: l.id.slice(-4),
-          name: l.title || 'Lead Contact',
-          phone: l.description?.split('Phone: ')?.[1] || '+1 (555) 000-0000',
-          treatment: l.description?.split('Treatment: ')?.[1]?.split(' |')?.[0] || 'General Consultation',
-          source: 'Website',
-          value: '$2,500',
-          stage: l.priority || 'New Lead',
-          score: '90',
-          date: l.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-        }));
-        setLeads(formatted);
-      } else {
-        setLeads([]);
-      }
-    }
-    loadLeads();
-  }, []);
+  const [leads, setLeads] = useState([
+    {
+      id: 'lead-1',
+      name: 'Samantha Wright',
+      phone: '+1 (555) 392-1049',
+      treatment: 'Full Cardiac Health Package',
+      source: 'Direct Website Inquiry',
+      value: '$2,400',
+      stage: 'NEW_LEAD',
+      date: '2026-09-15',
+    },
+    {
+      id: 'lead-2',
+      name: 'David Miller',
+      phone: '+1 (555) 481-9021',
+      treatment: 'Knee Replacement Surgery Consult',
+      source: 'Doctor Referral',
+      value: '$8,500',
+      stage: 'CONSULTED',
+      date: '2026-09-14',
+    },
+    {
+      id: 'lead-3',
+      name: 'Jessica Alba',
+      phone: '+1 (555) 712-4091',
+      treatment: 'Comprehensive MRI & Spine Check',
+      source: 'Health Camp',
+      value: '$1,800',
+      stage: 'FOLLOW_UP',
+      date: '2026-09-13',
+    },
+    {
+      id: 'lead-4',
+      name: 'Thomas Wayne',
+      phone: '+1 (555) 201-9843',
+      treatment: 'Bariatric Consultation & Diet Plan',
+      source: 'Website',
+      value: '$4,200',
+      stage: 'CONVERTED',
+      date: '2026-09-11',
+    },
+  ]);
+
+  // Form State
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [treatment, setTreatment] = useState('');
+  const [value, setValue] = useState('$1,500');
+
+  const stages = ['ALL', 'NEW_LEAD', 'CONSULTED', 'FOLLOW_UP', 'CONVERTED'];
 
   const filteredLeads = useMemo(() => {
-    return leads.filter((l) => stageFilter === 'All' || l.stage === stageFilter);
-  }, [leads, stageFilter]);
+    return leads.filter((l) => selectedStage === 'ALL' || l.stage === selectedStage);
+  }, [leads, selectedStage]);
 
-  const handleAddLead = async (newLead) => {
-    setLeads((prev) => [newLead, ...prev]);
-    await createCrmLead(newLead);
+  const handleAddLead = () => {
+    if (!name || !phone) return;
+    const newL = {
+      id: `lead-${Date.now()}`,
+      name,
+      phone,
+      treatment: treatment || 'Executive Health Package',
+      source: 'Mobile App Lead',
+      value: value || '$1,500',
+      stage: 'NEW_LEAD',
+      date: new Date().toISOString().split('T')[0],
+    };
+    setLeads((prev) => [newL, ...prev]);
+    setShowAddModal(false);
+    setName('');
+    setPhone('');
+    setTreatment('');
   };
 
-  const moveLeadNext = async (id) => {
+  const advanceStage = (id) => {
     setLeads((prev) =>
       prev.map((l) => {
         if (l.id === id) {
-          const currentIdx = STAGES.indexOf(l.stage);
-          if (currentIdx < STAGES.length - 1) {
-            const nextStage = STAGES[currentIdx + 1];
-            updateCrmLeadStage({ leadId: id, stage: nextStage });
-            return { ...l, stage: nextStage };
-          }
+          const next =
+            l.stage === 'NEW_LEAD'
+              ? 'CONSULTED'
+              : l.stage === 'CONSULTED'
+              ? 'FOLLOW_UP'
+              : 'CONVERTED';
+          return { ...l, stage: next };
         }
         return l;
       })
     );
   };
 
-  const getStageBadge = (stage) => {
-    switch (stage) {
-      case 'New Lead':
-        return { bg: 'bg-sky-500/20', text: 'text-sky-600' };
-      case 'Consulted':
-        return { bg: 'bg-purple-500/20', text: 'text-purple-600' };
-      case 'Follow-up':
-        return { bg: 'bg-amber-500/20', text: 'text-amber-600' };
-      case 'Converted':
-        return { bg: 'bg-emerald-500/20', text: 'text-emerald-600' };
-      default:
-        return { bg: 'bg-sky-500/20', text: 'text-sky-600' };
-    }
-  };
-
   return (
     <AppScreen>
       <CurexaHeader
-        title="Health CRM Engine"
-        showBack={true}
+        title="Patient Care CRM"
+        subtitle={`${filteredLeads.length} Inquiries & Leads`}
+        showBack
         rightAction={
           <Pressable
             onPress={() => setShowAddModal(true)}
-            className="flex-row items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2"
+            className="flex-row items-center gap-1 rounded-[12px] bg-pink-600 px-2.5 py-1.5"
           >
-            <Ionicons name="sparkles" size={16} color="#ffffff" />
-            <Text className="text-[11px] font-bold text-white">Add Lead</Text>
+            <Ionicons name="add" size={15} color="#ffffff" />
+            <Text className="text-[11px] font-bold text-white">New Lead</Text>
           </Pressable>
         }
       />
-      <View className="flex-1 px-4 pt-3 pb-4">
 
-        {/* Pipeline Summary Cards */}
-        <View className="mb-3 flex-row gap-2">
-          <View className={`flex-1 rounded-[20px] p-3 bg-purple-500/15`}>
-            <Text className={`text-[11px] ${palette.textMuted}`}>Active Leads</Text>
-            <Text className={`mt-0.5 text-[20px] font-bold ${palette.text}`}>{leads.length}</Text>
-          </View>
-          <View className={`flex-1 rounded-[20px] p-3 bg-emerald-500/15`}>
-            <Text className={`text-[11px] ${palette.textMuted}`}>Pipeline Value</Text>
-            <Text className={`mt-0.5 text-[20px] font-bold ${palette.text}`}>$148.5K</Text>
-          </View>
-          <View className={`flex-1 rounded-[20px] p-3 bg-sky-500/15`}>
-            <Text className={`text-[11px] ${palette.textMuted}`}>Conversion Rate</Text>
-            <Text className={`mt-0.5 text-[20px] font-bold ${palette.text}`}>68%</Text>
-          </View>
-        </View>
-
-        {/* Stage Filter Tabs */}
-        <View className="mb-3">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1.5">
-            {['All', 'New Lead', 'Consulted', 'Follow-up', 'Converted'].map((st) => (
+      <View className="flex-1 px-3 pt-2">
+        {/* Stage Filter */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2 max-h-8">
+          <View className="flex-row gap-1.5">
+            {stages.map((st) => (
               <Pressable
                 key={st}
-                onPress={() => setStageFilter(st)}
-                className={`rounded-full px-3.5 py-1.5 ${
-                  stageFilter === st ? 'bg-emerald-600' : palette.surfaceInset
+                onPress={() => setSelectedStage(st)}
+                className={`rounded-[10px] px-2.5 py-1 ${
+                  selectedStage === st ? 'bg-pink-600' : palette.surface
                 }`}
               >
                 <Text
-                  className={`text-[11px] font-semibold ${
-                    stageFilter === st ? 'text-white' : palette.textMuted
+                  className={`text-[10px] font-semibold ${
+                    selectedStage === st ? 'text-white font-bold' : palette.text
                   }`}
                 >
-                  {st}
+                  {st.replace('_', ' ')}
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
 
-        {/* Lead List */}
-        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-          <View className="gap-2.5 pb-8">
-            {filteredLeads.map((lead) => {
-              const badge = getStageBadge(lead.stage);
-              return (
-                <View key={lead.id} className={`rounded-[22px] p-4 shadow-sm ${palette.surface}`}>
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2">
-                      <Text className={`text-[16px] font-bold ${palette.text}`}>{lead.name}</Text>
-                      <View className="rounded-full bg-emerald-500/20 px-2 py-0.5">
-                        <Text className="text-[10px] font-bold text-emerald-600">{lead.score}% Intent</Text>
-                      </View>
+        {/* Leads List */}
+        <ScrollView showsVerticalScrollIndicator={false} className="flex-1 pb-24">
+          <View className="gap-2">
+            {filteredLeads.map((lead) => (
+              <View
+                key={lead.id}
+                className={`rounded-[16px] p-3 shadow-sm ${palette.surface}`}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-row items-center gap-2.5">
+                    <View className="h-9 w-9 items-center justify-center rounded-[12px] bg-pink-500/15">
+                      <Ionicons name="sparkles" size={17} color="#ec4899" />
                     </View>
-
-                    <View className={`rounded-full px-2.5 py-0.5 ${badge.bg}`}>
-                      <Text className={`text-[10px] font-bold ${badge.text}`}>{lead.stage}</Text>
+                    <View>
+                      <Text className={`text-[14px] font-bold ${palette.text}`}>{lead.name}</Text>
+                      <Text className={`text-[10px] ${palette.textMuted}`}>
+                        {lead.phone} • {lead.source}
+                      </Text>
                     </View>
                   </View>
 
-                  <Text className={`mt-1 text-[12px] font-semibold text-emerald-600`}>
-                    {lead.treatment}
-                  </Text>
-
-                  <View className="mt-2 flex-row items-center justify-between">
-                    <Text className={`text-[11px] ${palette.textSoft}`}>
-                      Source: <Text className="font-semibold">{lead.source}</Text>
-                    </Text>
-                    <Text className={`text-[13px] font-bold ${palette.text}`}>Est: {lead.value}</Text>
-                  </View>
-
-                  {/* Actions & Contact */}
-                  <View className="mt-3 flex-row items-center justify-between border-t border-gray-200/10 pt-2.5">
-                    <Text className={`text-[11px] ${palette.textMuted}`}>{lead.phone}</Text>
-                    <View className="flex-row items-center gap-2">
-                      <Pressable className="rounded-xl bg-emerald-600 p-2">
-                        <Ionicons name="call" size={14} color="#ffffff" />
-                      </Pressable>
-                      <Pressable className="rounded-xl bg-sky-600 p-2">
-                        <Ionicons name="logo-whatsapp" size={14} color="#ffffff" />
-                      </Pressable>
-                      {lead.stage !== 'Converted' && (
-                        <Pressable
-                          onPress={() => moveLeadNext(lead.id)}
-                          className="flex-row items-center gap-1 rounded-xl bg-gray-500/15 px-2.5 py-1.5"
-                        >
-                          <Text className={`text-[10px] font-bold ${palette.text}`}>Advance Stage</Text>
-                          <Ionicons name="chevron-forward" size={12} color={palette.textColor} />
-                        </Pressable>
-                      )}
+                  <View className="items-end">
+                    <Text className="text-[13px] font-bold text-emerald-600">{lead.value}</Text>
+                    <View
+                      className={`mt-0.5 rounded-full px-2 py-0.2 ${
+                        lead.stage === 'CONVERTED'
+                          ? 'bg-emerald-500/20'
+                          : lead.stage === 'CONSULTED'
+                          ? 'bg-sky-500/20'
+                          : 'bg-pink-500/20'
+                      }`}
+                    >
+                      <Text
+                        className={`text-[9px] font-bold ${
+                          lead.stage === 'CONVERTED'
+                            ? 'text-emerald-700'
+                            : lead.stage === 'CONSULTED'
+                            ? 'text-sky-700'
+                            : 'text-pink-700'
+                        }`}
+                      >
+                        {lead.stage.replace('_', ' ')}
+                      </Text>
                     </View>
                   </View>
                 </View>
-              );
-            })}
+
+                {/* Treatment Box */}
+                <View className={`mt-2 rounded-[10px] p-2 flex-row items-center justify-between ${palette.surfaceInset}`}>
+                  <Text className={`text-[10px] font-medium ${palette.text}`} numberOfLines={1}>
+                    Package: {lead.treatment}
+                  </Text>
+                  {lead.stage !== 'CONVERTED' && (
+                    <Pressable
+                      onPress={() => advanceStage(lead.id)}
+                      className="rounded-[8px] bg-pink-600 px-2 py-0.5"
+                    >
+                      <Text className="text-[9px] font-bold text-white">Advance</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            ))}
           </View>
         </ScrollView>
       </View>
 
       {/* Add Lead Modal */}
-      <AddLeadModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={handleAddLead}
-      />
+      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
+        <View className="flex-1 justify-end bg-black/60">
+          <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+            <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
+              <Text className={`text-[15px] font-bold ${palette.text}`}>Record Patient Inquiry</Text>
+              <Pressable onPress={() => setShowAddModal(false)} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
+                <Ionicons name="close" size={18} color={palette.textMutedColor} />
+              </Pressable>
+            </View>
+
+            <View className="gap-2 mb-3">
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Prospect Name *</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Thomas Wayne"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
+
+              <View className="flex-row gap-2">
+                <View className="flex-1">
+                  <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Phone Number *</Text>
+                  <TextInput
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="+1 (555) 000-0000"
+                    placeholderTextColor={palette.textMutedColor}
+                    className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                  />
+                </View>
+                <View className="w-28">
+                  <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Est. Value</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={setValue}
+                    placeholder="$2,000"
+                    placeholderTextColor={palette.textMutedColor}
+                    className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                  />
+                </View>
+              </View>
+
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Inquiry / Treatment Interest</Text>
+                <TextInput
+                  value={treatment}
+                  onChangeText={setTreatment}
+                  placeholder="e.g. Total Hip Arthroplasty"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
+            </View>
+
+            <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
+              <Pressable onPress={() => setShowAddModal(false)} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+                <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={handleAddLead} className="flex-1 rounded-[12px] bg-pink-600 py-2.5 items-center">
+                <Text className="text-[12px] font-bold text-white">Save Inquiry</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AppScreen>
   );
 }

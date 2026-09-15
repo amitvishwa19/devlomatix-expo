@@ -8,13 +8,43 @@
     "scheme": "devlomatix",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/images/app-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff",
+      "dark": {
+        "image": "./src/assets/images/app-icon.png",
+        "backgroundColor": "#020714",
+        "resizeMode": "contain"
+      }
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./src/assets/images/app-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff",
+        "dark": {
+          "image": "./src/assets/images/app-icon.png",
+          "backgroundColor": "#020714",
+          "resizeMode": "contain"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/app-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "splash": {
+        "image": "./src/assets/images/app-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff",
+        "dark": {
+          "image": "./src/assets/images/app-icon.png",
+          "backgroundColor": "#020714",
+          "resizeMode": "contain"
+        }
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -43,8 +73,15 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./src/assets/images/splashscreen-light.png",
-          "resizeMode": "cover"
+          "image": "./src/assets/images/app-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./src/assets/images/app-icon.png",
+            "backgroundColor": "#020714",
+            "imageWidth": 160,
+            "resizeMode": "contain"
+          }
         }
       ],
       [

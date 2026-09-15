@@ -37,30 +37,33 @@ const menuCategories = [
   {
     title: 'CLINICAL OPERATIONS',
     items: [
-      { route: '/(modules)/curexa/(tabs)', label: 'Overview', icon: 'pulse-outline', activeIcon: 'pulse' },
-      { route: '/(modules)/curexa/(tabs)/patients', label: 'Patient EHR Directory', icon: 'people-outline', activeIcon: 'people' },
-      { route: '/(modules)/curexa/(tabs)/appointments', label: 'OPD Visits & Scheduler', icon: 'calendar-outline', activeIcon: 'calendar' },
+      { route: '/(modules)/curexa/(tabs)', label: 'Overview Command Center', icon: 'pulse-outline', activeIcon: 'pulse' },
+      { route: '/(modules)/curexa/(tabs)/patients', label: 'Patient EMR Directory', icon: 'people-outline', activeIcon: 'people' },
+      { route: '/(modules)/curexa/(tabs)/appointments', label: 'OPD Scheduler & Queue', icon: 'calendar-outline', activeIcon: 'calendar' },
+      { route: '/(modules)/curexa/prescriptions', label: 'e-Prescriptions (e-Rx)', icon: 'document-text-outline', activeIcon: 'document-text' },
+      { route: '/(modules)/curexa/workflow', label: 'Clinical Workflow Kanban', icon: 'git-network-outline', activeIcon: 'git-network' },
     ],
   },
   {
     title: 'INPATIENT & DIAGNOSTICS',
     items: [
-      { route: '/(modules)/curexa/beds', label: 'Wards & Bed Grid', icon: 'bed-outline', activeIcon: 'bed' },
-      { route: '/(modules)/curexa/laboratory', label: 'Diagnostics & Lab', icon: 'flask-outline', activeIcon: 'flask' },
+      { route: '/(modules)/curexa/beds', label: 'Wards & Bed Matrix (IPD)', icon: 'bed-outline', activeIcon: 'bed' },
+      { route: '/(modules)/curexa/laboratory', label: 'Diagnostics & Lab Tests', icon: 'flask-outline', activeIcon: 'flask' },
     ],
   },
   {
     title: 'PHARMACY & FINANCE',
     items: [
-      { route: '/(modules)/curexa/pharmacy', label: 'Pharmacy & Stock', icon: 'medkit-outline', activeIcon: 'medkit' },
-      { route: '/(modules)/curexa/billing', label: 'Billing & Invoices', icon: 'receipt-outline', activeIcon: 'receipt' },
+      { route: '/(modules)/curexa/pharmacy', label: 'Pharmacy & Drug Stock', icon: 'medkit-outline', activeIcon: 'medkit' },
+      { route: '/(modules)/curexa/billing', label: 'Invoices & Payments', icon: 'receipt-outline', activeIcon: 'receipt' },
     ],
   },
   {
-    title: 'HOSPITAL ADMIN',
+    title: 'HOSPITAL ADMIN & ANALYTICS',
     items: [
-      { route: '/(modules)/curexa/departments', label: 'Departments & Roster', icon: 'business-outline', activeIcon: 'business' },
-      { route: '/(modules)/curexa/crm', label: 'Health CRM Pipeline', icon: 'sparkles-outline', activeIcon: 'sparkles' },
+      { route: '/(modules)/curexa/departments', label: 'Departments & Doctors', icon: 'business-outline', activeIcon: 'business' },
+      { route: '/(modules)/curexa/reports', label: 'Reports & Hospital Stats', icon: 'bar-chart-outline', activeIcon: 'bar-chart' },
+      { route: '/(modules)/curexa/crm', label: 'Patient Care CRM', icon: 'sparkles-outline', activeIcon: 'sparkles' },
       { route: '/(modules)/curexa/(tabs)/settings', label: 'System Settings', icon: 'settings-outline', activeIcon: 'settings' },
     ],
   },
@@ -95,18 +98,18 @@ function CurexaDrawerModal({ visible, onClose }) {
         <Animated.View
           entering={SlideInLeft.duration(250)}
           exiting={SlideOutLeft.duration(200)}
-          className={`w-[82%] max-w-[320px] flex-1 border-r ${palette.surface} ${palette.border}`}
+          className={`w-[84%] max-w-[320px] flex-1 border-r ${palette.surface} ${palette.border}`}
           style={{ paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }}
         >
           {/* Header Badge */}
-          <View className="px-5 pb-4 border-b border-gray-200/15 flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600">
-                <Ionicons name="medical" size={22} color="#ffffff" />
+          <View className="px-4 pb-3 border-b border-gray-200/15 flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2.5">
+              <View className="h-9 w-9 items-center justify-center rounded-[14px] bg-emerald-600 shadow-sm">
+                <Ionicons name="medical" size={20} color="#ffffff" />
               </View>
               <View>
                 <View className="flex-row items-center gap-1.5">
-                  <Text className={`text-[17px] font-bold ${palette.text}`}>Curexa HMS</Text>
+                  <Text className={`text-[16px] font-bold ${palette.text}`}>Curexa HMS</Text>
                   <View className="rounded-full bg-emerald-500/20 px-1.5 py-0.5">
                     <Text className="text-[9px] font-bold text-emerald-600">PRO</Text>
                   </View>
@@ -115,38 +118,41 @@ function CurexaDrawerModal({ visible, onClose }) {
               </View>
             </View>
             <Pressable onPress={onClose} className={`rounded-full p-1.5 ${palette.surfaceAlt}`}>
-              <Ionicons name="close" size={18} color={palette.textMutedColor} />
+              <Ionicons name="close" size={16} color={palette.textMutedColor} />
             </Pressable>
           </View>
 
           {/* Nav Categories */}
-          <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-3 pt-3">
-            {menuCategories.map((cat, idx) => (
-              <View key={cat.title} className="mb-4">
-                <Text className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[1.2px] text-emerald-600">
+          <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-3 pt-2">
+            {menuCategories.map((cat) => (
+              <View key={cat.title} className="mb-3">
+                <Text className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[1.2px] text-emerald-600">
                   {cat.title}
                 </Text>
                 <View className="gap-1">
                   {cat.items.map((item) => {
                     const isActive =
                       pathname === item.route ||
-                      (item.route === '/(modules)/curexa' && (pathname === '/(modules)/curexa' || pathname === '/(modules)/curexa/'));
+                      (item.route === '/(modules)/curexa/(tabs)' &&
+                        (pathname === '/(modules)/curexa' ||
+                          pathname === '/(modules)/curexa/' ||
+                          pathname === '/(modules)/curexa/(tabs)/index'));
 
                     return (
                       <Pressable
                         key={item.route}
                         onPress={() => navigateTo(item.route)}
-                        className={`flex-row items-center gap-3 rounded-2xl px-3.5 py-2.5 ${
+                        className={`flex-row items-center gap-2.5 rounded-[14px] px-3 py-2 ${
                           isActive ? 'bg-emerald-600' : 'transparent'
                         }`}
                       >
                         <Ionicons
                           name={isActive ? item.activeIcon : item.icon}
-                          size={18}
+                          size={17}
                           color={isActive ? '#ffffff' : palette.textMutedColor}
                         />
                         <Text
-                          className={`text-[13px] font-semibold ${
+                          className={`text-[13px] font-medium ${
                             isActive ? 'text-white font-bold' : palette.text
                           }`}
                         >
@@ -161,15 +167,15 @@ function CurexaDrawerModal({ visible, onClose }) {
           </ScrollView>
 
           {/* Footer Return Button */}
-          <View className="px-4 pt-3 border-t border-gray-200/15">
+          <View className="px-3 pt-2 border-t border-gray-200/15">
             <Pressable
               onPress={() => {
                 onClose();
                 router.replace('/(tabs)/home');
               }}
-              className="flex-row items-center justify-center gap-2 rounded-2xl bg-gray-500/15 py-3"
+              className="flex-row items-center justify-center gap-2 rounded-[14px] bg-gray-500/15 py-2.5"
             >
-              <Ionicons name="home-outline" size={16} color={palette.textColor} />
+              <Ionicons name="home-outline" size={15} color={palette.textColor} />
               <Text className={`text-[12px] font-bold ${palette.text}`}>Return to Main App</Text>
             </Pressable>
           </View>
