@@ -35,9 +35,9 @@ export default function CrmHeader({
           {showBack ? (
             <Pressable
               onPress={() => (router.canGoBack() ? router.back() : router.replace('/(modules)/crm/(tabs)'))}
-              className="h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 active:bg-slate-100"
+              className={`h-9 w-9 items-center justify-center rounded-xl border ${palette.surfaceAlt} ${palette.border}`}
             >
-              <Ionicons name="arrow-back" size={18} color="#334155" />
+              <Ionicons name="arrow-back" size={18} color={palette.textColor} />
             </Pressable>
           ) : (
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
@@ -47,17 +47,17 @@ export default function CrmHeader({
 
           <View className="flex-1">
             <View className="flex-row items-center gap-x-1.5">
-              <Text className="text-base font-black tracking-tight text-slate-900" numberOfLines={1}>
+              <Text className={`text-base font-black tracking-tight ${palette.text}`} numberOfLines={1}>
                 {title}
               </Text>
               {!showBack && (
-                <View className="rounded-full bg-indigo-50 px-2 py-0.5 border border-indigo-100">
-                  <Text className="text-[9px] font-bold uppercase tracking-wider text-indigo-700">v5 API</Text>
+                <View className={`rounded-full px-2 py-0.5 border ${palette.accentSoft} ${palette.border}`}>
+                  <Text className={`text-[9px] font-bold uppercase tracking-wider ${palette.accentText}`}>v5 API</Text>
                 </View>
               )}
             </View>
             {subtitle ? (
-              <Text className="text-[11px] text-slate-500 font-medium" numberOfLines={1}>
+              <Text className={`text-[11px] font-medium ${palette.textMuted}`} numberOfLines={1}>
                 {subtitle}
               </Text>
             ) : null}
@@ -69,29 +69,29 @@ export default function CrmHeader({
           {showAnalytics && (
             <Pressable
               onPress={() => router.push('/(modules)/crm/analytics')}
-              className="h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+              className={`h-9 w-9 items-center justify-center rounded-xl border ${palette.surfaceAlt} ${palette.border}`}
             >
-              <Ionicons name="bar-chart-outline" size={16} color="#475569" />
+              <Ionicons name="bar-chart-outline" size={16} color={palette.textMutedColor} />
             </Pressable>
           )}
 
           {showSettings && (
             <Pressable
               onPress={() => router.push('/(modules)/crm/settings')}
-              className="h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+              className={`h-9 w-9 items-center justify-center rounded-xl border ${palette.surfaceAlt} ${palette.border}`}
             >
-              <Ionicons name="settings-outline" size={16} color="#475569" />
+              <Ionicons name="settings-outline" size={16} color={palette.textMutedColor} />
             </Pressable>
           )}
 
           <Pressable
             onPress={refreshAll}
             disabled={refreshing}
-            className={`h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100 ${
+            className={`h-9 w-9 items-center justify-center rounded-xl border ${palette.surfaceAlt} ${palette.border} ${
               refreshing ? 'opacity-50' : ''
             }`}
           >
-            <Ionicons name="refresh-outline" size={16} color="#475569" />
+            <Ionicons name="refresh-outline" size={16} color={palette.textMutedColor} />
           </Pressable>
 
           {rightActions}

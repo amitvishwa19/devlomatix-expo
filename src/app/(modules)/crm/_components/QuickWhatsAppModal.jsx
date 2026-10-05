@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import * as crmService from '~/services/crm';
 
@@ -30,6 +31,7 @@ const TEMPLATES = [
 
 export default function QuickWhatsAppModal() {
   const insets = useSafeAreaInsets();
+  const { palette } = useAppTheme();
   const { quickWhatsAppTarget, closeQuickWhatsApp, refreshAll } = useCrm();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -94,43 +96,43 @@ export default function QuickWhatsAppModal() {
         <Pressable className="flex-1" onPress={closeQuickWhatsApp} />
 
         <View
-          className="rounded-t-3xl bg-white p-5 shadow-2xl"
+          className={`rounded-t-3xl ${palette.surface} p-5 shadow-2xl border-t ${palette.border}`}
           style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
         >
           {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-slate-100 pb-3.5">
+          <View className={`flex-row items-center justify-between border-b ${palette.border} pb-3.5`}>
             <View className="flex-row items-center gap-x-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 border border-emerald-200">
-                <Ionicons name="logo-whatsapp" size={18} color="#059669" />
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
+                <Ionicons name="logo-whatsapp" size={18} color="#10b981" />
               </View>
               <View>
-                <Text className="text-base font-black text-slate-900">WhatsApp Outreach</Text>
-                <Text className="text-xs text-slate-500 font-medium">
-                  To: <Text className="font-bold text-slate-800">{contact.name}</Text> ({contact.phone || 'No phone'})
+                <Text className={`text-base font-black ${palette.text}`}>WhatsApp Outreach</Text>
+                <Text className={`text-xs ${palette.textMuted} font-medium`}>
+                  To: <Text className={`font-bold ${palette.text}`}>{contact.name}</Text> ({contact.phone || 'No phone'})
                 </Text>
               </View>
             </View>
 
             <Pressable
               onPress={closeQuickWhatsApp}
-              className="h-8 w-8 items-center justify-center rounded-full bg-slate-100 active:bg-slate-200"
+              className={`h-8 w-8 items-center justify-center rounded-full ${palette.surfaceAlt} border ${palette.border}`}
             >
-              <Ionicons name="close" size={18} color="#475569" />
+              <Ionicons name="close" size={18} color={palette.textColor} />
             </Pressable>
           </View>
 
           {/* Attached Deal Context */}
           {deal && (
-            <View className="mt-3 flex-row items-center gap-x-2 rounded-xl bg-indigo-50/70 px-3 py-2 border border-indigo-100">
-              <Ionicons name="briefcase-outline" size={14} color="#4f46e5" />
-              <Text className="text-xs font-semibold text-indigo-900" numberOfLines={1}>
+            <View className="mt-3 flex-row items-center gap-x-2 rounded-xl bg-indigo-500/15 px-3 py-2 border border-indigo-500/30">
+              <Ionicons name="briefcase-outline" size={14} color="#818cf8" />
+              <Text className="text-xs font-semibold text-indigo-300" numberOfLines={1}>
                 Attached Deal: <Text className="font-black">{deal.title}</Text> ({deal.currency} {deal.value})
               </Text>
             </View>
           )}
 
           {/* Quick Template Chips */}
-          <Text className="mt-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <Text className={`mt-3 text-[11px] font-bold uppercase tracking-wider ${palette.textMuted}`}>
             Quick AI & Standard Templates
           </Text>
           <ScrollView
@@ -142,23 +144,23 @@ export default function QuickWhatsAppModal() {
               <Pressable
                 key={t.id}
                 onPress={() => applyTemplate(t)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 active:bg-slate-100"
+                className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3 py-1.5 active:opacity-75`}
               >
-                <Text className="text-xs font-semibold text-slate-700">{t.title}</Text>
+                <Text className={`text-xs font-semibold ${palette.text}`}>{t.title}</Text>
               </Pressable>
             ))}
           </ScrollView>
 
           {/* Message Input */}
-          <View className="mt-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+          <View className={`mt-3.5 rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3`}>
             <TextInput
               multiline
               numberOfLines={4}
               value={message}
               onChangeText={setMessage}
               placeholder="Type WhatsApp message here..."
-              placeholderTextColor="#94a3b8"
-              className="min-h-[90px] text-sm text-slate-900 leading-5"
+              placeholderTextColor={palette.textMutedColor}
+              className={`min-h-[90px] text-sm ${palette.text} leading-5`}
               textAlignVertical="top"
             />
           </View>
@@ -168,13 +170,13 @@ export default function QuickWhatsAppModal() {
             <View
               className={`mt-3 rounded-xl p-2.5 border ${
                 statusMsg.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-200'
-                  : 'bg-rose-50 border-rose-200'
+                  ? 'bg-emerald-500/15 border-emerald-500/30'
+                  : 'bg-rose-500/15 border-rose-500/30'
               }`}
             >
               <Text
                 className={`text-xs font-bold text-center ${
-                  statusMsg.type === 'success' ? 'text-emerald-700' : 'text-rose-700'
+                  statusMsg.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
                 {statusMsg.text}

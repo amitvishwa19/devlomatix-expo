@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import * as crmService from '~/services/crm';
 
 export default function CreateDealModal() {
   const insets = useSafeAreaInsets();
+  const { palette } = useAppTheme();
   const {
     createDealVisible,
     setCreateDealVisible,
@@ -96,56 +98,56 @@ export default function CreateDealModal() {
         <Pressable className="flex-1" onPress={() => setCreateDealVisible(false)} />
 
         <View
-          className="max-h-[85%] rounded-t-3xl bg-white p-5 shadow-2xl"
+          className={`max-h-[85%] rounded-t-3xl ${palette.surface} p-5 shadow-2xl border-t ${palette.border}`}
           style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
         >
           {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-slate-100 pb-3">
+          <View className={`flex-row items-center justify-between border-b ${palette.border} pb-3`}>
             <View className="flex-row items-center gap-x-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 border border-indigo-200">
-                <Ionicons name="briefcase" size={18} color="#4f46e5" />
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15 border border-indigo-500/30">
+                <Ionicons name="briefcase" size={18} color="#818cf8" />
               </View>
               <View>
-                <Text className="text-base font-black text-slate-900">Create New Deal</Text>
-                <Text className="text-xs text-slate-500 font-medium">Add opportunity to sales pipeline</Text>
+                <Text className={`text-base font-black ${palette.text}`}>Create New Deal</Text>
+                <Text className={`text-xs ${palette.textMuted} font-medium`}>Add opportunity to sales pipeline</Text>
               </View>
             </View>
 
             <Pressable
               onPress={() => setCreateDealVisible(false)}
-              className="h-8 w-8 items-center justify-center rounded-full bg-slate-100 active:bg-slate-200"
+              className={`h-8 w-8 items-center justify-center rounded-full ${palette.surfaceAlt} border ${palette.border}`}
             >
-              <Ionicons name="close" size={18} color="#475569" />
+              <Ionicons name="close" size={18} color={palette.textColor} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
             {/* Title */}
-            <Text className="text-xs font-bold text-slate-700 mb-1">Deal Title *</Text>
+            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Deal Title *</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. Enterprise Cloud Migration"
-              placeholderTextColor="#94a3b8"
-              className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 mb-3"
+              placeholderTextColor={palette.textMutedColor}
+              className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm ${palette.text} mb-3`}
             />
 
             {/* Value & Currency */}
             <View className="flex-row items-center gap-x-2 mb-3">
               <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 mb-1">Estimated Value</Text>
+                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Estimated Value</Text>
                 <TextInput
                   value={value}
                   onChangeText={setValue}
                   keyboardType="numeric"
                   placeholder="e.g. 250000"
-                  placeholderTextColor="#94a3b8"
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm ${palette.text}`}
                 />
               </View>
               <View className="w-24">
-                <Text className="text-xs font-bold text-slate-700 mb-1">Currency</Text>
-                <View className="flex-row rounded-xl border border-slate-200 bg-slate-50 p-1">
+                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Currency</Text>
+                <View className={`flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1`}>
                   {['INR', 'USD'].map((c) => (
                     <Pressable
                       key={c}
@@ -156,7 +158,7 @@ export default function CreateDealModal() {
                     >
                       <Text
                         className={`text-xs font-bold ${
-                          currency === c ? 'text-white' : 'text-slate-600'
+                          currency === c ? 'text-white' : palette.textMuted
                         }`}
                       >
                         {c}
@@ -168,7 +170,7 @@ export default function CreateDealModal() {
             </View>
 
             {/* Stage Selector */}
-            <Text className="text-xs font-bold text-slate-700 mb-1">Pipeline Stage</Text>
+            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Pipeline Stage</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
               {currentStages.map((s) => (
                 <Pressable
@@ -177,7 +179,7 @@ export default function CreateDealModal() {
                   className={`rounded-xl border px-3 py-2 flex-row items-center gap-x-1.5 ${
                     stageId === s.id
                       ? 'bg-indigo-600 border-indigo-600'
-                      : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+                      : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
                   }`}
                 >
                   <View
@@ -186,7 +188,7 @@ export default function CreateDealModal() {
                   />
                   <Text
                     className={`text-xs font-bold ${
-                      stageId === s.id ? 'text-white' : 'text-slate-700'
+                      stageId === s.id ? 'text-white' : palette.text
                     }`}
                   >
                     {s.name}
@@ -196,7 +198,7 @@ export default function CreateDealModal() {
             </ScrollView>
 
             {/* Priority Selector */}
-            <Text className="text-xs font-bold text-slate-700 mb-1">Priority</Text>
+            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Priority</Text>
             <View className="flex-row gap-x-2 mb-3">
               {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
                 <Pressable
@@ -204,13 +206,13 @@ export default function CreateDealModal() {
                   onPress={() => setPriority(p)}
                   className={`flex-1 items-center justify-center rounded-xl border py-2 ${
                     priority === p
-                      ? 'bg-slate-900 border-slate-900'
-                      : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+                      ? 'bg-indigo-600 border-indigo-600'
+                      : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
                   }`}
                 >
                   <Text
                     className={`text-[10px] font-bold ${
-                      priority === p ? 'text-white' : 'text-slate-700'
+                      priority === p ? 'text-white' : palette.text
                     }`}
                   >
                     {p}
@@ -222,15 +224,15 @@ export default function CreateDealModal() {
             {/* Contact Linkage */}
             {contacts.length > 0 && (
               <>
-                <Text className="text-xs font-bold text-slate-700 mb-1">Link Contact</Text>
+                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Link Contact</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
                   <Pressable
                     onPress={() => setContactId('')}
                     className={`rounded-xl border px-3 py-1.5 ${
-                      !contactId ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-50 border-slate-200'
+                      !contactId ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
                     }`}
                   >
-                    <Text className={`text-xs font-semibold ${!contactId ? 'text-white' : 'text-slate-600'}`}>
+                    <Text className={`text-xs font-semibold ${!contactId ? 'text-white' : palette.textMuted}`}>
                       None
                     </Text>
                   </Pressable>
@@ -239,10 +241,10 @@ export default function CreateDealModal() {
                       key={c.id}
                       onPress={() => setContactId(c.id)}
                       className={`rounded-xl border px-3 py-1.5 ${
-                        contactId === c.id ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-50 border-slate-200'
+                        contactId === c.id ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
                       }`}
                     >
-                      <Text className={`text-xs font-semibold ${contactId === c.id ? 'text-white' : 'text-slate-700'}`}>
+                      <Text className={`text-xs font-semibold ${contactId === c.id ? 'text-white' : palette.text}`}>
                         {c.name}
                       </Text>
                     </Pressable>
@@ -254,15 +256,15 @@ export default function CreateDealModal() {
             {/* Account Linkage */}
             {accounts.length > 0 && (
               <>
-                <Text className="text-xs font-bold text-slate-700 mb-1">Link Company Account</Text>
+                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Link Company Account</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
                   <Pressable
                     onPress={() => setAccountId('')}
                     className={`rounded-xl border px-3 py-1.5 ${
-                      !accountId ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-50 border-slate-200'
+                      !accountId ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
                     }`}
                   >
-                    <Text className={`text-xs font-semibold ${!accountId ? 'text-white' : 'text-slate-600'}`}>
+                    <Text className={`text-xs font-semibold ${!accountId ? 'text-white' : palette.textMuted}`}>
                       Independent
                     </Text>
                   </Pressable>
@@ -271,10 +273,10 @@ export default function CreateDealModal() {
                       key={a.id}
                       onPress={() => setAccountId(a.id)}
                       className={`rounded-xl border px-3 py-1.5 ${
-                        accountId === a.id ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-50 border-slate-200'
+                        accountId === a.id ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
                       }`}
                     >
-                      <Text className={`text-xs font-semibold ${accountId === a.id ? 'text-white' : 'text-slate-700'}`}>
+                      <Text className={`text-xs font-semibold ${accountId === a.id ? 'text-white' : palette.text}`}>
                         {a.name}
                       </Text>
                     </Pressable>
@@ -285,8 +287,8 @@ export default function CreateDealModal() {
 
             {/* Error banner */}
             {error && (
-              <View className="mb-3 rounded-xl bg-rose-50 p-2.5 border border-rose-200">
-                <Text className="text-xs font-bold text-rose-700 text-center">{error}</Text>
+              <View className="mb-3 rounded-xl bg-rose-500/15 p-2.5 border border-rose-500/30">
+                <Text className="text-xs font-bold text-rose-400 text-center">{error}</Text>
               </View>
             )}
           </ScrollView>

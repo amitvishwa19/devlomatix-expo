@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import * as crmService from '~/services/crm';
 import CrmHeader from '../_components/CrmHeader';
@@ -23,6 +24,7 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function CrmCopilotTab() {
+  const { palette } = useAppTheme();
   const { deals, forecast } = useCrm();
   const scrollViewRef = useRef(null);
 
@@ -114,10 +116,10 @@ export default function CrmCopilotTab() {
         rightActions={
           <Pressable
             onPress={clearChat}
-            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+            className={`h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border ${palette.border} ${palette.surfaceAlt} active:opacity-75`}
           >
-            <Ionicons name="trash-outline" size={14} color="#64748b" />
-            <Text className="text-[11px] font-semibold text-slate-600">Clear</Text>
+            <Ionicons name="trash-outline" size={14} color={palette.textMutedColor} />
+            <Text className={`text-[11px] font-semibold ${palette.textMuted}`}>Clear</Text>
           </Pressable>
         }
       />
@@ -153,12 +155,12 @@ export default function CrmCopilotTab() {
                   className={`max-w-[82%] rounded-2xl p-3.5 shadow-sm ${
                     isUser
                       ? 'bg-indigo-600 rounded-tr-sm'
-                      : 'bg-white border border-slate-200 rounded-tl-sm'
+                      : `${palette.surface} border ${palette.border} rounded-tl-sm`
                   }`}
                 >
                   <Text
                     className={`text-xs leading-5 ${
-                      isUser ? 'font-bold text-white' : 'font-medium text-slate-800'
+                      isUser ? 'font-bold text-white' : `font-medium ${palette.text}`
                     }`}
                   >
                     {m.content}
@@ -173,8 +175,8 @@ export default function CrmCopilotTab() {
               <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600">
                 <ActivityIndicator size="small" color="#ffffff" />
               </View>
-              <View className="rounded-2xl bg-white border border-slate-200 p-3.5 rounded-tl-sm shadow-sm">
-                <Text className="text-xs font-semibold text-indigo-700 italic">
+              <View className={`rounded-2xl ${palette.surface} border ${palette.border} p-3.5 rounded-tl-sm shadow-sm`}>
+                <Text className="text-xs font-semibold text-indigo-400 italic">
                   FlowGenix AI is synthesizing pipeline intelligence...
                 </Text>
               </View>
@@ -183,7 +185,7 @@ export default function CrmCopilotTab() {
         </ScrollView>
 
         {/* Suggested Prompts Horizon */}
-        <View className="bg-white border-t border-slate-200 px-3 pt-2" style={{ paddingBottom: 76 }}>
+        <View className={`${palette.surface} border-t ${palette.border} px-3 pt-2`} style={{ paddingBottom: 76 }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -194,9 +196,9 @@ export default function CrmCopilotTab() {
                 key={idx}
                 onPress={() => handleSend(p)}
                 disabled={loading}
-                className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 active:bg-indigo-100 mr-1"
+                className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3 py-1.5 active:opacity-75 mr-1`}
               >
-                <Text className="text-[11px] font-bold text-indigo-900">{p}</Text>
+                <Text className={`text-[11px] font-bold ${palette.text}`}>{p}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -207,10 +209,10 @@ export default function CrmCopilotTab() {
               value={inputText}
               onChangeText={setInputText}
               placeholder="Ask Copilot anything about your CRM..."
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={palette.textMutedColor}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
-              className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900"
+              className={`flex-1 rounded-2xl border ${palette.border} ${palette.surfaceAlt} px-4 py-2.5 text-xs ${palette.text}`}
             />
 
             <Pressable

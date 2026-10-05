@@ -10,12 +10,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
 
 export default function CrmSettingsScreen() {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { pipelines, activePipeline, refreshAll, refreshing } = useCrm();
 
   const [syncingWa, setSyncingWa] = useState(false);
@@ -60,18 +62,18 @@ export default function CrmSettingsScreen() {
         className="px-4 pt-3.5"
       >
         {/* Active Pipeline & Stage Config */}
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
+        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-4`}>
           <View className="flex-row items-center justify-between mb-3">
             <View>
-              <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
+              <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
                 Active Deal Pipeline
               </Text>
-              <Text className="text-base font-black text-slate-900 mt-0.5">
+              <Text className={`text-base font-black ${palette.text} mt-0.5`}>
                 {activePipeline?.name || 'Default Sales Pipeline'}
               </Text>
             </View>
-            <View className="rounded-full bg-indigo-50 px-2 py-0.5 border border-indigo-100">
-              <Text className="text-[9px] font-bold text-indigo-700">{stages.length} Stages</Text>
+            <View className="rounded-full bg-indigo-500/15 px-2 py-0.5 border border-indigo-500/30">
+              <Text className="text-[9px] font-bold text-indigo-400">{stages.length} Stages</Text>
             </View>
           </View>
 
@@ -80,16 +82,16 @@ export default function CrmSettingsScreen() {
             <View
               key={stage.id}
               className={`flex-row items-center justify-between py-2.5 ${
-                idx !== 0 ? 'border-t border-slate-100' : ''
+                idx !== 0 ? `border-t ${palette.border}` : ''
               }`}
             >
               <View className="flex-row items-center gap-x-2.5">
                 <View className="h-3 w-3 rounded-full" style={{ backgroundColor: stage.color || '#4f46e5' }} />
-                <Text className="text-xs font-bold text-slate-800">
+                <Text className={`text-xs font-bold ${palette.text}`}>
                   {idx + 1}. {stage.name}
                 </Text>
               </View>
-              <Text className="text-xs font-semibold text-slate-500">
+              <Text className={`text-xs font-semibold ${palette.textMuted}`}>
                 {stage.probability}% win probability
               </Text>
             </View>
@@ -97,30 +99,30 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* 1-Click WhatsApp Chat Sync Card */}
-        <View className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm mb-4">
+        <View className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 p-4 shadow-sm mb-4">
           <View className="flex-row items-center gap-x-2.5 mb-1.5">
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-600">
               <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
             </View>
             <View>
-              <Text className="text-sm font-black text-emerald-950">KonnectX WhatsApp Bridge</Text>
-              <Text className="text-[11px] text-emerald-700">Auto-scan conversations & sync contacts</Text>
+              <Text className="text-sm font-black text-emerald-400">KonnectX WhatsApp Bridge</Text>
+              <Text className="text-[11px] text-emerald-300">Auto-scan conversations & sync contacts</Text>
             </View>
           </View>
 
-          <Text className="text-xs text-slate-600 mt-2 leading-5">
+          <Text className={`text-xs ${palette.textSoft} mt-2 leading-5`}>
             Scans your KonnectX WhatsApp Cloud inbox, auto-registers new client profiles into CRM, and links full chat history to contact dossiers.
           </Text>
 
           {syncResult && (
             <View
               className={`mt-3 rounded-xl p-2.5 border ${
-                syncResult.type === 'success' ? 'bg-emerald-100 border-emerald-300' : 'bg-rose-100 border-rose-300'
+                syncResult.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-rose-500/20 border-rose-500/40'
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
-                  syncResult.type === 'success' ? 'text-emerald-900' : 'text-rose-900'
+                  syncResult.type === 'success' ? 'text-emerald-300' : 'text-rose-300'
                 }`}
               >
                 {syncResult.text}
@@ -147,50 +149,50 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* Cross-Module Bridges Overview */}
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
-          <Text className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-4`}>
+          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted} mb-3`}>
             Active Ecosystem Bridges
           </Text>
 
           {/* PayFlow Bridge */}
-          <View className="flex-row items-center justify-between py-2.5 border-b border-slate-100">
+          <View className={`flex-row items-center justify-between py-2.5 border-b ${palette.border}`}>
             <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="card-outline" size={18} color="#7c3aed" />
+              <Ionicons name="card-outline" size={18} color="#a855f7" />
               <View>
-                <Text className="text-xs font-bold text-slate-900">PayFlow Billing Bridge</Text>
-                <Text className="text-[10px] text-slate-500">1-Click Invoice & Quotations</Text>
+                <Text className={`text-xs font-bold ${palette.text}`}>PayFlow Billing Bridge</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>1-Click Invoice & Quotations</Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-              <Text className="text-[9px] font-bold text-emerald-700">Connected</Text>
+            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
+              <Text className="text-[9px] font-bold text-emerald-400">Connected</Text>
             </View>
           </View>
 
           {/* FlowGenix Bridge */}
-          <View className="flex-row items-center justify-between py-2.5 border-b border-slate-100">
+          <View className={`flex-row items-center justify-between py-2.5 border-b ${palette.border}`}>
             <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="sparkles-outline" size={18} color="#4f46e5" />
+              <Ionicons name="sparkles-outline" size={18} color="#818cf8" />
               <View>
-                <Text className="text-xs font-bold text-slate-900">FlowGenix AI Agent</Text>
-                <Text className="text-[10px] text-slate-500">Sales Intelligence & Health Scoring</Text>
+                <Text className={`text-xs font-bold ${palette.text}`}>FlowGenix AI Agent</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>Sales Intelligence & Health Scoring</Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-              <Text className="text-[9px] font-bold text-emerald-700">Active</Text>
+            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
+              <Text className="text-[9px] font-bold text-emerald-400">Active</Text>
             </View>
           </View>
 
           {/* Hireflow Bridge */}
           <View className="flex-row items-center justify-between py-2.5">
             <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="briefcase-outline" size={18} color="#0284c7" />
+              <Ionicons name="briefcase-outline" size={18} color="#0ea5e9" />
               <View>
-                <Text className="text-xs font-bold text-slate-900">Hireflow ATS Bridge</Text>
-                <Text className="text-[10px] text-slate-500">Candidate ⇄ Lead Conversion</Text>
+                <Text className={`text-xs font-bold ${palette.text}`}>Hireflow ATS Bridge</Text>
+                <Text className={`text-[10px] ${palette.textMuted}`}>Candidate ⇄ Lead Conversion</Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-              <Text className="text-[9px] font-bold text-emerald-700">Connected</Text>
+            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
+              <Text className="text-[9px] font-bold text-emerald-400">Connected</Text>
             </View>
           </View>
         </View>

@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
@@ -14,6 +15,7 @@ import * as crmService from '~/services/crm';
 
 export default function CrmDashboard() {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const {
     deals,
     contacts,
@@ -82,12 +84,14 @@ export default function CrmDashboard() {
         {syncBanner && (
           <View
             className={`mb-3.5 rounded-2xl p-3.5 border ${
-              syncBanner.type === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
+              syncBanner.type === 'success'
+                ? 'bg-emerald-500/15 border-emerald-500/30'
+                : 'bg-rose-500/15 border-rose-500/30'
             }`}
           >
             <Text
               className={`text-xs font-bold text-center ${
-                syncBanner.type === 'success' ? 'text-emerald-800' : 'text-rose-800'
+                syncBanner.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
               {syncBanner.text}
@@ -98,121 +102,121 @@ export default function CrmDashboard() {
         {/* Executive KPI Grid */}
         <View className="flex-row flex-wrap justify-between gap-y-2.5">
           {/* Total Pipeline */}
-          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <View className={`w-[48%] rounded-2xl border ${palette.border} ${palette.surface} p-3.5 shadow-sm`}>
             <View className="flex-row items-center justify-between">
-              <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100">
-                <Ionicons name="pie-chart" size={16} color="#4f46e5" />
+              <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/15 border border-indigo-500/30">
+                <Ionicons name="pie-chart" size={16} color="#818cf8" />
               </View>
-              <View className="rounded-full bg-indigo-50 px-1.5 py-0.5">
-                <Text className="text-[9px] font-bold text-indigo-700">Live</Text>
+              <View className="rounded-full bg-indigo-500/15 px-1.5 py-0.5 border border-indigo-500/30">
+                <Text className="text-[9px] font-bold text-indigo-400">Live</Text>
               </View>
             </View>
-            <Text className="mt-2.5 text-lg font-black text-slate-900" numberOfLines={1}>
+            <Text className={`mt-2.5 text-lg font-black ${palette.text}`} numberOfLines={1}>
               ₹ {totalPipelineVal}
             </Text>
-            <Text className="text-[10px] font-semibold text-slate-500 mt-0.5">Total Pipeline</Text>
+            <Text className={`text-[10px] font-semibold ${palette.textMuted} mt-0.5`}>Total Pipeline</Text>
           </View>
 
           {/* Weighted Revenue */}
-          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <View className={`w-[48%] rounded-2xl border ${palette.border} ${palette.surface} p-3.5 shadow-sm`}>
             <View className="flex-row items-center justify-between">
-              <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-100">
-                <Ionicons name="trending-up" size={16} color="#059669" />
+              <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
+                <Ionicons name="trending-up" size={16} color="#10b981" />
               </View>
-              <View className="rounded-full bg-emerald-50 px-1.5 py-0.5">
-                <Text className="text-[9px] font-bold text-emerald-700">Forecast</Text>
+              <View className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 border border-emerald-500/30">
+                <Text className="text-[9px] font-bold text-emerald-400">Forecast</Text>
               </View>
             </View>
-            <Text className="mt-2.5 text-lg font-black text-slate-900" numberOfLines={1}>
+            <Text className={`mt-2.5 text-lg font-black ${palette.text}`} numberOfLines={1}>
               ₹ {weightedRev}
             </Text>
-            <Text className="text-[10px] font-semibold text-slate-500 mt-0.5">Weighted Expected</Text>
+            <Text className={`text-[10px] font-semibold ${palette.textMuted} mt-0.5`}>Weighted Expected</Text>
           </View>
 
           {/* Win Rate */}
-          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <View className={`w-[48%] rounded-2xl border ${palette.border} ${palette.surface} p-3.5 shadow-sm`}>
             <View className="flex-row items-center justify-between">
-              <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-50 border border-amber-100">
-                <Ionicons name="trophy" size={16} color="#d97706" />
+              <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30">
+                <Ionicons name="trophy" size={16} color="#f59e0b" />
               </View>
-              <Text className="text-xs font-bold text-amber-700">{winRate}%</Text>
+              <Text className="text-xs font-bold text-amber-500">{winRate}%</Text>
             </View>
-            <Text className="mt-2.5 text-lg font-black text-slate-900">{winRate}%</Text>
-            <Text className="text-[10px] font-semibold text-slate-500 mt-0.5">Stage Win Rate</Text>
+            <Text className={`mt-2.5 text-lg font-black ${palette.text}`}>{winRate}%</Text>
+            <Text className={`text-[10px] font-semibold ${palette.textMuted} mt-0.5`}>Stage Win Rate</Text>
           </View>
 
           {/* Pending Tasks */}
-          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <View className={`w-[48%] rounded-2xl border ${palette.border} ${palette.surface} p-3.5 shadow-sm`}>
             <View className="flex-row items-center justify-between">
-              <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-50 border border-purple-100">
-                <Ionicons name="checkbox" size={16} color="#7c3aed" />
+              <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-500/15 border border-purple-500/30">
+                <Ionicons name="checkbox" size={16} color="#a855f7" />
               </View>
-              <Text className="text-xs font-bold text-purple-700">{pendingTasksCount} open</Text>
+              <Text className="text-xs font-bold text-purple-400">{pendingTasksCount} open</Text>
             </View>
-            <Text className="mt-2.5 text-lg font-black text-slate-900">{pendingTasksCount}</Text>
-            <Text className="text-[10px] font-semibold text-slate-500 mt-0.5">Follow-ups Due</Text>
+            <Text className={`mt-2.5 text-lg font-black ${palette.text}`}>{pendingTasksCount}</Text>
+            <Text className={`text-[10px] font-semibold ${palette.textMuted} mt-0.5`}>Follow-ups Due</Text>
           </View>
         </View>
 
         {/* Quick Action Grid */}
-        <Text className="mt-5 text-xs font-black uppercase tracking-wider text-slate-400">
+        <Text className={`mt-5 text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
           Quick Sales Operations
         </Text>
         <View className="mt-2 flex-row flex-wrap justify-between gap-y-2">
           <Pressable
             onPress={() => openCreateDeal()}
-            className="w-[31%] items-center justify-center rounded-2xl border border-indigo-200/90 bg-indigo-50/60 p-3 active:bg-indigo-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600">
               <Ionicons name="add" size={18} color="#ffffff" />
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-indigo-950">New Deal</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>New Deal</Text>
           </Pressable>
 
           <Pressable
             onPress={openCreateContact}
-            className="w-[31%] items-center justify-center rounded-2xl border border-emerald-200/90 bg-emerald-50/60 p-3 active:bg-emerald-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-600">
               <Ionicons name="person-add" size={16} color="#ffffff" />
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-emerald-950">Add Contact</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>Add Contact</Text>
           </Pressable>
 
           <Pressable
             onPress={() => openCreateTask()}
-            className="w-[31%] items-center justify-center rounded-2xl border border-purple-200/90 bg-purple-50/60 p-3 active:bg-purple-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-600">
               <Ionicons name="calendar" size={16} color="#ffffff" />
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-purple-950">Add Task</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>Add Task</Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push('/(modules)/crm/(tabs)/copilot')}
-            className="w-[31%] items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/60 p-3 active:bg-amber-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-600">
               <Ionicons name="sparkles" size={16} color="#ffffff" />
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-amber-950">AI Copilot</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>AI Copilot</Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push('/(modules)/crm/analytics')}
-            className="w-[31%] items-center justify-center rounded-2xl border border-sky-200/90 bg-sky-50/60 p-3 active:bg-sky-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-sky-600">
               <Ionicons name="bar-chart" size={16} color="#ffffff" />
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-sky-950">Leaderboard</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>Leaderboard</Text>
           </Pressable>
 
           <Pressable
             onPress={handleSyncWhatsApp}
             disabled={syncingWa}
-            className="w-[31%] items-center justify-center rounded-2xl border border-teal-200/90 bg-teal-50/60 p-3 active:bg-teal-100/70"
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-teal-600">
               {syncingWa ? (
@@ -221,32 +225,32 @@ export default function CrmDashboard() {
                 <Ionicons name="sync" size={16} color="#ffffff" />
               )}
             </View>
-            <Text className="mt-1.5 text-[11px] font-bold text-teal-950">Sync WA</Text>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>Sync WA</Text>
           </Pressable>
         </View>
 
         {/* Top Priority Opportunities */}
         <View className="mt-6 flex-row items-center justify-between mb-2.5">
-          <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
+          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
             Top Opportunities ({deals.length})
           </Text>
           <Pressable onPress={() => router.push('/(modules)/crm/(tabs)/pipeline')}>
-            <Text className="text-xs font-bold text-indigo-600">View Pipeline →</Text>
+            <Text className="text-xs font-bold text-indigo-400">View Pipeline →</Text>
           </Pressable>
         </View>
 
         {loading && deals.length === 0 ? (
           <View className="py-10 items-center justify-center">
-            <ActivityIndicator size="large" color="#4f46e5" />
-            <Text className="text-xs text-slate-400 font-semibold mt-2">Loading CRM intelligence...</Text>
+            <ActivityIndicator size="large" color="#6366f1" />
+            <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading CRM intelligence...</Text>
           </View>
         ) : topDeals.length > 0 ? (
           topDeals.map((deal) => <DealCard key={deal.id} deal={deal} />)
         ) : (
-          <View className="rounded-2xl border border-dashed border-slate-300 p-8 items-center justify-center bg-white">
-            <Ionicons name="briefcase-outline" size={32} color="#94a3b8" />
-            <Text className="text-sm font-bold text-slate-700 mt-2">No Deals in Pipeline</Text>
-            <Text className="text-xs text-slate-400 text-center mt-1">
+          <View className={`rounded-2xl border border-dashed ${palette.border} p-8 items-center justify-center ${palette.surface}`}>
+            <Ionicons name="briefcase-outline" size={32} color={palette.textMutedColor} />
+            <Text className={`text-sm font-bold ${palette.text} mt-2`}>No Deals in Pipeline</Text>
+            <Text className={`text-xs ${palette.textMuted} text-center mt-1`}>
               Create your first sales deal or import leads from WhatsApp.
             </Text>
             <Pressable

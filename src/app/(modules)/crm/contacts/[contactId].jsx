@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
@@ -21,6 +22,7 @@ import * as crmService from '~/services/crm';
 export default function ContactDossierScreen() {
   const { contactId } = useLocalSearchParams();
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { openQuickWhatsApp, openCreateTask, openCreateDeal, refreshAll } = useCrm();
 
   const [contact, setContact] = useState(null);
@@ -82,8 +84,8 @@ export default function ContactDossierScreen() {
     return (
       <AppScreen>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#4f46e5" />
-          <Text className="text-xs text-slate-400 font-semibold mt-2">Loading 360° Contact Dossier...</Text>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading 360° Contact Dossier...</Text>
         </View>
       </AppScreen>
     );
@@ -94,7 +96,7 @@ export default function ContactDossierScreen() {
       <AppScreen>
         <CrmHeader title="Contact Dossier" showBack={true} />
         <View className="flex-1 items-center justify-center">
-          <Text className="text-sm font-bold text-slate-700">Contact Not Found</Text>
+          <Text className={`text-sm font-bold ${palette.text}`}>Contact Not Found</Text>
         </View>
       </AppScreen>
     );
@@ -126,42 +128,42 @@ export default function ContactDossierScreen() {
         className="px-4 pt-3.5"
       >
         {/* Contact Profile Header Card */}
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
+        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
           <View className="flex-row items-center gap-x-3.5">
-            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 border border-indigo-200">
-              <Text className="text-lg font-black text-indigo-800">{initials}</Text>
+            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 border border-indigo-500/30">
+              <Text className="text-lg font-black text-indigo-400">{initials}</Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-black text-slate-900">{contact.name}</Text>
-              <Text className="text-xs text-slate-500 mt-0.5">
+              <Text className={`text-base font-black ${palette.text}`}>{contact.name}</Text>
+              <Text className={`text-xs ${palette.textMuted} mt-0.5`}>
                 {contact.jobTitle ? `${contact.jobTitle} • ` : ''}
                 {contact.account?.name || 'Individual Prospect'}
               </Text>
               {contact.phone && (
-                <Text className="text-xs font-mono font-bold text-slate-700 mt-1">{contact.phone}</Text>
+                <Text className={`text-xs font-mono font-bold ${palette.textSoft} mt-1`}>{contact.phone}</Text>
               )}
             </View>
           </View>
 
           {/* Quick Action Dialers */}
-          <View className="mt-3.5 flex-row gap-x-2 pt-3 border-t border-slate-100">
+          <View className={`mt-3.5 flex-row gap-x-2 pt-3 border-t ${palette.border}`}>
             {contact.phone && (
               <>
                 <Pressable
                   onPress={() => openQuickWhatsApp(contact)}
-                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-emerald-50 py-2.5 border border-emerald-200 active:bg-emerald-100"
+                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-emerald-500/15 py-2.5 border border-emerald-500/30 active:opacity-75"
                 >
-                  <Ionicons name="logo-whatsapp" size={16} color="#059669" />
-                  <Text className="text-xs font-bold text-emerald-700">WhatsApp</Text>
+                  <Ionicons name="logo-whatsapp" size={16} color="#10b981" />
+                  <Text className="text-xs font-bold text-emerald-400">WhatsApp</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={() => Linking.openURL(`tel:${contact.phone}`)}
-                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-sky-50 py-2.5 border border-sky-200 active:bg-sky-100"
+                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-sky-500/15 py-2.5 border border-sky-500/30 active:opacity-75"
                 >
-                  <Ionicons name="call-outline" size={16} color="#0284c7" />
-                  <Text className="text-xs font-bold text-sky-700">Direct Call</Text>
+                  <Ionicons name="call-outline" size={16} color="#0ea5e9" />
+                  <Text className="text-xs font-bold text-sky-400">Direct Call</Text>
                 </Pressable>
               </>
             )}
@@ -169,10 +171,10 @@ export default function ContactDossierScreen() {
             {contact.email && (
               <Pressable
                 onPress={() => Linking.openURL(`mailto:${contact.email}`)}
-                className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-slate-100 py-2.5 border border-slate-200 active:bg-slate-200"
+                className={`flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl ${palette.surfaceAlt} py-2.5 border ${palette.border} active:opacity-75`}
               >
-                <Ionicons name="mail-outline" size={16} color="#475569" />
-                <Text className="text-xs font-bold text-slate-700">Email</Text>
+                <Ionicons name="mail-outline" size={16} color={palette.textMutedColor} />
+                <Text className={`text-xs font-bold ${palette.text}`}>Email</Text>
               </Pressable>
             )}
           </View>
@@ -180,10 +182,10 @@ export default function ContactDossierScreen() {
 
         {/* Quick In-Page WhatsApp Messenger */}
         {contact.phone && (
-          <View className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm mb-3.5">
+          <View className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 p-4 shadow-sm mb-3.5">
             <View className="flex-row items-center gap-x-2 mb-2">
-              <Ionicons name="logo-whatsapp" size={16} color="#059669" />
-              <Text className="text-xs font-black text-emerald-950">Quick WhatsApp Touchpoint</Text>
+              <Ionicons name="logo-whatsapp" size={16} color="#10b981" />
+              <Text className="text-xs font-black text-emerald-400">Quick WhatsApp Touchpoint</Text>
             </View>
 
             <View className="flex-row items-center gap-x-2">
@@ -191,8 +193,8 @@ export default function ContactDossierScreen() {
                 value={quickMsg}
                 onChangeText={setQuickMsg}
                 placeholder="Type quick message..."
-                placeholderTextColor="#94a3b8"
-                className="flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-900"
+                placeholderTextColor={palette.textMutedColor}
+                className={`flex-1 rounded-xl border border-emerald-500/30 ${palette.surface} px-3 py-2 text-xs ${palette.text}`}
               />
               <Pressable
                 onPress={handleSendInlineWhatsApp}
@@ -212,7 +214,7 @@ export default function ContactDossierScreen() {
             {msgFeedback && (
               <Text
                 className={`text-[11px] font-bold mt-2 ${
-                  msgFeedback.type === 'success' ? 'text-emerald-700' : 'text-rose-700'
+                  msgFeedback.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
                 {msgFeedback.text}
@@ -223,19 +225,19 @@ export default function ContactDossierScreen() {
 
         {/* Linked Deals */}
         <View className="mb-2 flex-row items-center justify-between">
-          <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
+          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
             Active Deals ({deals.length})
           </Text>
           <Pressable onPress={() => openCreateDeal()}>
-            <Text className="text-xs font-bold text-indigo-600">+ New Deal</Text>
+            <Text className="text-xs font-bold text-indigo-400">+ New Deal</Text>
           </Pressable>
         </View>
 
         {deals.length > 0 ? (
           deals.map((deal) => <DealCard key={deal.id} deal={deal} />)
         ) : (
-          <View className="rounded-2xl border border-dashed border-slate-300 p-6 items-center justify-center bg-white mb-3.5">
-            <Text className="text-xs text-slate-500 font-semibold">No active deals with this contact yet.</Text>
+          <View className={`rounded-2xl border border-dashed ${palette.border} p-6 items-center justify-center ${palette.surface} mb-3.5`}>
+            <Text className={`text-xs ${palette.textMuted} font-semibold`}>No active deals with this contact yet.</Text>
           </View>
         )}
       </ScrollView>

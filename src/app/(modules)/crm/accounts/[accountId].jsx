@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
@@ -21,6 +22,7 @@ import * as crmService from '~/services/crm';
 export default function AccountDetailScreen() {
   const { accountId } = useLocalSearchParams();
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { openCreateDeal, openCreateContact, refreshAll } = useCrm();
 
   const [account, setAccount] = useState(null);
@@ -56,8 +58,8 @@ export default function AccountDetailScreen() {
     return (
       <AppScreen>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#4f46e5" />
-          <Text className="text-xs text-slate-400 font-semibold mt-2">Loading Company Sheet...</Text>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading Company Sheet...</Text>
         </View>
       </AppScreen>
     );
@@ -68,7 +70,7 @@ export default function AccountDetailScreen() {
       <AppScreen>
         <CrmHeader title="Account Sheet" showBack={true} />
         <View className="flex-1 items-center justify-center">
-          <Text className="text-sm font-bold text-slate-700">Account Not Found</Text>
+          <Text className={`text-sm font-bold ${palette.text}`}>Account Not Found</Text>
         </View>
       </AppScreen>
     );
@@ -97,77 +99,77 @@ export default function AccountDetailScreen() {
         className="px-4 pt-3.5"
       >
         {/* Account Summary Card */}
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
+        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
           <View className="flex-row items-center gap-x-3.5">
-            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 border border-indigo-200">
-              <Ionicons name="business" size={24} color="#4f46e5" />
+            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 border border-indigo-500/30">
+              <Ionicons name="business" size={24} color="#818cf8" />
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-black text-slate-900">{account.name}</Text>
-              <Text className="text-xs text-slate-500 mt-0.5">
+              <Text className={`text-base font-black ${palette.text}`}>{account.name}</Text>
+              <Text className={`text-xs ${palette.textMuted} mt-0.5`}>
                 {account.industry || 'Enterprise Client'} • {account.size || '11-50 Employees'}
               </Text>
               {account.website && (
                 <Pressable onPress={() => Linking.openURL(`https://${account.website.replace(/^https?:\/\//, '')}`)}>
-                  <Text className="text-xs font-semibold text-indigo-600 mt-1">{account.website}</Text>
+                  <Text className="text-xs font-semibold text-indigo-400 mt-1">{account.website}</Text>
                 </Pressable>
               )}
             </View>
           </View>
 
           {/* Aggregate Metrics */}
-          <View className="mt-3.5 flex-row justify-between gap-x-2 pt-3 border-t border-slate-100">
-            <View className="flex-1 rounded-xl bg-slate-50 p-2.5 border border-slate-200">
-              <Text className="text-[10px] font-bold text-slate-400">Total Deals</Text>
-              <Text className="text-base font-black text-slate-900 mt-0.5">{deals.length}</Text>
+          <View className={`mt-3.5 flex-row justify-between gap-x-2 pt-3 border-t ${palette.border}`}>
+            <View className={`flex-1 rounded-xl ${palette.surfaceAlt} p-2.5 border ${palette.border}`}>
+              <Text className={`text-[10px] font-bold ${palette.textMuted}`}>Total Deals</Text>
+              <Text className={`text-base font-black ${palette.text} mt-0.5`}>{deals.length}</Text>
             </View>
 
-            <View className="flex-1 rounded-xl bg-slate-50 p-2.5 border border-slate-200">
-              <Text className="text-[10px] font-bold text-slate-400">Pipeline Value</Text>
-              <Text className="text-base font-black text-indigo-700 mt-0.5">₹ {totalAccountValue}</Text>
+            <View className={`flex-1 rounded-xl ${palette.surfaceAlt} p-2.5 border ${palette.border}`}>
+              <Text className={`text-[10px] font-bold ${palette.textMuted}`}>Pipeline Value</Text>
+              <Text className="text-base font-black text-indigo-400 mt-0.5">₹ {totalAccountValue}</Text>
             </View>
 
-            <View className="flex-1 rounded-xl bg-slate-50 p-2.5 border border-slate-200">
-              <Text className="text-[10px] font-bold text-slate-400">Contacts</Text>
-              <Text className="text-base font-black text-slate-900 mt-0.5">{contacts.length}</Text>
+            <View className={`flex-1 rounded-xl ${palette.surfaceAlt} p-2.5 border ${palette.border}`}>
+              <Text className={`text-[10px] font-bold ${palette.textMuted}`}>Contacts</Text>
+              <Text className={`text-base font-black ${palette.text} mt-0.5`}>{contacts.length}</Text>
             </View>
           </View>
         </View>
 
         {/* Contacts in Account */}
         <View className="mb-2 flex-row items-center justify-between">
-          <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
+          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
             Team Contacts ({contacts.length})
           </Text>
           <Pressable onPress={openCreateContact}>
-            <Text className="text-xs font-bold text-indigo-600">+ Add Contact</Text>
+            <Text className="text-xs font-bold text-indigo-400">+ Add Contact</Text>
           </Pressable>
         </View>
 
         {contacts.length > 0 ? (
           contacts.map((c) => <ContactCard key={c.id} contact={c} />)
         ) : (
-          <View className="rounded-2xl border border-dashed border-slate-300 p-5 items-center justify-center bg-white mb-3.5">
-            <Text className="text-xs text-slate-500 font-semibold">No contacts linked to this account yet.</Text>
+          <View className={`rounded-2xl border border-dashed ${palette.border} p-5 items-center justify-center ${palette.surface} mb-3.5`}>
+            <Text className={`text-xs ${palette.textMuted} font-semibold`}>No contacts linked to this account yet.</Text>
           </View>
         )}
 
         {/* Deals in Account */}
         <View className="mt-3 mb-2 flex-row items-center justify-between">
-          <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
+          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
             Commercial Deals ({deals.length})
           </Text>
           <Pressable onPress={openCreateDeal}>
-            <Text className="text-xs font-bold text-indigo-600">+ New Deal</Text>
+            <Text className="text-xs font-bold text-indigo-400">+ New Deal</Text>
           </Pressable>
         </View>
 
         {deals.length > 0 ? (
           deals.map((deal) => <DealCard key={deal.id} deal={deal} />)
         ) : (
-          <View className="rounded-2xl border border-dashed border-slate-300 p-5 items-center justify-center bg-white mb-3.5">
-            <Text className="text-xs text-slate-500 font-semibold">No opportunities registered under this account.</Text>
+          <View className={`rounded-2xl border border-dashed ${palette.border} p-5 items-center justify-center ${palette.surface} mb-3.5`}>
+            <Text className={`text-xs ${palette.textMuted} font-semibold`}>No opportunities registered under this account.</Text>
           </View>
         )}
       </ScrollView>

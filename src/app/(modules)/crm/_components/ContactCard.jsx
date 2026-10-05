@@ -2,10 +2,12 @@ import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 
 export default function ContactCard({ contact }) {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { openQuickWhatsApp } = useCrm();
 
   if (!contact) return null;
@@ -30,26 +32,26 @@ export default function ContactCard({ contact }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/contacts/${contact.id}`)}
-      className="mb-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm active:bg-slate-100"
+      className={`mb-2.5 rounded-2xl border ${palette.surface} ${palette.border} p-3.5 shadow-sm active:opacity-80`}
     >
       <View className="flex-row items-center justify-between">
         {/* Avatar & Info */}
         <View className="flex-row items-center gap-x-3 flex-1">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 border border-indigo-200">
-            <Text className="text-sm font-black text-indigo-800">{initials}</Text>
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600/20 border border-indigo-500/30">
+            <Text className="text-sm font-black text-indigo-400">{initials}</Text>
           </View>
 
           <View className="flex-1">
-            <Text className="text-sm font-black text-slate-900 tracking-tight" numberOfLines={1}>
+            <Text className={`text-sm font-black ${palette.text} tracking-tight`} numberOfLines={1}>
               {contact.name}
             </Text>
-            <Text className="text-[11px] font-medium text-slate-500 mt-0.5" numberOfLines={1}>
+            <Text className={`text-[11px] font-medium ${palette.textMuted} mt-0.5`} numberOfLines={1}>
               {contact.jobTitle ? `${contact.jobTitle} • ` : ''}
               {contact.account?.name || 'Individual'}
             </Text>
 
             {contact.phone ? (
-              <Text className="text-[10px] font-mono text-slate-400 mt-0.5" numberOfLines={1}>
+              <Text className={`text-[10px] font-mono ${palette.textSoft} mt-0.5`} numberOfLines={1}>
                 {contact.phone}
               </Text>
             ) : null}
@@ -62,39 +64,39 @@ export default function ContactCard({ contact }) {
             <>
               <Pressable
                 onPress={handleWhatsApp}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
+                className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 active:opacity-70"
               >
-                <Ionicons name="logo-whatsapp" size={15} color="#059669" />
+                <Ionicons name="logo-whatsapp" size={15} color="#10b981" />
               </Pressable>
 
               <Pressable
                 onPress={handleCall}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-sky-50 border border-sky-200 active:bg-sky-100"
+                className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 border border-sky-500/30 active:opacity-70"
               >
-                <Ionicons name="call-outline" size={15} color="#0284c7" />
+                <Ionicons name="call-outline" size={15} color="#0ea5e9" />
               </Pressable>
             </>
           )}
 
           <View className="h-9 w-6 items-center justify-center">
-            <Ionicons name="chevron-forward" size={14} color="#94a3b8" />
+            <Ionicons name="chevron-forward" size={14} color={palette.textMutedColor} />
           </View>
         </View>
       </View>
 
       {/* Tags Row */}
       {contact.tags && contact.tags.length > 0 && (
-        <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+        <View className={`mt-2.5 flex-row flex-wrap items-center gap-1.5 pt-2 border-t ${palette.border}`}>
           {contact.tags.slice(0, 3).map((tag, idx) => (
             <View
               key={idx}
-              className="rounded-lg bg-slate-100 px-2 py-0.5 border border-slate-200"
+              className={`rounded-lg ${palette.surfaceAlt} px-2 py-0.5 border ${palette.border}`}
             >
-              <Text className="text-[9px] font-bold text-slate-600">{tag}</Text>
+              <Text className={`text-[9px] font-bold ${palette.textMuted}`}>{tag}</Text>
             </View>
           ))}
           {contact.tags.length > 3 && (
-            <Text className="text-[9px] text-slate-400 font-semibold">
+            <Text className={`text-[9px] ${palette.textMuted} font-semibold`}>
               +{contact.tags.length - 3} more
             </Text>
           )}

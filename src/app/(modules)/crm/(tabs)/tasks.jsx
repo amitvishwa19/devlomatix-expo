@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import TaskCard from '../_components/TaskCard';
@@ -11,6 +12,7 @@ import CreateTaskModal from '../_components/CreateTaskModal';
 
 export default function CrmTasksTab() {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
 
   const [activeTab, setActiveTab] = useState('PENDING'); // 'PENDING' | 'COMPLETED'
@@ -48,18 +50,18 @@ export default function CrmTasksTab() {
       <CreateTaskModal />
 
       {/* Tabs & Type Filters Bar */}
-      <View className="bg-white px-4 py-2.5 border-b border-slate-200">
+      <View className={`${palette.surface} px-4 py-2.5 border-b ${palette.border}`}>
         {/* Status Switcher */}
-        <View className="flex-row rounded-xl border border-slate-200 bg-slate-100 p-1 mb-2.5">
+        <View className={`flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1 mb-2.5`}>
           <Pressable
             onPress={() => setActiveTab('PENDING')}
             className={`flex-1 items-center justify-center rounded-lg py-2 ${
-              activeTab === 'PENDING' ? 'bg-white shadow-sm' : 'bg-transparent'
+              activeTab === 'PENDING' ? 'bg-indigo-600 shadow-sm' : 'bg-transparent'
             }`}
           >
             <Text
               className={`text-xs font-bold ${
-                activeTab === 'PENDING' ? 'text-indigo-700' : 'text-slate-600'
+                activeTab === 'PENDING' ? 'text-white' : palette.textMuted
               }`}
             >
               Pending ({pendingTasks.length})
@@ -69,12 +71,12 @@ export default function CrmTasksTab() {
           <Pressable
             onPress={() => setActiveTab('COMPLETED')}
             className={`flex-1 items-center justify-center rounded-lg py-2 ${
-              activeTab === 'COMPLETED' ? 'bg-white shadow-sm' : 'bg-transparent'
+              activeTab === 'COMPLETED' ? 'bg-indigo-600 shadow-sm' : 'bg-transparent'
             }`}
           >
             <Text
               className={`text-xs font-bold ${
-                activeTab === 'COMPLETED' ? 'text-indigo-700' : 'text-slate-600'
+                activeTab === 'COMPLETED' ? 'text-white' : palette.textMuted
               }`}
             >
               Completed ({completedTasks.length})
@@ -97,13 +99,13 @@ export default function CrmTasksTab() {
                 onPress={() => setSelectedType(t)}
                 className={`mr-2 rounded-xl px-3 py-1.5 border ${
                   isSelected
-                    ? 'bg-slate-900 border-slate-900'
-                    : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+                    ? 'bg-indigo-600 border-indigo-600'
+                    : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
                 }`}
               >
                 <Text
                   className={`text-[11px] font-bold ${
-                    isSelected ? 'text-white' : 'text-slate-700'
+                    isSelected ? 'text-white' : palette.text
                   }`}
                 >
                   {t}
@@ -118,23 +120,23 @@ export default function CrmTasksTab() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
+        refreshControl={<RefreshControl refreshing={refreshAll} onRefresh={refreshAll} />}
         className="px-4 pt-3.5"
       >
         {loading && tasks.length === 0 ? (
           <View className="py-14 items-center justify-center">
-            <ActivityIndicator size="large" color="#4f46e5" />
-            <Text className="text-xs text-slate-400 font-semibold mt-2">Loading follow-ups...</Text>
+            <ActivityIndicator size="large" color="#6366f1" />
+            <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading follow-ups...</Text>
           </View>
         ) : filteredTasks.length > 0 ? (
           filteredTasks.map((task) => <TaskCard key={task.id} task={task} />)
         ) : (
-          <View className="rounded-2xl border border-dashed border-slate-300 p-8 items-center justify-center bg-white">
-            <Ionicons name="checkmark-done-circle-outline" size={36} color="#059669" />
-            <Text className="text-sm font-bold text-slate-700 mt-2">
+          <View className={`rounded-2xl border border-dashed ${palette.border} p-8 items-center justify-center ${palette.surface}`}>
+            <Ionicons name="checkmark-done-circle-outline" size={36} color="#10b981" />
+            <Text className={`text-sm font-bold ${palette.text} mt-2`}>
               {activeTab === 'PENDING' ? 'All Follow-ups Completed!' : 'No Completed Tasks'}
             </Text>
-            <Text className="text-xs text-slate-400 text-center mt-1">
+            <Text className={`text-xs ${palette.textMuted} text-center mt-1`}>
               {activeTab === 'PENDING'
                 ? 'Great job! Schedule a new follow-up to keep deals moving.'
                 : 'Tasks you complete will be archived here for audit history.'}

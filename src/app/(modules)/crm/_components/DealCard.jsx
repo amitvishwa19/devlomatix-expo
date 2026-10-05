@@ -2,17 +2,19 @@ import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
+import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 
 const PRIORITY_THEMES = {
-  URGENT: { bg: 'bg-rose-50 border-rose-200', text: 'text-rose-700', dot: '#e11d48' },
-  HIGH: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', dot: '#d97706' },
-  MEDIUM: { bg: 'bg-sky-50 border-sky-200', text: 'text-sky-700', dot: '#0284c7' },
-  LOW: { bg: 'bg-slate-50 border-slate-200', text: 'text-slate-600', dot: '#64748b' },
+  URGENT: { bg: 'bg-rose-500/15 border-rose-500/30', text: 'text-rose-400', dot: '#f43f5e' },
+  HIGH: { bg: 'bg-amber-500/15 border-amber-500/30', text: 'text-amber-400', dot: '#f59e0b' },
+  MEDIUM: { bg: 'bg-sky-500/15 border-sky-500/30', text: 'text-sky-400', dot: '#0ea5e9' },
+  LOW: { bg: 'bg-slate-500/15 border-slate-500/30', text: 'text-slate-400', dot: '#94a3b8' },
 };
 
 export default function DealCard({ deal, onStageChange }) {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { openQuickWhatsApp } = useCrm();
 
   if (!deal) return null;
@@ -37,7 +39,7 @@ export default function DealCard({ deal, onStageChange }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/deals/${deal.id}`)}
-      className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-100"
+      className={`mb-3 rounded-2xl border ${palette.surface} ${palette.border} p-4 shadow-sm active:opacity-80`}
     >
       {/* Top Meta: Stage Pill & Priority */}
       <View className="flex-row items-center justify-between gap-x-2">
@@ -64,17 +66,17 @@ export default function DealCard({ deal, onStageChange }) {
       </View>
 
       {/* Deal Title */}
-      <Text className="mt-2 text-base font-black text-slate-900 tracking-tight" numberOfLines={2}>
+      <Text className={`mt-2 text-base font-black ${palette.text} tracking-tight`} numberOfLines={2}>
         {deal.title}
       </Text>
 
       {/* Value & Win Probability */}
       <View className="mt-2 flex-row items-baseline gap-x-2">
-        <Text className="text-lg font-black text-indigo-700">
+        <Text className="text-lg font-black text-indigo-400">
           {currencySymbol} {formattedVal}
         </Text>
         {deal.stage?.probability !== undefined ? (
-          <Text className="text-[11px] font-semibold text-slate-500">
+          <Text className={`text-[11px] font-semibold ${palette.textMuted}`}>
             ({deal.stage.probability}% win prob)
           </Text>
         ) : null}
@@ -82,14 +84,14 @@ export default function DealCard({ deal, onStageChange }) {
 
       {/* Contact & Company Association */}
       {(deal.contact || deal.account) && (
-        <View className="mt-3 flex-row items-center gap-x-3 rounded-xl bg-slate-50 px-2.5 py-2 border border-slate-100">
-          <Ionicons name="business-outline" size={14} color="#64748b" />
+        <View className={`mt-3 flex-row items-center gap-x-3 rounded-xl ${palette.surfaceAlt} px-2.5 py-2 border ${palette.border}`}>
+          <Ionicons name="business-outline" size={14} color={palette.textMutedColor} />
           <View className="flex-1 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold text-slate-700" numberOfLines={1}>
+            <Text className={`text-xs font-semibold ${palette.text}`} numberOfLines={1}>
               {deal.account?.name || deal.contact?.name}
             </Text>
             {deal.account?.name && deal.contact?.name && (
-              <Text className="text-[10px] text-slate-400 font-medium" numberOfLines={1}>
+              <Text className={`text-[10px] ${palette.textMuted} font-medium`} numberOfLines={1}>
                 • {deal.contact.name}
               </Text>
             )}
@@ -98,34 +100,34 @@ export default function DealCard({ deal, onStageChange }) {
       )}
 
       {/* Action Footer */}
-      <View className="mt-3.5 flex-row items-center justify-between border-t border-slate-100 pt-3">
+      <View className={`mt-3.5 flex-row items-center justify-between border-t ${palette.border} pt-3`}>
         <View className="flex-row items-center gap-x-1.5">
           {deal.contact?.phone ? (
             <>
               <Pressable
                 onPress={handleWhatsApp}
-                className="flex-row items-center gap-x-1 rounded-xl bg-emerald-50 px-2.5 py-1.5 border border-emerald-200 active:bg-emerald-100"
+                className="flex-row items-center gap-x-1 rounded-xl bg-emerald-500/15 px-2.5 py-1.5 border border-emerald-500/30 active:opacity-75"
               >
-                <Ionicons name="logo-whatsapp" size={13} color="#059669" />
-                <Text className="text-[10px] font-bold text-emerald-700">WhatsApp</Text>
+                <Ionicons name="logo-whatsapp" size={13} color="#10b981" />
+                <Text className="text-[10px] font-bold text-emerald-400">WhatsApp</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleCall}
-                className="flex-row items-center gap-x-1 rounded-xl bg-sky-50 px-2.5 py-1.5 border border-sky-200 active:bg-sky-100"
+                className="flex-row items-center gap-x-1 rounded-xl bg-sky-500/15 px-2.5 py-1.5 border border-sky-500/30 active:opacity-75"
               >
-                <Ionicons name="call-outline" size={13} color="#0284c7" />
-                <Text className="text-[10px] font-bold text-sky-700">Call</Text>
+                <Ionicons name="call-outline" size={13} color="#0ea5e9" />
+                <Text className="text-[10px] font-bold text-sky-400">Call</Text>
               </Pressable>
             </>
           ) : (
-            <Text className="text-[10px] text-slate-400 italic">No phone attached</Text>
+            <Text className={`text-[10px] ${palette.textMuted} italic`}>No phone attached</Text>
           )}
         </View>
 
         <View className="flex-row items-center gap-x-1">
-          <Text className="text-[11px] font-bold text-indigo-600">View Dossier</Text>
-          <Ionicons name="chevron-forward" size={12} color="#4f46e5" />
+          <Text className="text-[11px] font-bold text-indigo-400">View Dossier</Text>
+          <Ionicons name="chevron-forward" size={12} color="#818cf8" />
         </View>
       </View>
     </Pressable>
