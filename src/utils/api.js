@@ -130,5 +130,6 @@ export const apiUrls = {
   crmCopilotScore: baseApi + "/crm/copilot/score",
   crmCopilotChat: baseApi + "/crm/copilot/chat",
   crmDocs: baseApi + "/crm/docs",
+  crmDcr: baseApi + "/crm/dcr",
 };
 

@@ -204,6 +204,16 @@ export default function CrmDashboard() {
           </Pressable>
 
           <Pressable
+            onPress={() => router.push('/(modules)/crm/dcr')}
+            className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
+          >
+            <View className="h-8 w-8 items-center justify-center rounded-xl bg-blue-600">
+              <Ionicons name="call" size={16} color="#ffffff" />
+            </View>
+            <Text className={`mt-1.5 text-[11px] font-bold ${palette.text}`}>Activity Center</Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/(modules)/crm/analytics')}
             className={`w-[31%] items-center justify-center rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 active:opacity-75`}
           >

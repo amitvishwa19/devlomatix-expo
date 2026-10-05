@@ -11,6 +11,7 @@ export default function CrmRootLayout() {
         <Stack.Screen name="contacts/[contactId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="accounts/[accountId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="analytics/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="dcr/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="settings/index" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </CrmProvider>

@@ -270,3 +270,26 @@ export async function askCopilotChat(message, chatHistory = [], params = {}) {
   const res = await api.post(apiUrls.crmCopilotChat, { message, chatHistory }, { params: resolvedParams });
   return { success: true, data: extractPayload(res.data) };
 }
+
+// ==========================================
+// 📞 DCR (DAILY CALL & FIELD VISIT RECORDS)
+// ==========================================
+
+export async function getDcrRecords(params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.get(apiUrls.crmDcr, { params: resolvedParams });
+  const payload = extractPayload(res.data);
+  return {
+    success: true,
+    data: Array.isArray(payload) ? payload : (payload?.records || []),
+    metrics: payload?.metrics || null,
+    raw: payload
+  };
+}
+
+export async function createDcrRecord(body, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(apiUrls.crmDcr, body, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
