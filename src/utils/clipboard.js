@@ -1,11 +1,23 @@
-import * as Clipboard from 'expo-clipboard';
+let ExpoClipboard = null;
+let expoClipboardLoaded = false;
+
+function getClipboardModule() {
+  if (expoClipboardLoaded) return ExpoClipboard;
+  expoClipboardLoaded = true;
+  try {
+    // Dynamically require so missing native module doesn't crash on module evaluation
+    ExpoClipboard = require('expo-clipboard');
+  } catch (err) {
+    ExpoClipboard = null;
+  }
+  return ExpoClipboard;
+}
 
 /**
  * Copies text to the system clipboard.
  *
- * `expo-clipboard` has no web implementation of `setStringAsync`, so the web
- * target falls back to the async Clipboard API. Returns `false` instead of
- * throwing so callers can surface a single toast on failure.
+ * Falls back gracefully to the web Clipboard API or returns `false`
+ * if clipboard capabilities are not available in the current runtime/native build.
  */
 export async function copyToClipboard(text) {
   const value = typeof text === 'string' ? text : String(text ?? '');
@@ -20,10 +32,20 @@ export async function copyToClipboard(text) {
       return false;
     }
 
-    await Clipboard.setStringAsync(value);
-    return true;
+    const Clipboard = getClipboardModule();
+    if (Clipboard?.setStringAsync) {
+      await Clipboard.setStringAsync(value);
+      return true;
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+
+    return false;
   } catch (error) {
-    console.error('copyToClipboard failed:', error);
+    console.warn('copyToClipboard failed:', error?.message || error);
     return false;
   }
 }

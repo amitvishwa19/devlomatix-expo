@@ -1,10 +1,10 @@
-import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useAppTheme } from '~/theme/AppTheme';
 
 export default function CrmHeader({
   title = 'DevX CRM',
@@ -21,11 +21,11 @@ export default function CrmHeader({
 
   return (
     <View
-      className="border-b px-4 pb-3"
+      className=" px-4 pb-3"
       style={{
         paddingTop: 6,
         paddingBottom: 10,
-        backgroundColor: palette.colors.surface || '#ffffff',
+     
         borderColor: palette.colors.border || '#f1f5f9',
       }}
     >
@@ -35,7 +35,7 @@ export default function CrmHeader({
           {showBack ? (
             <Pressable
               onPress={() => (router.canGoBack() ? router.back() : router.replace('/(modules)/crm/(tabs)'))}
-              className={`h-9 w-9 items-center justify-center rounded-xl border ${palette.surfaceAlt} ${palette.border}`}
+              className={`h-9 w-9 items-center justify-center rounded-xl  ${palette.surfaceAlt} ${palette.border}`}
             >
               <Ionicons name="arrow-back" size={18} color={palette.textColor} />
             </Pressable>
