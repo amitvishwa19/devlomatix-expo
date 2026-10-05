@@ -183,7 +183,7 @@ export default function CrmCopilotTab() {
         </ScrollView>
 
         {/* Suggested Prompts Horizon */}
-        <View className="bg-white border-t border-slate-200 px-3 pt-2">
+        <View className="bg-white border-t border-slate-200 px-3 pt-2" style={{ paddingBottom: 76 }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

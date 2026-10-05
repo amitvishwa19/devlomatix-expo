@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrm } from '~/providers/CrmProvider';
 import * as crmService from '~/services/crm';
 
 export default function CreateContactModal() {
+  const insets = useSafeAreaInsets();
   const { createContactVisible, setCreateContactVisible, accounts, refreshAll } = useCrm();
 
   const [name, setName] = useState('');
@@ -68,7 +70,10 @@ export default function CreateContactModal() {
       <View className="flex-1 justify-end bg-black/60">
         <Pressable className="flex-1" onPress={() => setCreateContactVisible(false)} />
 
-        <View className="max-h-[85%] rounded-t-3xl bg-white p-5 shadow-2xl">
+        <View
+          className="max-h-[85%] rounded-t-3xl bg-white p-5 shadow-2xl"
+          style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
+        >
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-slate-100 pb-3">
             <View className="flex-row items-center gap-x-2.5">

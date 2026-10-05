@@ -117,7 +117,7 @@ export default function CrmTasksTab() {
       {/* Task List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
         className="px-4 pt-3.5"
       >
