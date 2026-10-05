@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -8,12 +9,11 @@ import {
   Text,
   TextInput,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
-import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
+import CrmHeader from '../_components/CrmHeader';
 
 const SUGGESTED_PROMPTS = [
   '⚡ Analyze pipeline risks & stalled deals',
@@ -194,7 +194,7 @@ export default function CrmCopilotTab() {
                 key={idx}
                 onPress={() => handleSend(p)}
                 disabled={loading}
-                className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 active:bg-indigo-100"
+                className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 active:bg-indigo-100 mr-1"
               >
                 <Text className="text-[11px] font-bold text-indigo-900">{p}</Text>
               </Pressable>
