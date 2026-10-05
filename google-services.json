@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "245235062421-6bbv9avmbmrj67hnr5lbmgckhmkf1gen.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.devlomatixsolutions.devlomatix",
+            "certificate_hash": "27ea55220485220e58ec03e437c01e3b237bdce1"
+          }
+        },
+        {
           "client_id": "245235062421-75p46ssdbihbr2rgi5l9ujhro78tvirf.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

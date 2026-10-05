@@ -43,7 +43,7 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 - Google Sign-In supported; Firebase Cloud Messaging for push notifications
 
 ### API
-- Base URL: `https://dev.devlomatix.com/api/v5` (set in `src/utils/api.js`)
+- Base URLs (see `src/utils/api.js`): dev = `https://dev.devlomatix.com/api/v5`, prod = `https://devlomatix.com/api/v5`, resolved as `EXPO_PUBLIC_BASE_API || (__DEV__ ? dev : prod)`. EAS `production` pins `EXPO_PUBLIC_BASE_API` to prod.
 - All API calls go through `src/utils/axios.js` (configured axios instance)
 - **EXPO_PUBLIC_*** environment variables used for: Google Maps API key, OpenAI key, Gemini key
 
@@ -53,8 +53,8 @@ Provider components live in `src/providers/` (KonnectxProvider, CrystalAuraProvi
 - Used via `useAppTheme()` hook
 
 ### EAS Build
-- projectId: `8f5ef678-be7b-4d55-b0a8-90096d1d6a77`, owner: `devlomatixsolutions`
-- Profiles: `development` (dev client APK, internal), `preview` (standalone APK, internal), `production`
+- projectId: `1e3af72f-5769-4f1f-a9f0-62f2f5f43a1a`, owner: `devlomatixsolutions`
+- Single build profile: `production` (no separate dev/preview variants — one app identity, `com.devlomatixsolutions.devlomatix`)
 
 ### Patches
 - `patches/@react-native-google-signin+google-signin+16.1.4.patch` — applied via `postinstall` script

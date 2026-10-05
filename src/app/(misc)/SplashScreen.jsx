@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
+import { hasCompletedOnboarding } from '~/utils/onboardingStorage';
 
 import darkSplash from '~/assets/images/splashscreen-dark.png';
 import lightSplash from '~/assets/images/splashscreen-light.png';
@@ -42,6 +43,12 @@ export default function AppSplashScreen() {
 
     const timer = setTimeout(async () => {
       try {
+        const onboarded = await hasCompletedOnboarding();
+        if (!onboarded) {
+          router.replace('/(misc)/onboarding');
+          return;
+        }
+
         const session = await getSession();
         const nextRoute = session?.isLoggedIn ? '/(tabs)/home' : '/(auth)/login';
         router.replace(nextRoute);

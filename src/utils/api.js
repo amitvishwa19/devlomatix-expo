@@ -114,5 +114,21 @@ export const apiUrls = {
   curexaInventory: curexaBaseApi + "/inventory",
   curexaInvoice: curexaBaseApi + "/invoice",
   curexaReports: curexaBaseApi + "/reports",
+
+  // DevX CRM
+  crm: baseApi + "/crm",
+  crmDeals: baseApi + "/crm/deals",
+  crmContacts: baseApi + "/crm/contacts",
+  crmAccounts: baseApi + "/crm/accounts",
+  crmPipelines: baseApi + "/crm/pipelines",
+  crmTasks: baseApi + "/crm/tasks",
+  crmActivities: baseApi + "/crm/activities",
+  crmForecast: baseApi + "/crm/analytics/forecast",
+  crmLeaderboard: baseApi + "/crm/analytics/leaderboard",
+  crmBulkImport: baseApi + "/crm/import/bulk",
+  crmWhatsAppSync: baseApi + "/crm/import/whatsapp-sync",
+  crmCopilotScore: baseApi + "/crm/copilot/score",
+  crmCopilotChat: baseApi + "/crm/copilot/chat",
+  crmDocs: baseApi + "/crm/docs",
 };
 

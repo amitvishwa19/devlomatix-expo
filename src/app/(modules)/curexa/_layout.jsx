@@ -19,6 +19,12 @@ export default function CurexaModuleLayout() {
           <Stack.Screen name="workflow" />
           <Stack.Screen name="reports" />
           <Stack.Screen name="crm" />
+          <Stack.Screen name="ai-assistant" />
+          <Stack.Screen name="scanner" />
+          <Stack.Screen name="telemetry" />
+          <Stack.Screen name="messaging-automation" />
+          <Stack.Screen name="telemedicine" />
+          <Stack.Screen name="roster" />
         </Stack>
       </CurexaDrawerProvider>
     </CurexaProvider>

@@ -61,3 +61,33 @@ export async function searchUsers(userId, workspaceId, query) {
   const { data } = await konnectxClient.get('/templates/search-users', { params: { userId, workspaceId, query } });
   return data.data ?? data;
 }
+
+export async function getTemplateGroups(userId, workspaceId) {
+  const { data } = await konnectxClient.get('/templates/groups', { params: { userId, workspaceId } });
+  return data.data ?? data;
+}
+
+export async function saveTemplateGroup(userId, body) {
+  const { data } = await konnectxClient.post('/templates/groups', body, {
+    params: { userId, workspaceId: body.workspaceId }
+  });
+  return data;
+}
+
+export async function deleteTemplateGroup(userId, workspaceId, id) {
+  const { data } = await konnectxClient.delete('/templates/groups', {
+    params: { userId, workspaceId, id }
+  });
+  return data;
+}
+
+export async function assignTemplateGroup(userId, body) {
+  const { data } = await konnectxClient.post('/templates/groups/assign', body, {
+    params: { userId, workspaceId: body.workspaceId }
+  });
+  return data;
+}
+
+export async function unassignTemplateGroup(userId, workspaceId, templateIds) {
+  return assignTemplateGroup(userId, { workspaceId, templateIds, groupId: null });
+}

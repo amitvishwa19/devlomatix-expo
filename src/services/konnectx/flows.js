@@ -31,6 +31,20 @@ export async function saveFlow(arg1, arg2) {
   return createFlow(arg1, arg2);
 }
 
+export async function getFlow(arg1, arg2) {
+  let userId, id;
+  if (arg2 !== undefined) {
+    userId = arg1;
+    id = arg2;
+  } else {
+    id = arg1;
+  }
+  const resolvedId = await resolveUserId(userId);
+  const params = resolvedId ? { userId: resolvedId } : {};
+  const { data } = await konnectxClient.get(`/flows/${id}`, { params });
+  return data.data ?? data;
+}
+
 export async function updateFlow(arg1, arg2, arg3) {
   let userId, id, body;
   if (arg3 !== undefined) {

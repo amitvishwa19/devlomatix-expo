@@ -76,3 +76,31 @@ export async function toggleBot(arg1, arg2, arg3) {
   const { data } = await konnectxClient.patch(`/chatbots/${id}/toggle`, { active }, { params });
   return data;
 }
+
+export async function getBot(arg1, arg2) {
+  let userId, id;
+  if (arg2 !== undefined) {
+    userId = arg1;
+    id = arg2;
+  } else {
+    id = arg1;
+  }
+  const resolvedId = await resolveUserId(userId);
+  const params = resolvedId ? { userId: resolvedId } : {};
+  const { data } = await konnectxClient.get(`/chatbots/${id}`, { params });
+  return data.data ?? data;
+}
+
+export async function getBotExecutions(arg1, arg2, params = {}) {
+  let userId, id;
+  if (arg2 !== undefined) {
+    userId = arg1;
+    id = arg2;
+  } else {
+    id = arg1;
+  }
+  const resolvedId = await resolveUserId(userId);
+  const query = resolvedId ? { userId: resolvedId, ...params } : { ...params };
+  const { data } = await konnectxClient.get(`/chatbots/${id}/executions`, { params: query });
+  return data;
+}

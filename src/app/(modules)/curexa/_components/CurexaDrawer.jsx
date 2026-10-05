@@ -4,6 +4,7 @@ import { createContext, useContext, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInLeft, SlideOutLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
 
 const CurexaDrawerContext = createContext(null);
@@ -33,7 +34,7 @@ export function CurexaDrawerProvider({ children }) {
 
 export default CurexaDrawerProvider;
 
-const menuCategories = [
+const hospitalCategories = [
   {
     title: 'CLINICAL OPERATIONS',
     items: [
@@ -42,6 +43,17 @@ const menuCategories = [
       { route: '/(modules)/curexa/(tabs)/appointments', label: 'OPD Scheduler & Queue', icon: 'calendar-outline', activeIcon: 'calendar' },
       { route: '/(modules)/curexa/prescriptions', label: 'e-Prescriptions (e-Rx)', icon: 'document-text-outline', activeIcon: 'document-text' },
       { route: '/(modules)/curexa/workflow', label: 'Clinical Workflow Kanban', icon: 'git-network-outline', activeIcon: 'git-network' },
+    ],
+  },
+  {
+    title: 'ADVANCED CLINICAL SUITE',
+    items: [
+      { route: '/(modules)/curexa/ai-assistant', label: 'AI Clinical & Triage Assistant', icon: 'sparkles-outline', activeIcon: 'sparkles' },
+      { route: '/(modules)/curexa/scanner', label: 'Bedside QR & Barcode Scanner', icon: 'qr-code-outline', activeIcon: 'qr-code' },
+      { route: '/(modules)/curexa/telemetry', label: 'Live ICU Telemetry & Vitals', icon: 'heart-outline', activeIcon: 'heart' },
+      { route: '/(modules)/curexa/telemedicine', label: 'Telemedicine Virtual OPD', icon: 'videocam-outline', activeIcon: 'videocam' },
+      { route: '/(modules)/curexa/messaging-automation', label: 'WhatsApp & SMS Automation', icon: 'logo-whatsapp', activeIcon: 'logo-whatsapp' },
+      { route: '/(modules)/curexa/roster', label: 'SBAR Handovers & On-Call Roster', icon: 'swap-horizontal-outline', activeIcon: 'swap-horizontal' },
     ],
   },
   {
@@ -63,8 +75,37 @@ const menuCategories = [
     items: [
       { route: '/(modules)/curexa/departments', label: 'Departments & Doctors', icon: 'business-outline', activeIcon: 'business' },
       { route: '/(modules)/curexa/reports', label: 'Reports & Hospital Stats', icon: 'bar-chart-outline', activeIcon: 'bar-chart' },
-      { route: '/(modules)/curexa/crm', label: 'Patient Care CRM', icon: 'sparkles-outline', activeIcon: 'sparkles' },
+      { route: '/(modules)/curexa/crm', label: 'Patient Care CRM', icon: 'heart-circle-outline', activeIcon: 'heart-circle' },
       { route: '/(modules)/curexa/(tabs)/settings', label: 'System Settings', icon: 'settings-outline', activeIcon: 'settings' },
+    ],
+  },
+];
+
+const patientCategories = [
+  {
+    title: 'MY HEALTH & CARE',
+    items: [
+      { route: '/(modules)/curexa/(tabs)', label: 'Health Hub Overview', icon: 'heart-outline', activeIcon: 'heart' },
+      { route: '/(modules)/curexa/(tabs)/patients', label: 'My Medical Records & Timeline', icon: 'document-text-outline', activeIcon: 'document-text' },
+      { route: '/(modules)/curexa/(tabs)/appointments', label: 'My Visits & Live Token Tracker', icon: 'calendar-outline', activeIcon: 'calendar' },
+      { route: '/(modules)/curexa/prescriptions', label: 'Active e-Prescriptions (e-Rx)', icon: 'medkit-outline', activeIcon: 'medkit' },
+      { route: '/(modules)/curexa/laboratory', label: 'Diagnostic Lab Reports', icon: 'flask-outline', activeIcon: 'flask' },
+    ],
+  },
+  {
+    title: 'TELEHEALTH & DOCTORS',
+    items: [
+      { route: '/(modules)/curexa/telemedicine', label: 'Telemedicine Video OPD Room', icon: 'videocam-outline', activeIcon: 'videocam' },
+      { route: '/(modules)/curexa/ai-assistant', label: 'AI Health Symptom Checker', icon: 'sparkles-outline', activeIcon: 'sparkles' },
+      { route: '/(modules)/curexa/scanner', label: 'Bedside QR Pass Scanner', icon: 'qr-code-outline', activeIcon: 'qr-code' },
+      { route: '/(modules)/curexa/departments', label: 'Find Doctors & Specialties', icon: 'business-outline', activeIcon: 'business' },
+    ],
+  },
+  {
+    title: 'BILLING & ACCOUNT',
+    items: [
+      { route: '/(modules)/curexa/billing', label: 'My Invoices & Insurance', icon: 'receipt-outline', activeIcon: 'receipt' },
+      { route: '/(modules)/curexa/(tabs)/settings', label: 'Profile & Portal Settings', icon: 'settings-outline', activeIcon: 'settings' },
     ],
   },
 ];
@@ -74,6 +115,10 @@ function CurexaDrawerModal({ visible, onClose }) {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { palette } = useAppTheme();
+  const { portalMode, currentPatientProfile } = useCurexa();
+
+  const isPatient = portalMode === 'PATIENT';
+  const menuCategories = isPatient ? patientCategories : hospitalCategories;
 
   if (!visible) return null;
 
@@ -104,17 +149,35 @@ function CurexaDrawerModal({ visible, onClose }) {
           {/* Header Badge */}
           <View className="px-4 pb-3 border-b border-gray-200/15 flex-row items-center justify-between">
             <View className="flex-row items-center gap-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-[14px] bg-emerald-600 shadow-sm">
-                <Ionicons name="medical" size={20} color="#ffffff" />
+              <View
+                className={`h-9 w-9 items-center justify-center rounded-[14px] shadow-sm ${
+                  isPatient ? 'bg-sky-600' : 'bg-emerald-600'
+                }`}
+              >
+                <Ionicons name={isPatient ? 'person' : 'medical'} size={18} color="#ffffff" />
               </View>
               <View>
                 <View className="flex-row items-center gap-1.5">
-                  <Text className={`text-[16px] font-bold ${palette.text}`}>Curexa HMS</Text>
-                  <View className="rounded-full bg-emerald-500/20 px-1.5 py-0.5">
-                    <Text className="text-[9px] font-bold text-emerald-600">PRO</Text>
+                  <Text className={`text-[15px] font-bold ${palette.text}`}>
+                    {isPatient ? 'Patient Portal' : 'Curexa HMS'}
+                  </Text>
+                  <View
+                    className={`rounded-full px-1.5 py-0.5 ${
+                      isPatient ? 'bg-sky-500/20' : 'bg-emerald-500/20'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[9px] font-bold ${
+                        isPatient ? 'text-sky-600' : 'text-emerald-600'
+                      }`}
+                    >
+                      {isPatient ? 'PATIENT' : 'PRO'}
+                    </Text>
                   </View>
                 </View>
-                <Text className={`text-[11px] ${palette.textMuted}`}>Hospital Command Center</Text>
+                <Text className={`text-[11px] ${palette.textMuted}`}>
+                  {isPatient ? `${currentPatientProfile.displayName} • ${currentPatientProfile.uhid}` : 'Hospital Command Center'}
+                </Text>
               </View>
             </View>
             <Pressable onPress={onClose} className={`rounded-full p-1.5 ${palette.surfaceAlt}`}>
@@ -126,7 +189,11 @@ function CurexaDrawerModal({ visible, onClose }) {
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-3 pt-2">
             {menuCategories.map((cat) => (
               <View key={cat.title} className="mb-3">
-                <Text className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[1.2px] text-emerald-600">
+                <Text
+                  className={`mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[1.2px] ${
+                    isPatient ? 'text-sky-600' : 'text-emerald-600'
+                  }`}
+                >
                   {cat.title}
                 </Text>
                 <View className="gap-1">
@@ -143,7 +210,11 @@ function CurexaDrawerModal({ visible, onClose }) {
                         key={item.route}
                         onPress={() => navigateTo(item.route)}
                         className={`flex-row items-center gap-2.5 rounded-[14px] px-3 py-2 ${
-                          isActive ? 'bg-emerald-600' : 'transparent'
+                          isActive
+                            ? isPatient
+                              ? 'bg-sky-600'
+                              : 'bg-emerald-600'
+                            : 'transparent'
                         }`}
                       >
                         <Ionicons

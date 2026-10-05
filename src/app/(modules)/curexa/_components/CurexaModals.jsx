@@ -1,6 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/theme/AppTheme';
 
 /**
@@ -8,14 +18,22 @@ import { useAppTheme } from '~/theme/AppTheme';
  */
 export function PatientDetailModal({ patient, visible, onClose }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('vitals');
 
   if (!patient) return null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[88%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <View className="flex-1 justify-end bg-black/70">
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           {/* Header */}
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2.5">
             <View className="flex-row items-center gap-2.5">
@@ -24,9 +42,13 @@ export function PatientDetailModal({ patient, visible, onClose }) {
               </View>
               <View>
                 <View className="flex-row items-center gap-1.5">
-                  <Text className={`text-[15px] font-bold ${palette.text}`}>{patient.displayName || patient.name}</Text>
+                  <Text className={`text-[15px] font-bold ${palette.text}`}>
+                    {patient.displayName || patient.name}
+                  </Text>
                   <View className="rounded-full bg-emerald-500/20 px-1.5 py-0.2">
-                    <Text className="text-[9px] font-bold text-emerald-600">{patient.bloodGroup || 'O+'}</Text>
+                    <Text className="text-[9px] font-bold text-emerald-600">
+                      {patient.bloodGroup || 'O+'}
+                    </Text>
                   </View>
                 </View>
                 <Text className={`text-[11px] ${palette.textMuted}`}>
@@ -81,7 +103,12 @@ export function PatientDetailModal({ patient, visible, onClose }) {
           </View>
 
           {/* Content Area */}
-          <ScrollView showsVerticalScrollIndicator={false} className="mb-2">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
             {activeTab === 'vitals' && (
               <View className="gap-2">
                 <View className="flex-row gap-2">
@@ -201,8 +228,11 @@ export function PatientDetailModal({ patient, visible, onClose }) {
           </ScrollView>
 
           {/* Close CTA */}
-          <Pressable onPress={onClose} className="rounded-[12px] bg-gray-500/15 py-2.5 items-center">
-            <Text className={`text-[12px] font-bold ${palette.text}`}>Close Sheet</Text>
+          <Pressable
+            onPress={onClose}
+            className="rounded-[14px] bg-emerald-600 py-3 items-center shadow-sm"
+          >
+            <Text className="text-[13px] font-bold text-white">Close Details</Text>
           </Pressable>
         </View>
       </View>
@@ -215,6 +245,7 @@ export function PatientDetailModal({ patient, visible, onClose }) {
  */
 export function AddPatientModal({ visible, onClose, onSave }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('Female');
@@ -248,8 +279,18 @@ export function AddPatientModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[88%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/70"
+      >
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
             <Text className={`text-[15px] font-bold ${palette.text}`}>Register New Patient</Text>
             <Pressable onPress={onClose} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
@@ -257,7 +298,12 @@ export function AddPatientModal({ visible, onClose, onSave }) {
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mb-2">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
             <View className="gap-2">
               <View>
                 <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Full Name *</Text>
@@ -347,15 +393,15 @@ export function AddPatientModal({ visible, onClose, onSave }) {
           </ScrollView>
 
           <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
-            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-3 items-center">
               <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-2.5 items-center">
+            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-3 items-center">
               <Text className="text-[12px] font-bold text-white">Save Patient</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -365,6 +411,7 @@ export function AddPatientModal({ visible, onClose, onSave }) {
  */
 export function BookAppointmentModal({ visible, onClose, onSave }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [patientName, setPatientName] = useState('');
   const [doctorName, setDoctorName] = useState('Dr. Sarah Lin (Cardio)');
   const [timeSlot, setTimeSlot] = useState('10:00 AM');
@@ -392,8 +439,18 @@ export function BookAppointmentModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/70"
+      >
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
             <Text className={`text-[15px] font-bold ${palette.text}`}>Book OPD Appointment</Text>
             <Pressable onPress={onClose} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
@@ -401,67 +458,74 @@ export function BookAppointmentModal({ visible, onClose, onSave }) {
             </Pressable>
           </View>
 
-          <View className="gap-2.5 mb-3">
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
-              <TextInput
-                value={patientName}
-                onChangeText={setPatientName}
-                placeholder="e.g. Eleanor Vance"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
+            <View className="gap-2.5">
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
+                <TextInput
+                  value={patientName}
+                  onChangeText={setPatientName}
+                  placeholder="e.g. Eleanor Vance"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
 
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Attending Doctor</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {['Dr. Sarah Lin (Cardio)', 'Dr. Mark Bennett (Neuro)', 'Dr. Rachel Patel (OBGYN)'].map((d) => (
-                  <Pressable
-                    key={d}
-                    onPress={() => setDoctorName(d)}
-                    className={`rounded-[10px] px-2.5 py-1.5 ${
-                      doctorName === d ? 'bg-emerald-600' : palette.surfaceInset
-                    }`}
-                  >
-                    <Text className={`text-[10px] font-semibold ${doctorName === d ? 'text-white' : palette.text}`}>
-                      {d}
-                    </Text>
-                  </Pressable>
-                ))}
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Attending Doctor</Text>
+                <View className="flex-row flex-wrap gap-1.5">
+                  {['Dr. Sarah Lin (Cardio)', 'Dr. Mark Bennett (Neuro)', 'Dr. Rachel Patel (OBGYN)'].map((d) => (
+                    <Pressable
+                      key={d}
+                      onPress={() => setDoctorName(d)}
+                      className={`rounded-[10px] px-2.5 py-1.5 ${
+                        doctorName === d ? 'bg-emerald-600' : palette.surfaceInset
+                      }`}
+                    >
+                      <Text className={`text-[10px] font-semibold ${doctorName === d ? 'text-white' : palette.text}`}>
+                        {d}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Time Slot</Text>
+                <View className="flex-row gap-1.5">
+                  {['09:30 AM', '10:15 AM', '11:00 AM', '02:30 PM'].map((slot) => (
+                    <Pressable
+                      key={slot}
+                      onPress={() => setTimeSlot(slot)}
+                      className={`flex-1 items-center rounded-[8px] py-1.5 ${
+                        timeSlot === slot ? 'bg-sky-600' : palette.surfaceInset
+                      }`}
+                    >
+                      <Text className={`text-[10px] font-semibold ${timeSlot === slot ? 'text-white' : palette.text}`}>
+                        {slot}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
             </View>
-
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Time Slot</Text>
-              <View className="flex-row gap-1.5">
-                {['09:30 AM', '10:15 AM', '11:00 AM', '02:30 PM'].map((slot) => (
-                  <Pressable
-                    key={slot}
-                    onPress={() => setTimeSlot(slot)}
-                    className={`flex-1 items-center rounded-[8px] py-1.5 ${
-                      timeSlot === slot ? 'bg-sky-600' : palette.surfaceInset
-                    }`}
-                  >
-                    <Text className={`text-[10px] font-semibold ${timeSlot === slot ? 'text-white' : palette.text}`}>
-                      {slot}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </View>
+          </ScrollView>
 
           <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
-            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-3 items-center">
               <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-2.5 items-center">
+            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-3 items-center">
               <Text className="text-[12px] font-bold text-white">Confirm Booking</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -471,6 +535,7 @@ export function BookAppointmentModal({ visible, onClose, onSave }) {
  */
 export function CreatePrescriptionModal({ visible, onClose, onSave }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [patientName, setPatientName] = useState('');
   const [medicine, setMedicine] = useState('Atorvastatin Calcium 20mg');
   const [dosage, setDosage] = useState('1 - 0 - 1');
@@ -495,8 +560,18 @@ export function CreatePrescriptionModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/70"
+      >
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
             <Text className={`text-[15px] font-bold ${palette.text}`}>Generate e-Prescription (e-Rx)</Text>
             <Pressable onPress={onClose} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
@@ -504,72 +579,79 @@ export function CreatePrescriptionModal({ visible, onClose, onSave }) {
             </Pressable>
           </View>
 
-          <View className="gap-2 mb-3">
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
-              <TextInput
-                value={patientName}
-                onChangeText={setPatientName}
-                placeholder="e.g. Robert Sterling"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
+            <View className="gap-2">
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
+                <TextInput
+                  value={patientName}
+                  onChangeText={setPatientName}
+                  placeholder="e.g. Robert Sterling"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
 
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Select Medicine</Text>
-              <TextInput
-                value={medicine}
-                onChangeText={setMedicine}
-                placeholder="Medicine name"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Select Medicine</Text>
+                <TextInput
+                  value={medicine}
+                  onChangeText={setMedicine}
+                  placeholder="Medicine name"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
 
-            <View className="flex-row gap-2">
-              <View className="flex-1">
-                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Frequency</Text>
-                <View className="flex-row gap-1">
-                  {['1-0-1', '1-1-1', '0-1-0', '1-0-0'].map((f) => (
-                    <Pressable
-                      key={f}
-                      onPress={() => setDosage(f)}
-                      className={`flex-1 items-center rounded-[8px] py-1.5 ${
-                        dosage === f ? 'bg-emerald-600' : palette.surfaceInset
-                      }`}
-                    >
-                      <Text className={`text-[10px] font-bold ${dosage === f ? 'text-white' : palette.text}`}>
-                        {f}
-                      </Text>
-                    </Pressable>
-                  ))}
+              <View className="flex-row gap-2">
+                <View className="flex-1">
+                  <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Frequency</Text>
+                  <View className="flex-row gap-1">
+                    {['1-0-1', '1-1-1', '0-1-0', '1-0-0'].map((f) => (
+                      <Pressable
+                        key={f}
+                        onPress={() => setDosage(f)}
+                        className={`flex-1 items-center rounded-[8px] py-1.5 ${
+                          dosage === f ? 'bg-emerald-600' : palette.surfaceInset
+                        }`}
+                      >
+                        <Text className={`text-[10px] font-bold ${dosage === f ? 'text-white' : palette.text}`}>
+                          {f}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Doctor Instructions</Text>
-              <TextInput
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Specific instructions"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Doctor Instructions</Text>
+                <TextInput
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Specific instructions"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
           <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
-            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-3 items-center">
               <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-2.5 items-center">
+            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-emerald-600 py-3 items-center">
               <Text className="text-[12px] font-bold text-white">Issue e-Rx</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -579,6 +661,7 @@ export function CreatePrescriptionModal({ visible, onClose, onSave }) {
  */
 export function CreateLabOrderModal({ visible, onClose, onSave }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [patientName, setPatientName] = useState('');
   const [selectedTests, setSelectedTests] = useState(['Complete Blood Count (CBC)']);
   const [priority, setPriority] = useState('Routine');
@@ -615,8 +698,18 @@ export function CreateLabOrderModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/70"
+      >
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
             <Text className={`text-[15px] font-bold ${palette.text}`}>Order Diagnostic Lab Test</Text>
             <Pressable onPress={onClose} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
@@ -624,51 +717,58 @@ export function CreateLabOrderModal({ visible, onClose, onSave }) {
             </Pressable>
           </View>
 
-          <View className="gap-2 mb-3">
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
-              <TextInput
-                value={patientName}
-                onChangeText={setPatientName}
-                placeholder="e.g. Clara Oswald"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
+            <View className="gap-2">
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
+                <TextInput
+                  value={patientName}
+                  onChangeText={setPatientName}
+                  placeholder="e.g. Clara Oswald"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
 
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Select Tests</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {availableTests.map((t) => {
-                  const isSelected = selectedTests.includes(t);
-                  return (
-                    <Pressable
-                      key={t}
-                      onPress={() => toggleTest(t)}
-                      className={`rounded-[10px] px-2.5 py-1.5 ${
-                        isSelected ? 'bg-cyan-600' : palette.surfaceInset
-                      }`}
-                    >
-                      <Text className={`text-[10px] font-semibold ${isSelected ? 'text-white' : palette.text}`}>
-                        {t}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Select Tests</Text>
+                <View className="flex-row flex-wrap gap-1.5">
+                  {availableTests.map((t) => {
+                    const isSelected = selectedTests.includes(t);
+                    return (
+                      <Pressable
+                        key={t}
+                        onPress={() => toggleTest(t)}
+                        className={`rounded-[10px] px-2.5 py-1.5 ${
+                          isSelected ? 'bg-cyan-600' : palette.surfaceInset
+                        }`}
+                      >
+                        <Text className={`text-[10px] font-semibold ${isSelected ? 'text-white' : palette.text}`}>
+                          {t}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
 
           <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
-            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-3 items-center">
               <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-cyan-600 py-2.5 items-center">
+            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-cyan-600 py-3 items-center">
               <Text className="text-[12px] font-bold text-white">Place Lab Order</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -678,6 +778,7 @@ export function CreateLabOrderModal({ visible, onClose, onSave }) {
  */
 export function CreateInvoiceModal({ visible, onClose, onSave }) {
   const { palette } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [patientName, setPatientName] = useState('');
   const [amount, setAmount] = useState('250.00');
   const [category, setCategory] = useState('Consultation');
@@ -702,8 +803,18 @@ export function CreateInvoiceModal({ visible, onClose, onSave }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60">
-        <View className={`max-h-[85%] rounded-t-[24px] p-3.5 ${palette.surface}`}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/70"
+      >
+        <Pressable className="absolute inset-0" onPress={onClose} />
+        <View
+          style={{
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 16) + 14,
+          }}
+          className={`rounded-t-[28px] p-4 ${palette.surface}`}
+        >
           <View className="mb-2.5 flex-row items-center justify-between border-b border-gray-200/15 pb-2">
             <Text className={`text-[15px] font-bold ${palette.text}`}>Generate Medical Invoice</Text>
             <Pressable onPress={onClose} className={`rounded-full p-1 ${palette.surfaceAlt}`}>
@@ -711,60 +822,67 @@ export function CreateInvoiceModal({ visible, onClose, onSave }) {
             </Pressable>
           </View>
 
-          <View className="gap-2 mb-3">
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
-              <TextInput
-                value={patientName}
-                onChangeText={setPatientName}
-                placeholder="e.g. Eleanor Vance"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 16 }}
+            className="mb-2"
+          >
+            <View className="gap-2">
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Patient Name *</Text>
+                <TextInput
+                  value={patientName}
+                  onChangeText={setPatientName}
+                  placeholder="e.g. Eleanor Vance"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
+              </View>
 
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Billing Category</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {['Consultation', 'IPD Bed Stay', 'Pharmacy', 'Diagnostic Lab'].map((c) => (
-                  <Pressable
-                    key={c}
-                    onPress={() => setCategory(c)}
-                    className={`rounded-[10px] px-2.5 py-1.5 ${
-                      category === c ? 'bg-amber-600' : palette.surfaceInset
-                    }`}
-                  >
-                    <Text className={`text-[10px] font-semibold ${category === c ? 'text-white' : palette.text}`}>
-                      {c}
-                    </Text>
-                  </Pressable>
-                ))}
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Billing Category</Text>
+                <View className="flex-row flex-wrap gap-1.5">
+                  {['Consultation', 'IPD Bed Stay', 'Pharmacy', 'Diagnostic Lab'].map((c) => (
+                    <Pressable
+                      key={c}
+                      onPress={() => setCategory(c)}
+                      className={`rounded-[10px] px-2.5 py-1.5 ${
+                        category === c ? 'bg-amber-600' : palette.surfaceInset
+                      }`}
+                    >
+                      <Text className={`text-[10px] font-semibold ${category === c ? 'text-white' : palette.text}`}>
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Total Amount ($) *</Text>
+                <TextInput
+                  value={amount}
+                  onChangeText={setAmount}
+                  keyboardType="numeric"
+                  placeholder="250.00"
+                  placeholderTextColor={palette.textMutedColor}
+                  className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
+                />
               </View>
             </View>
-
-            <View>
-              <Text className={`text-[10px] font-semibold mb-1 ${palette.textMuted}`}>Total Amount ($) *</Text>
-              <TextInput
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="numeric"
-                placeholder="250.00"
-                placeholderTextColor={palette.textMutedColor}
-                className={`rounded-[12px] p-2.5 text-[12px] border ${palette.surfaceInset} ${palette.border} ${palette.text}`}
-              />
-            </View>
-          </View>
+          </ScrollView>
 
           <View className="flex-row gap-2 pt-2 border-t border-gray-200/15">
-            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-2.5 items-center">
+            <Pressable onPress={onClose} className="flex-1 rounded-[12px] bg-gray-500/15 py-3 items-center">
               <Text className={`text-[12px] font-bold ${palette.text}`}>Cancel</Text>
             </Pressable>
-            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-amber-600 py-2.5 items-center">
+            <Pressable onPress={handleSave} className="flex-1 rounded-[12px] bg-amber-600 py-3 items-center">
               <Text className="text-[12px] font-bold text-white">Generate & Collect</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

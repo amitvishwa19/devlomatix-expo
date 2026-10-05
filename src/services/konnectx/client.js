@@ -30,22 +30,22 @@ konnectxClient.interceptors.request.use(async (config) => {
     const credId = currentCredential.id || currentCredential._id;
     config.params = config.params || {};
     if (credId) {
-      config.params.credentialId = credId;
-      config.params.credential_id = credId;
-      config.headers['x-credential-id'] = String(credId);
-      config.headers['credentialid'] = String(credId);
+      config.params.credentialId = config.params.credentialId ?? credId;
+      config.params.credential_id = config.params.credential_id ?? credId;
+      config.headers['x-credential-id'] = config.headers['x-credential-id'] ?? String(credId);
+      config.headers['credentialid'] = config.headers['credentialid'] ?? String(credId);
     }
     if (currentCredential.wabaId) {
-      config.params.wabaId = currentCredential.wabaId;
-      config.params.waba_id = currentCredential.wabaId;
-      config.headers['x-waba-id'] = String(currentCredential.wabaId);
-      config.headers['wabaid'] = String(currentCredential.wabaId);
+      config.params.wabaId = config.params.wabaId ?? currentCredential.wabaId;
+      config.params.waba_id = config.params.waba_id ?? currentCredential.wabaId;
+      config.headers['x-waba-id'] = config.headers['x-waba-id'] ?? String(currentCredential.wabaId);
+      config.headers['wabaid'] = config.headers['wabaid'] ?? String(currentCredential.wabaId);
     }
     if (currentCredential.phoneNumberId) {
-      config.params.phoneNumberId = currentCredential.phoneNumberId;
-      config.params.phone_number_id = currentCredential.phoneNumberId;
-      config.headers['x-phone-number-id'] = String(currentCredential.phoneNumberId);
-      config.headers['phonenumberid'] = String(currentCredential.phoneNumberId);
+      config.params.phoneNumberId = config.params.phoneNumberId ?? currentCredential.phoneNumberId;
+      config.params.phone_number_id = config.params.phone_number_id ?? currentCredential.phoneNumberId;
+      config.headers['x-phone-number-id'] = config.headers['x-phone-number-id'] ?? String(currentCredential.phoneNumberId);
+      config.headers['phonenumberid'] = config.headers['phonenumberid'] ?? String(currentCredential.phoneNumberId);
     }
   }
   return config;

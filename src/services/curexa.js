@@ -786,3 +786,268 @@ export async function getCrmLeads(params = {}) {
     };
   }
 }
+
+// ================= AI CLINICAL SERVICES ================= //
+export async function generateAiPrescription({ symptoms, patientAge, gender, allergies = [] }) {
+  // Simulated AI clinical reasoning engine with safe contraindication checks
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const lowerSym = (symptoms || '').toLowerCase();
+      let diagnosis = 'Acute Upper Respiratory Tract Infection (Provisional)';
+      let medicines = [
+        { name: 'Paracetamol 650mg', dosage: '1 tablet TDS (3 times daily) after meals', duration: '5 Days', type: 'Tablet' },
+        { name: 'Levocetirizine 5mg', dosage: '1 tablet once daily at bedtime', duration: '5 Days', type: 'Tablet' },
+        { name: 'Vitamin C 500mg (Zinc Chewable)', dosage: '1 chewable daily after breakfast', duration: '10 Days', type: 'Chewable' },
+      ];
+
+      if (lowerSym.includes('chest') || lowerSym.includes('heart') || lowerSym.includes('bp') || lowerSym.includes('breath')) {
+        diagnosis = 'Atypical Angina / Exertional Dyspnea (Rule Out CAD)';
+        medicines = [
+          { name: 'Aspirin 75mg (Enteric Coated)', dosage: '1 tablet OD after dinner', duration: '14 Days', type: 'Tablet' },
+          { name: 'Atorvastatin 20mg', dosage: '1 tablet OD at bedtime', duration: '30 Days', type: 'Tablet' },
+          { name: 'Sorbitrate 5mg (Sublingual)', dosage: '1 tablet SOS for acute chest tightness', duration: 'As needed', type: 'Sublingual' },
+        ];
+      } else if (lowerSym.includes('fever') || lowerSym.includes('cough') || lowerSym.includes('throat')) {
+        diagnosis = 'Acute Bronchitis with Pyrexia';
+        medicines = [
+          { name: 'Amoxicillin + Clavulanate 625mg', dosage: '1 tablet BD (twice daily) after meals', duration: '5 Days', type: 'Tablet' },
+          { name: 'Paracetamol 650mg Fast-Release', dosage: '1 tablet TDS for fever > 100°F', duration: '3 Days', type: 'Tablet' },
+          { name: 'Dextromethorphan Cough Syrup', dosage: '10ml TDS after meals', duration: '5 Days', type: 'Syrup' },
+        ];
+      } else if (lowerSym.includes('stomach') || lowerSym.includes('gastric') || lowerSym.includes('acid') || lowerSym.includes('pain')) {
+        diagnosis = 'Acute Gastritis / GERD Exacerbation';
+        medicines = [
+          { name: 'Pantoprazole 40mg', dosage: '1 tablet OD empty stomach 30 mins before breakfast', duration: '14 Days', type: 'Tablet' },
+          { name: 'Sucralfate Suspension 10ml', dosage: '10ml TDS 1 hour before food', duration: '7 Days', type: 'Syrup' },
+          { name: 'Domperidone 10mg', dosage: '1 tablet BD before meals', duration: '5 Days', type: 'Tablet' },
+        ];
+      }
+
+      // Check allergy warning
+      const contraindications = [];
+      allergies.forEach((alg) => {
+        if (alg.toLowerCase().includes('penicillin') && medicines.some((m) => m.name.toLowerCase().includes('amoxicillin'))) {
+          contraindications.push('⚠️ WARNING: Penicillin allergy detected! Amoxicillin removed.');
+          medicines = medicines.filter((m) => !m.name.toLowerCase().includes('amoxicillin'));
+          medicines.push({ name: 'Azithromycin 500mg (Macrolide Alternative)', dosage: '1 tablet OD 1 hr before lunch', duration: '3 Days', type: 'Tablet' });
+        }
+      });
+
+      resolve({
+        status: 200,
+        diagnosis,
+        icdCode: 'ICD-10-CM J06.9',
+        medicines,
+        advice: [
+          'Maintain adequate oral hydration (2.5 - 3L/day)',
+          'Monitor body temperature twice daily with digital thermometer',
+          'Follow up in OPD after 5 days or immediately if dyspnea develops',
+        ],
+        contraindications,
+        aiConfidence: '98.4%',
+      });
+    }, 600);
+  });
+}
+
+export async function calculateAiTriage({ symptoms, vitals = {} }) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const bpSys = parseInt((vitals.bp || '120/80').split('/')[0]) || 120;
+      const spo2Val = parseInt((vitals.spo2 || '98%').replace('%', '')) || 98;
+      const hr = parseInt((vitals.heartRate || '75').replace(/\D/g, '')) || 75;
+
+      let level = 'ROUTINE (Level 4)';
+      let color = '#059669';
+      let tag = 'Standard OPD';
+      let action = 'Seat in OPD waiting lounge; routine doctor review within 45 mins.';
+      let recommendedLabs = ['Routine Hemogram (CBC)', 'Random Blood Sugar (RBS)'];
+
+      if (spo2Val < 92 || bpSys > 180 || bpSys < 85 || hr > 130) {
+        level = 'EMERGENCY / RESUSCITATION (Level 1)';
+        color = '#ef4444';
+        tag = 'Immediate STAT Bed';
+        action = 'Shift immediately to Red Bay 1. High-flow O2, start IV line, page ER Physician STAT.';
+        recommendedLabs = ['STAT ABG Analysis', '12-Lead Emergency ECG', 'Cardiac Troponin I', 'Serum Electrolytes'];
+      } else if (spo2Val < 95 || bpSys > 160 || hr > 110) {
+        level = 'URGENT (Level 2)';
+        color = '#f59e0b';
+        tag = 'Urgent Triage (Yellow)';
+        action = 'Place in Yellow observation area; doctor consultation within 15 minutes.';
+        recommendedLabs = ['12-Lead ECG', 'Complete Blood Count (CBC)', 'Serum Creatinine'];
+      }
+
+      resolve({
+        status: 200,
+        triageLevel: level,
+        color,
+        tag,
+        action,
+        recommendedLabs,
+        suggestedSpecialty: (symptoms || '').toLowerCase().includes('chest') ? 'Cardiology' : 'Internal Medicine',
+      });
+    }, 450);
+  });
+}
+
+export async function generateAiDischargeSummary(patient) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        status: 200,
+        summaryText: `PATIENT DISCHARGE SUMMARY\n` +
+          `=========================\n` +
+          `Patient: ${patient.displayName || patient.name} (SKU: ${patient.sku || 'PAT-001'})\n` +
+          `Age/Gender: ${patient.age || '38'}Y / ${patient.gender || 'Female'}\n` +
+          `Admission Date: ${patient.admissionDate || '2026-09-12'}\n` +
+          `Discharge Date: ${new Date().toISOString().split('T')[0]}\n` +
+          `Attending Doctor: ${patient.primaryDoctor || 'Dr. Sarah Lin, MD'}\n\n` +
+          `DIAGNOSIS AT DISCHARGE:\n` +
+          `• Primary: ${patient.condition || 'Post-Op Stable'}\n` +
+          `• Chronic History: ${(patient.chronicConditions || []).join(', ') || 'None'}\n\n` +
+          `HOSPITAL COURSE & INTERVENTIONS:\n` +
+          `Patient was admitted under stable hemodynamics. Monitored continuously in IPD. Vitals remained stable on ambient air. Responsive to oral therapies. Wound dressing healthy with no sign of erythema.\n\n` +
+          `DISCHARGE MEDICATIONS:\n` +
+          `1. Atorvastatin 20mg - 1 Tab OD at night x 30 days\n` +
+          `2. Pantoprazole 40mg - 1 Tab OD empty stomach x 14 days\n` +
+          `3. Paracetamol 650mg - 1 Tab SOS for pain\n\n` +
+          `FOLLOW UP INSTRUCTIONS:\n` +
+          `• OPD Follow-up on: ${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}\n` +
+          `• Emergency SOS warning signs: Acute chest tightness, high fever (>101°F), or wound discharge.`,
+      });
+    }, 500);
+  });
+}
+
+// ================= TELEMETRY & ICU VITALS ================= //
+export const MOCK_TELEMETRY_BEDS = [
+  {
+    bedId: 'ICU-Bed 01',
+    wardName: 'Intensive Care Unit (ICU)',
+    patientName: 'Marcus Aurelius Vance',
+    age: 67,
+    gender: 'Male',
+    diagnosis: 'Post Myocardial Infarction',
+    doctor: 'Dr. James Wilson',
+    leadStatus: 'Normal Sinus Rhythm',
+    vitals: {
+      hr: 72,
+      spo2: 98,
+      bpSys: 124,
+      bpDia: 82,
+      resp: 16,
+      temp: 98.6,
+    },
+    alarm: null,
+  },
+  {
+    bedId: 'ICU-Bed 02',
+    wardName: 'Intensive Care Unit (ICU)',
+    patientName: 'Hannah Abbott',
+    age: 54,
+    gender: 'Female',
+    diagnosis: 'Acute Respiratory Distress (ARDS)',
+    doctor: 'Dr. James Wilson',
+    leadStatus: 'Sinus Tachycardia',
+    vitals: {
+      hr: 104,
+      spo2: 93,
+      bpSys: 138,
+      bpDia: 90,
+      resp: 22,
+      temp: 99.8,
+    },
+    alarm: 'SpO2 Borderline Alert',
+  },
+  {
+    bedId: 'ICU-Bed 03',
+    wardName: 'CCU Isolation Bay',
+    patientName: 'Thomas Thorne',
+    age: 72,
+    gender: 'Male',
+    diagnosis: 'Severe Cardiogenic Shock',
+    doctor: 'Dr. Sarah Lin',
+    leadStatus: 'Ventricular Ectopics',
+    vitals: {
+      hr: 118,
+      spo2: 89,
+      bpSys: 90,
+      bpDia: 58,
+      resp: 24,
+      temp: 100.4,
+    },
+    alarm: 'CRITICAL: SpO2 < 90% (Code Blue Ready)',
+  },
+];
+
+// ================= SHIFT HANDOVERS & ON-CALL ROSTER ================= //
+export const MOCK_HANDOVERS = [
+  {
+    id: 'h-1',
+    shift: 'Morning -> Evening Handover',
+    ward: 'ICU & Emergency',
+    fromDoctor: 'Dr. Sarah Lin, MD',
+    toDoctor: 'Dr. Mark Bennett, MD',
+    timestamp: 'Today, 03:30 PM',
+    sbar: {
+      situation: '8 IPD patients in ICU, 2 critical on ventilator weaning protocol.',
+      background: 'Marcus Vance post-MI day 2 stable; Thomas Thorne hypotensive on inotrope support.',
+      assessment: 'Thorne requiring close arterial line BP monitoring; may need inotrope titration.',
+      recommendation: 'Repeat ABG and electrolytes at 06:00 PM; alert consultant if MAP < 65.',
+    },
+  },
+  {
+    id: 'h-2',
+    shift: 'Night -> Morning Handover',
+    ward: 'Cardiology Ward 3B',
+    fromDoctor: 'Dr. James Wilson',
+    toDoctor: 'Dr. Sarah Lin',
+    timestamp: 'Today, 07:45 AM',
+    sbar: {
+      situation: 'All 9 patients stable overnight; 2 planned discharges today.',
+      background: 'Eleanor Vance ready for discharge pending final echo review.',
+      assessment: 'Echo scheduled at 10:00 AM. Invoices cleared with insurance.',
+      recommendation: 'Sign discharge medications summary once echo is verified.',
+    },
+  },
+];
+
+export const MOCK_ON_CALL_DOCTORS = [
+  { id: 'doc-1', name: 'Dr. Sarah Lin, MD', specialty: 'Cardiology', onCall: true, phone: '+1 555-0192', status: 'In Hospital (Room 302)', badge: 'PRIMARY ON-CALL' },
+  { id: 'doc-2', name: 'Dr. Mark Bennett, MD', specialty: 'Neurology', onCall: true, phone: '+1 555-0188', status: 'On Active Duty', badge: 'ER SPECIALIST' },
+  { id: 'doc-3', name: 'Dr. James Wilson, MD', specialty: 'Critical Care / ICU', onCall: true, phone: '+1 555-0174', status: 'ICU Bay A', badge: 'INTENSIVIST' },
+  { id: 'doc-4', name: 'Dr. Rachel Patel, MD', specialty: 'Obstetrics & Gyn', onCall: false, phone: '+1 555-0163', status: 'On-Call (15 min ETA)', badge: 'BACKUP CALL' },
+  { id: 'doc-5', name: 'Dr. Alan Harper, MS', specialty: 'Orthopedics & Trauma', onCall: true, phone: '+1 555-0152', status: 'OT 2 (Surgery)', badge: 'SURGEON ON-CALL' },
+];
+
+// ================= WHATSAPP AUTOMATION LOGS ================= //
+export const MOCK_WHATSAPP_LOGS = [
+  {
+    id: 'wa-1',
+    patientName: 'Eleanor Vance',
+    phone: '+1 (555) 234-5678',
+    type: 'TOKEN_UPDATE',
+    message: 'Hello Eleanor, your OPD token A-01 with Dr. Sarah Lin is next in 10 mins. Please report to Room 3B.',
+    status: 'DELIVERED',
+    sentAt: '10:15 AM',
+  },
+  {
+    id: 'wa-2',
+    patientName: 'Clara Oswald',
+    phone: '+1 (555) 432-8765',
+    type: 'LAB_REPORT',
+    message: 'Your Thyroid Profile Lab Report (LAB-2026-903) is ready. Tap to download PDF: https://curexa.devlomatix.com/r/903',
+    status: 'READ',
+    sentAt: '09:40 AM',
+  },
+  {
+    id: 'wa-3',
+    patientName: 'Marcus Aurelius Vance',
+    phone: '+1 (555) 678-1234',
+    type: 'FAMILY_UPDATE',
+    message: 'Family update from Curexa ICU: Marcus Vance vitals stable. Doctor rounds completed. Visiting hours 4-6 PM.',
+    status: 'DELIVERED',
+    sentAt: '08:30 AM',
+  },
+];
+

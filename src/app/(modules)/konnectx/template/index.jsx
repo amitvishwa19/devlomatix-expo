@@ -365,9 +365,9 @@ export default function TemplatesScreen() {
                       activeOpacity={0.7}
                       onPress={async () => {
                         showLoader(`Switching to ${cred.profile || 'WhatsApp Account'}...`);
-                        setSelectedCredential(cred);
                         setShowAcctSwitcher(false);
                         setLoading(true);
+                        await setSelectedCredential(cred);
                         await fetchTemplates(cred);
                       }}
                       className="flex-row items-center gap-3 rounded-[16px] border p-4"

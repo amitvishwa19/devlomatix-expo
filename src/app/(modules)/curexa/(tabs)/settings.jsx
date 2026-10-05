@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -10,18 +10,100 @@ import CurexaHeader from '../_components/CurexaHeader';
 export default function CurexaSettingsScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
-  const { hospitalInfo } = useCurexa();
+  const { hospitalInfo, portalMode, setPortalMode, currentPatientProfile } = useCurexa();
 
   // Settings Toggles
   const [smsReminders, setSmsReminders] = useState(true);
   const [criticalLabAlerts, setCriticalLabAlerts] = useState(true);
   const [bedAutoClean, setBedAutoClean] = useState(true);
   const [drugInteractionWarning, setDrugInteractionWarning] = useState(true);
+  const [patientDirectBooking, setPatientDirectBooking] = useState(true);
+  const [patientLabDownloads, setPatientLabDownloads] = useState(true);
+
+  const isHospitalMode = portalMode === 'HOSPITAL';
+
+  const handleToggleMode = (mode) => {
+    setPortalMode(mode);
+    Alert.alert(
+      'App Portal Mode Updated',
+      mode === 'HOSPITAL'
+        ? '🏥 Switched to Clinic / Hospital Management Mode. All clinical tools (OPD queues, ICU Beds, Pharmacy, Billing, e-Rx) are active.'
+        : '👤 Switched to Patient Care Portal Mode. Tailored for patients to view appointments, test reports, prescriptions, and join video consultations.'
+    );
+  };
 
   return (
     <AppScreen>
-      <CurexaHeader title="Hospital Settings" subtitle="Clinical & System Configuration" />
+      <CurexaHeader title="Curexa Configuration" subtitle="App Role & Clinical Settings" />
       <ScrollView className="flex-1 px-3 pt-2 pb-24" showsVerticalScrollIndicator={false}>
+        {/* App Mode Switcher (Hospital / Clinic vs. Patient Care) */}
+        <View className={`mb-2.5 rounded-[16px] p-3 shadow-sm border border-emerald-500/30 ${palette.surface}`}>
+          <View className="flex-row items-center justify-between mb-2">
+            <View>
+              <Text className="text-[11px] font-bold uppercase tracking-[1px] text-emerald-600">
+                APP PURPOSE & ROLE MODE
+              </Text>
+              <Text className={`text-[14px] font-bold ${palette.text}`}>
+                {isHospitalMode ? '🏥 Clinic / Hospital Management' : '👤 Patient Care Portal'}
+              </Text>
+            </View>
+            <View className="rounded-full bg-emerald-500/20 px-2.5 py-0.5">
+              <Text className="text-[9.5px] font-bold text-emerald-700">
+                {isHospitalMode ? 'STAFF / CLINIC' : 'PATIENT'}
+              </Text>
+            </View>
+          </View>
+
+          <Text className={`text-[11px] mb-3 leading-4 ${palette.textMuted}`}>
+            {isHospitalMode
+              ? 'Configured for doctors, nurses, and hospital administration. Full access to inpatient wards, OPD queues, electronic health records, pharmacy, and billing.'
+              : 'Configured for patients & families. Streamlined access to book OPD slots, view electronic prescriptions, download lab reports, and launch virtual video consultations.'}
+          </Text>
+
+          {/* Segmented Mode Switcher */}
+          <View className={`flex-row rounded-[12px] p-1 ${palette.surfaceInset}`}>
+            <TouchableOpacity
+              onPress={() => handleToggleMode('HOSPITAL')}
+              className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-[9px] py-2 ${
+                isHospitalMode ? 'bg-emerald-600' : 'bg-transparent'
+              }`}
+            >
+              <Ionicons
+                name="business"
+                size={14}
+                color={isHospitalMode ? '#ffffff' : '#64748b'}
+              />
+              <Text
+                className={`text-[11px] font-bold ${
+                  isHospitalMode ? 'text-white' : palette.textMuted
+                }`}
+              >
+                Clinic / Hospital
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleToggleMode('PATIENT')}
+              className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-[9px] py-2 ${
+                !isHospitalMode ? 'bg-emerald-600' : 'bg-transparent'
+              }`}
+            >
+              <Ionicons
+                name="person"
+                size={14}
+                color={!isHospitalMode ? '#ffffff' : '#64748b'}
+              />
+              <Text
+                className={`text-[11px] font-bold ${
+                  !isHospitalMode ? 'text-white' : palette.textMuted
+                }`}
+              >
+                Patient Portal
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Hospital Profile Banner */}
         <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
           <View className="flex-row items-center gap-3">
@@ -37,6 +119,98 @@ export default function CurexaSettingsScreen() {
             </View>
           </View>
         </View>
+
+        {/* Patient Portal Specific Profile & Features (if in Patient mode) */}
+        {!isHospitalMode && (
+          <>
+            <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
+              <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1px] text-sky-600">
+                Patient Medical Profile
+              </Text>
+              <View className="gap-2">
+                <View className={`rounded-[12px] p-2.5 ${palette.surfaceInset}`}>
+                  <View className="flex-row items-center justify-between">
+                    <Text className={`text-[13px] font-bold ${palette.text}`}>
+                      {currentPatientProfile?.displayName || 'Eleanor Vance'}
+                    </Text>
+                    <View className="rounded-full bg-sky-500/20 px-2 py-0.5">
+                      <Text className="text-[9.5px] font-bold text-sky-700">
+                        {currentPatientProfile?.uhid || 'CUX-889102'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className={`text-[10.5px] ${palette.textMuted} mt-0.5`}>
+                    Age: {currentPatientProfile?.age} • Gender: {currentPatientProfile?.gender} • Blood Group: {currentPatientProfile?.bloodGroup}
+                  </Text>
+                </View>
+
+                <View className={`rounded-[12px] p-2.5 ${palette.surfaceInset}`}>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-rose-600 mb-1">
+                    Emergency Contact (ICE)
+                  </Text>
+                  <Text className={`text-[12px] font-bold ${palette.text}`}>
+                    {currentPatientProfile?.emergencyContact?.name} ({currentPatientProfile?.emergencyContact?.relation})
+                  </Text>
+                  <Text className="text-[11px] font-semibold text-rose-600">
+                    {currentPatientProfile?.emergencyContact?.phone}
+                  </Text>
+                </View>
+
+                <View className={`rounded-[12px] p-2.5 ${palette.surfaceInset}`}>
+                  <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-amber-600 mb-1">
+                    Documented Allergies
+                  </Text>
+                  <View className="flex-row flex-wrap gap-1">
+                    {currentPatientProfile?.allergies?.map((al, idx) => (
+                      <View key={idx} className="rounded-full bg-amber-500/20 px-2 py-0.5">
+                        <Text className="text-[9.5px] font-bold text-amber-700">{al}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>
+              <Text className="mb-2 text-[11px] font-bold uppercase tracking-[1px] text-sky-600">
+                Patient Portal Privileges
+              </Text>
+              <View className="gap-2.5">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 pr-2">
+                    <Text className={`text-[13px] font-bold ${palette.text}`}>
+                      Instant Online OPD Booking
+                    </Text>
+                    <Text className={`text-[10px] ${palette.textMuted}`}>
+                      Allow patients to reserve doctor consultation tokens directly
+                    </Text>
+                  </View>
+                  <Switch
+                    value={patientDirectBooking}
+                    onValueChange={setPatientDirectBooking}
+                    trackColor={{ false: '#767577', true: '#0284c7' }}
+                  />
+                </View>
+
+                <View className="flex-row items-center justify-between border-t border-gray-200/10 pt-2">
+                  <View className="flex-1 pr-2">
+                    <Text className={`text-[13px] font-bold ${palette.text}`}>
+                      Direct Lab Report Downloads
+                    </Text>
+                    <Text className={`text-[10px] ${palette.textMuted}`}>
+                      Automatic PDF access as soon as tests are signed by pathologist
+                    </Text>
+                  </View>
+                  <Switch
+                    value={patientLabDownloads}
+                    onValueChange={setPatientLabDownloads}
+                    trackColor={{ false: '#767577', true: '#0284c7' }}
+                  />
+                </View>
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Clinical Operations Controls */}
         <View className={`mb-2.5 rounded-[16px] p-3 ${palette.surface}`}>

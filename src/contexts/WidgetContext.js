@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 const STORAGE_KEY = 'devlomatix.widgets';
 
 const DEFAULT_WIDGETS = {
+  crm: true,
   konnectx: true,
   solarbright: true,
   curexa: true,

@@ -18,7 +18,7 @@ export function KonnectxProvider({ children }) {
   const [error, setError] = useState(null);
   const selectedRef = useRef(null);
 
-  const setSelectedCredential = useCallback((cred) => {
+  const setSelectedCredential = useCallback(async (cred) => {
     if (cred) {
       const isDifferent = String(cred.id || cred._id || '') !== String(selectedRef.current?.id || selectedRef.current?._id || '');
       if (selectedRef.current && isDifferent) {
@@ -30,11 +30,13 @@ export function KonnectxProvider({ children }) {
     setClientCredential(cred);
     if (cred?.id || cred?._id) {
       const credId = cred.id || cred._id;
-      AsyncStorage.setItem(SELECTED_CRED_KEY, String(credId)).catch(() => {});
+      await AsyncStorage.setItem(SELECTED_CRED_KEY, String(credId)).catch(() => {});
       if (userId) {
-        credentialsService.setDefaultCredential(userId, credId).catch((e) => {
+        try {
+          await credentialsService.setDefaultCredential(userId, credId);
+        } catch (e) {
           console.warn('Failed to update default credential on server:', e?.message);
-        });
+        }
       }
     }
   }, [userId, showLoader]);
@@ -80,7 +82,7 @@ export function KonnectxProvider({ children }) {
       }
 
       if (targetCred) {
-        setSelectedCredential(targetCred);
+        await setSelectedCredential(targetCred);
       }
     } catch (err) {
       setError(err.message);

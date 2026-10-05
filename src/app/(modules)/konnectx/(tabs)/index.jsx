@@ -160,6 +160,12 @@ export default function KonnectXDashboardScreen() {
         { icon: 'storefront-outline', label: 'Business Profile', route: '/(modules)/konnectx/business-profile' },
         { icon: 'qr-code-outline', label: 'Link & QR', route: '/(modules)/konnectx/click-to-chat' },
         { icon: 'pulse-outline', label: 'System', route: '/(modules)/konnectx/system' },
+        { icon: 'pricetags-outline', label: 'Catalog', route: '/(modules)/konnectx/catalog' },
+        { icon: 'cart-outline', label: 'Store', route: '/(modules)/konnectx/ecommerce' },
+        { icon: 'bar-chart-outline', label: 'Reports', route: '/(modules)/konnectx/reports' },
+        { icon: 'people-outline', label: 'Accounts', route: '/(modules)/konnectx/accounts' },
+        { icon: 'send-outline', label: 'Bulk Sender', route: '/(modules)/konnectx/bulk-sender' },
+        { icon: 'book-outline', label: 'Docs', route: '/(modules)/konnectx/docs' },
     ];
 
     return (
@@ -349,9 +355,9 @@ export default function KonnectXDashboardScreen() {
                                             activeOpacity={0.7}
                                             onPress={async () => {
                                                 showLoader(`Switching to ${cred.profile || 'WhatsApp Account'}...`);
-                                                setSelectedCredential(cred);
                                                 setShowAcctSwitcher(false);
                                                 setLoading(true);
+                                                await setSelectedCredential(cred);
                                                 await fetchData(cred);
                                             }}
                                             className="flex-row items-center gap-3 rounded-[16px] border p-4"

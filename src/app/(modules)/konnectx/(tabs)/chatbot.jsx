@@ -150,6 +150,13 @@ export default function ChatbotScreen() {
                 </View>
 
                 <View className="flex-row items-center gap-2">
+                  <TouchableOpacity onPress={() => router.push(`/konnectx/chatbot-builder?id=${item.id}`)}
+                    className="flex-row items-center gap-1 rounded-xl border px-2.5 py-1.5"
+                    style={{ borderColor: palette.colors.border }}>
+                    <Ionicons name="git-branch-outline" size={13} color="#0284c7" />
+                    <Text className="text-[11px] font-bold text-sky-600">Edit Flow</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity onPress={() => handleToggle(item)}
                     className={`rounded-xl border px-3 py-1.5 ${item.active ? 'border-amber-500/30' : 'border-green-500/30'}`}>
                     <Text className={`text-[11px] font-bold ${item.active ? 'text-amber-600' : 'text-green-600'}`}>

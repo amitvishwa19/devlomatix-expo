@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "~/theme/AppTheme";
 import { getSession } from "~/utils/authStorage";
+import { ONBOARDING_KEY } from "~/utils/onboardingStorage";
 
 const STORAGE_KEYS = [
   { key: "devlomatix.user", label: "User Data", secure: false },
@@ -20,6 +21,9 @@ const STORAGE_KEYS = [
   { key: "devlomatix.accessToken", label: "Access Token", secure: true },
   { key: "devlomatix.deviceToken", label: "Device Token", secure: false },
   { key: "devlomatix.expoPushToken", label: "Expo Push Token", secure: false },
+  { key: "devlomatix.curexa_portal_mode", label: "Curexa Portal Mode (HOSPITAL / PATIENT)", secure: false },
+  { key: "devlomatix.curexa_onboarded", label: "Curexa Onboarded Status", secure: false },
+  { key: ONBOARDING_KEY, label: "App Onboarding Completed", secure: false },
 ];
 
 function formatValue(value) {

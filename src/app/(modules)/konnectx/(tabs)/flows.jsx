@@ -160,6 +160,13 @@ export default function FlowsScreen() {
                 </View>
 
                 <View className="flex-row items-center gap-2">
+                  <TouchableOpacity onPress={() => router.push(`/konnectx/flows-builder?id=${item.id}`)}
+                    className="flex-row items-center gap-1 rounded-xl border px-2.5 py-1.5"
+                    style={{ borderColor: palette.colors.border }}>
+                    <Ionicons name="construct-outline" size={13} color="#0284c7" />
+                    <Text className="text-[11px] font-bold text-sky-600">Edit</Text>
+                  </TouchableOpacity>
+
                   {item.status !== 'PUBLISHED' ? (
                     <TouchableOpacity onPress={() => handlePublish(item)}
                       className="rounded-xl bg-sky-600 px-3 py-1.5">

@@ -14,6 +14,15 @@ export default function KonnectxRootLayout() {
         <Stack.Screen name="business-profile/index" />
         <Stack.Screen name="click-to-chat/index" />
         <Stack.Screen name="system/index" />
+        <Stack.Screen name="catalog/index" />
+        <Stack.Screen name="reports/index" />
+        <Stack.Screen name="ecommerce/index" />
+        <Stack.Screen name="chatbot-builder/index" />
+        <Stack.Screen name="chatbot-builder/executions" />
+        <Stack.Screen name="flows-builder/index" />
+        <Stack.Screen name="accounts/index" />
+        <Stack.Screen name="bulk-sender/index" />
+        <Stack.Screen name="docs/index" />
       </Stack>
     </KonnectxProvider>
   );

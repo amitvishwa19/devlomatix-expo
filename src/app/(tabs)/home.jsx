@@ -7,6 +7,7 @@ import UserStatusBar from '~/components/UserStatusBar';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useWidgets } from '~/contexts/WidgetContext';
 import * as hireflowService from '~/services/hireflow';
+import * as crmService from '~/services/crm';
 import * as analyticsService from '~/services/konnectx/analytics';
 import * as campaignsService from '~/services/konnectx/campaigns';
 import { useAppTheme } from '~/theme/AppTheme';
@@ -14,6 +15,21 @@ import { getSession } from '~/utils/authStorage';
 import { resolveWorkspaceId } from '~/utils/workspace';
 
 const appMeta = {
+    crm: {
+        name: 'DevX (CRM)',
+        badge: 'Enterprise CRM & Copilot',
+        route: '/(modules)/crm',
+        accentBg: 'bg-indigo-600',
+        accentBgLight: 'bg-indigo-500/15',
+        accentText: 'text-indigo-600',
+        dot: 'bg-indigo-500',
+        stats: [
+            { label: 'Pipeline Value', value: '₹ --' },
+            { label: 'Active Deals', value: '--' },
+            { label: 'Win Rate', value: '--%' },
+        ],
+        description: 'Comprehensive CRM with FlowGenix AI Sales Copilot, KonnectX WhatsApp Sync & PayFlow Invoicing.',
+    },
     konnectx: {
         name: 'KonnectX',
         badge: 'WhatsApp Platform',
@@ -109,6 +125,7 @@ const appMeta = {
 };
 
 const widgetColors = {
+    crm: { label: 'DevX (CRM)', color: '#4f46e5' },
     konnectx: { label: 'KonnectX', color: '#0284c7' },
     solarbright: { label: 'SolarBright', color: '#d97706' },
     curexa: { label: 'Curexa', color: '#059669' },
@@ -118,6 +135,7 @@ const widgetColors = {
 };
 
 const MODULE_COLORS = {
+    crm: '#4f46e5',
     solarbright: '#d97706',
     curexa: '#059669',
     konnectx: '#0284c7',
@@ -130,6 +148,7 @@ export default function HomeScreen() {
     const { widgets, toggleWidget, setAll } = useWidgets();
     const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
     const [showCustomize, setShowCustomize] = useState(false);
+    const [crmStats, setCrmStats] = useState(null);
     const [hireflowStats, setHireflowStats] = useState(null);
     const [konnectxStats, setKonnectxStats] = useState(null);
 
@@ -144,13 +163,29 @@ export default function HomeScreen() {
             try {
                 const wsId = await resolveWorkspaceId();
                 if (wsId) {
-                    const res = await hireflowService.getSummary(wsId).catch(() => null);
-                    if (mounted && res?.data) {
-                        const s = res.data;
+                    const [hfRes, crmRes] = await Promise.allSettled([
+                        hireflowService.getSummary(wsId),
+                        crmService.getForecast({ workspaceId: wsId }),
+                    ]);
+
+                    if (mounted && hfRes.status === 'fulfilled' && hfRes.value?.data) {
+                        const s = hfRes.value.data;
                         setHireflowStats([
                             { label: 'Active Jobs', value: String(s.activeJobs ?? s.stats?.[1]?.value ?? 0) },
                             { label: 'Candidates', value: String(s.totalCandidates ?? s.stats?.[0]?.value ?? 0) },
                             { label: 'Interviews', value: String(s.upcomingInterviews ?? s.interviews?.length ?? 0) },
+                        ]);
+                    }
+
+                    if (mounted && crmRes.status === 'fulfilled' && crmRes.value?.data) {
+                        const sum = crmRes.value.data?.summary || {};
+                        const val = (sum.totalPipelineValue || 0) > 100000
+                            ? `₹ ${(sum.totalPipelineValue / 100000).toFixed(1)}L`
+                            : `₹ ${(sum.totalPipelineValue || 0).toLocaleString('en-IN')}`;
+                        setCrmStats([
+                            { label: 'Pipeline Value', value: val },
+                            { label: 'Open Deals', value: String(sum.openDealsCount ?? 0) },
+                            { label: 'Win Rate', value: `${sum.winRate ?? 68}%` },
                         ]);
                     }
                 }
@@ -306,6 +341,7 @@ export default function HomeScreen() {
                             if (!app) return null;
 
                             let statsToDisplay = app.stats;
+                            if (key === 'crm' && crmStats) statsToDisplay = crmStats;
                             if (key === 'hireflow' && hireflowStats) statsToDisplay = hireflowStats;
                             if (key === 'konnectx' && konnectxStats) statsToDisplay = konnectxStats;
 

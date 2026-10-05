@@ -2,85 +2,42 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useCurexa } from '~/providers/CurexaProvider';
 import { useAppTheme } from '~/theme/AppTheme';
 import CurexaHeader from './_components/CurexaHeader';
 import { CreatePrescriptionModal } from './_components/CurexaModals';
 
 export default function CurexaPrescriptionsScreen() {
   const { palette } = useAppTheme();
+  const { prescriptions, addPrescriptionLocally } = useCurexa();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 'rx-101',
-      patientName: 'Eleanor Vance',
-      patientSku: 'PAT-2026-001',
-      doctorName: 'Dr. Sarah Lin, MD',
-      diagnosis: 'Post-Catheterization Ischemia Prevention',
-      prescribedAt: '2026-09-15',
-      status: 'Active',
-      medicines: [
-        { name: 'Atorvastatin Calcium 20mg', dosage: '1 - 0 - 1', duration: '30 Days', timing: 'After Meals' },
-        { name: 'Aspirin Cardio 75mg', dosage: '0 - 1 - 0', duration: '30 Days', timing: 'After Lunch' },
-      ],
-    },
-    {
-      id: 'rx-102',
-      patientName: 'Robert Sterling',
-      patientSku: 'PAT-2026-002',
-      doctorName: 'Dr. Mark Bennett, MD',
-      diagnosis: 'Acute Migraine Prophylaxis',
-      prescribedAt: '2026-09-15',
-      status: 'Active',
-      medicines: [
-        { name: 'Sumatriptan 50mg', dosage: 'SOS (When Needed)', duration: '10 Days', timing: 'Onset of aura' },
-        { name: 'Pantoprazole 40mg', dosage: '1 - 0 - 0', duration: '14 Days', timing: 'Before Breakfast' },
-      ],
-    },
-    {
-      id: 'rx-103',
-      patientName: 'Marcus Aurelius Vance',
-      patientSku: 'PAT-2026-004',
-      doctorName: 'Dr. James Wilson, MD',
-      diagnosis: 'Acute Coronary Syndrome Maintenance',
-      prescribedAt: '2026-09-13',
-      status: 'Active',
-      medicines: [
-        { name: 'Metoprolol Tartrate 25mg', dosage: '1 - 0 - 1', duration: '60 Days', timing: 'After Meals' },
-        { name: 'Clopidogrel 75mg', dosage: '0 - 1 - 0', duration: '30 Days', timing: 'After Meals' },
-      ],
-    },
-  ]);
-
   const filteredRx = prescriptions.filter(
     (rx) =>
-      rx.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rx.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rx.id.toLowerCase().includes(searchQuery.toLowerCase())
+      rx.patientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rx.diagnosis?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rx.id?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddRx = (newRx) => {
-    setPrescriptions((prev) => [
-      {
-        id: newRx.id,
-        patientName: newRx.patientName,
-        patientSku: 'PAT-2026-NEW',
-        doctorName: 'Dr. Sarah Lin, MD',
-        diagnosis: newRx.notes || 'Clinical Care',
-        prescribedAt: new Date().toISOString().split('T')[0],
-        status: 'Active',
-        medicines: [
-          {
-            name: newRx.medicine,
-            dosage: newRx.dosage,
-            duration: newRx.duration,
-            timing: 'As Directed',
-          },
-        ],
-      },
-      ...prev,
-    ]);
+    addPrescriptionLocally({
+      id: newRx.id || `rx-${Date.now().toString().slice(-4)}`,
+      patientName: newRx.patientName || 'Patient',
+      patientSku: 'PAT-2026-NEW',
+      doctorName: 'Dr. Sarah Lin, MD',
+      diagnosis: newRx.notes || 'Clinical Care',
+      prescribedAt: new Date().toISOString().split('T')[0],
+      status: 'Active',
+      medicines: [
+        {
+          name: newRx.medicine || 'Prescribed Med',
+          dosage: newRx.dosage || '1 - 0 - 1',
+          duration: newRx.duration || '30 Days',
+          timing: 'As Directed',
+        },
+      ],
+    });
   };
 
   return (

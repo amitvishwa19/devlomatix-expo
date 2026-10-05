@@ -9,23 +9,24 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/images/app-icon.png",
+      "image": "./src/assets/images/splashscreen-light.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff",
       "dark": {
-        "image": "./src/assets/images/app-icon.png",
+        "image": "./src/assets/images/splashscreen-dark.png",
         "backgroundColor": "#020714",
         "resizeMode": "contain"
       }
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.devlomatixsolutions.devlomatix",
       "splash": {
-        "image": "./src/assets/images/app-icon.png",
+        "image": "./src/assets/images/splashscreen-light.png",
         "resizeMode": "contain",
         "backgroundColor": "#ffffff",
         "dark": {
-          "image": "./src/assets/images/app-icon.png",
+          "image": "./src/assets/images/splashscreen-dark.png",
           "backgroundColor": "#020714",
           "resizeMode": "contain"
         }
@@ -37,11 +38,11 @@
         "backgroundColor": "#ffffff"
       },
       "splash": {
-        "image": "./src/assets/images/app-icon.png",
+        "image": "./src/assets/images/splashscreen-light.png",
         "resizeMode": "contain",
         "backgroundColor": "#ffffff",
         "dark": {
-          "image": "./src/assets/images/app-icon.png",
+          "image": "./src/assets/images/splashscreen-dark.png",
           "backgroundColor": "#020714",
           "resizeMode": "contain"
         }
@@ -73,11 +74,11 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./src/assets/images/app-icon.png",
+          "image": "./src/assets/images/splashscreen-light.png",
           "imageWidth": 160,
           "resizeMode": "contain",
           "dark": {
-            "image": "./src/assets/images/app-icon.png",
+            "image": "./src/assets/images/splashscreen-dark.png",
             "backgroundColor": "#020714",
             "imageWidth": 160,
             "resizeMode": "contain"
@@ -117,9 +118,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1e3af72f-5769-4f1f-a9f0-62f2f5f43a1a"
+        "projectId": "1a2d41c8-76d9-41c5-b198-35d9ba1b0ff8"
       }
-    },
-    "owner": "devlomatixsolutions"
+    }
   }
 }

@@ -7,4 +7,7 @@ export * from './analytics';
 export * from './flows';
 export * from './chatbots';
 export * from './settings';
+export * from './catalog';
+export * from './ecommerce';
+export * from './reports';
 export { default as konnectxClient } from './client';
