@@ -10,7 +10,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
@@ -107,14 +107,14 @@ export default function CrmCopilotTab() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="FlowGenix Copilot"
         subtitle="AI Sales Strategist & Intelligence"
         rightActions={
           <Pressable
             onPress={clearChat}
-            className="h-8.5 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border border-slate-200 bg-white active:bg-slate-100"
           >
             <Ionicons name="trash-outline" size={14} color="#64748b" />
             <Text className="text-[11px] font-semibold text-slate-600">Clear</Text>
@@ -144,7 +144,7 @@ export default function CrmCopilotTab() {
                 }`}
               >
                 {!isUser && (
-                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-300">
+                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
                     <Ionicons name="sparkles" size={15} color="#ffffff" />
                   </View>
                 )}
@@ -153,7 +153,7 @@ export default function CrmCopilotTab() {
                   className={`max-w-[82%] rounded-2xl p-3.5 shadow-sm ${
                     isUser
                       ? 'bg-indigo-600 rounded-tr-sm'
-                      : 'bg-white border border-slate-200/90 rounded-tl-sm'
+                      : 'bg-white border border-slate-200 rounded-tl-sm'
                   }`}
                 >
                   <Text
@@ -183,7 +183,7 @@ export default function CrmCopilotTab() {
         </ScrollView>
 
         {/* Suggested Prompts Horizon */}
-        <View className="bg-white border-t border-slate-200/80 px-3 pt-2">
+        <View className="bg-white border-t border-slate-200 px-3 pt-2">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -194,7 +194,7 @@ export default function CrmCopilotTab() {
                 key={idx}
                 onPress={() => handleSend(p)}
                 disabled={loading}
-                className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-1.5 active:bg-indigo-100"
+                className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 active:bg-indigo-100"
               >
                 <Text className="text-[11px] font-bold text-indigo-900">{p}</Text>
               </Pressable>
@@ -225,6 +225,6 @@ export default function CrmCopilotTab() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

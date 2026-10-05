@@ -23,7 +23,8 @@ export default function CrmHeader({
     <View
       className="border-b px-4 pb-3"
       style={{
-        paddingTop: Math.max(insets.top, 12),
+        paddingTop: 6,
+        paddingBottom: 10,
         backgroundColor: palette.colors.surface || '#ffffff',
         borderColor: palette.colors.border || '#f1f5f9',
       }}
@@ -39,7 +40,7 @@ export default function CrmHeader({
               <Ionicons name="arrow-back" size={18} color="#334155" />
             </Pressable>
           ) : (
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-400">
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
               <Ionicons name="rocket" size={18} color="#ffffff" />
             </View>
           )}
@@ -68,7 +69,7 @@ export default function CrmHeader({
           {showAnalytics && (
             <Pressable
               onPress={() => router.push('/(modules)/crm/analytics')}
-              className="h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+              className="h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
             >
               <Ionicons name="bar-chart-outline" size={16} color="#475569" />
             </Pressable>
@@ -77,7 +78,7 @@ export default function CrmHeader({
           {showSettings && (
             <Pressable
               onPress={() => router.push('/(modules)/crm/settings')}
-              className="h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
+              className="h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100"
             >
               <Ionicons name="settings-outline" size={16} color="#475569" />
             </Pressable>
@@ -86,7 +87,7 @@ export default function CrmHeader({
           <Pressable
             onPress={refreshAll}
             disabled={refreshing}
-            className={`h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100 ${
+            className={`h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white active:bg-slate-100 ${
               refreshing ? 'opacity-50' : ''
             }`}
           >

@@ -9,7 +9,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
@@ -45,7 +45,7 @@ export default function CrmSettingsScreen() {
   const stages = activePipeline?.stages || [];
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="CRM Settings & Bridges"
         subtitle="Ecosystem Integrations & Pipeline Config"
@@ -60,7 +60,7 @@ export default function CrmSettingsScreen() {
         className="px-4 pt-3.5"
       >
         {/* Active Pipeline & Stage Config */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-4">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
           <View className="flex-row items-center justify-between mb-3">
             <View>
               <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
@@ -97,7 +97,7 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* 1-Click WhatsApp Chat Sync Card */}
-        <View className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm mb-4">
+        <View className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm mb-4">
           <View className="flex-row items-center gap-x-2.5 mb-1.5">
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-600">
               <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
@@ -115,7 +115,7 @@ export default function CrmSettingsScreen() {
           {syncResult && (
             <View
               className={`mt-3 rounded-xl p-2.5 border ${
-                syncResult.type === 'success' ? 'bg-emerald-100/70 border-emerald-300' : 'bg-rose-100 border-rose-300'
+                syncResult.type === 'success' ? 'bg-emerald-100 border-emerald-300' : 'bg-rose-100 border-rose-300'
               }`}
             >
               <Text
@@ -147,7 +147,7 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* Cross-Module Bridges Overview */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-4">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
           <Text className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
             Active Ecosystem Bridges
           </Text>
@@ -195,6 +195,6 @@ export default function CrmSettingsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -48,10 +48,10 @@ export default function TaskCard({ task, onStatusChange }) {
     <View
       className={`mb-2.5 rounded-2xl border bg-white p-3.5 shadow-sm ${
         isCompleted
-          ? 'border-slate-100 bg-slate-50/70 opacity-60'
+          ? 'border-slate-100 bg-slate-50 opacity-60'
           : isOverdue
-          ? 'border-rose-200/90'
-          : 'border-slate-200/90'
+          ? 'border-rose-300'
+          : 'border-slate-200'
       }`}
     >
       <View className="flex-row items-start justify-between gap-x-2">

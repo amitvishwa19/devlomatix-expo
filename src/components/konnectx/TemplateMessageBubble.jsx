@@ -8,7 +8,7 @@ import { useAppTheme } from '~/theme/AppTheme';
  * Mirrors the official WhatsApp rendering (white incoming / green outgoing bubble,
  * media header, interpolated body, footer, quick-reply buttons, carousel cards).
  */
-export default function TemplateMessageBubble({ msg, templateDefinition, onPress }) {
+export default function TemplateMessageBubble({ msg, templateDefinition, onPress, onLongPress }) {
   const { isDark } = useAppTheme();
   if (!msg) return null;
 
@@ -161,7 +161,11 @@ export default function TemplateMessageBubble({ msg, templateDefinition, onPress
   // Carousel rendering
   if (isCarousel && cards.length > 0) {
     return (
-      <View className="w-full" style={{ maxWidth: 320, alignItems: isFromMe ? 'flex-end' : 'flex-start' }}>
+      <View
+        className="w-full"
+        style={{ maxWidth: 320, alignItems: isFromMe ? 'flex-end' : 'flex-start' }}
+        onLongPress={onLongPress}
+        delayLongPress={280}>
         {/* Carousel Header Bubble */}
         <View className="relative mb-2" style={{ maxWidth: 260 }}>
           <View className="overflow-hidden rounded-lg rounded-tl-none shadow-sm"
@@ -243,6 +247,8 @@ export default function TemplateMessageBubble({ msg, templateDefinition, onPress
     <TouchableOpacity
       activeOpacity={onPress ? 0.85 : 1}
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={280}
       className="relative overflow-hidden rounded-xl shadow-sm"
       style={{ backgroundColor: bubbleBg, maxWidth: 300 }}
     >

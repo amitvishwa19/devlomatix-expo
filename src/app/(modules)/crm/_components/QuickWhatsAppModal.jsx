@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrm } from '~/providers/CrmProvider';
 import * as crmService from '~/services/crm';
 
@@ -28,6 +29,7 @@ const TEMPLATES = [
 ];
 
 export default function QuickWhatsAppModal() {
+  const insets = useSafeAreaInsets();
   const { quickWhatsAppTarget, closeQuickWhatsApp, refreshAll } = useCrm();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -91,7 +93,10 @@ export default function QuickWhatsAppModal() {
       <View className="flex-1 justify-end bg-black/60">
         <Pressable className="flex-1" onPress={closeQuickWhatsApp} />
 
-        <View className="rounded-t-3xl bg-white p-5 shadow-2xl">
+        <View
+          className="rounded-t-3xl bg-white p-5 shadow-2xl"
+          style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
+        >
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-slate-100 pb-3.5">
             <View className="flex-row items-center gap-x-2.5">
@@ -181,7 +186,7 @@ export default function QuickWhatsAppModal() {
           <Pressable
             onPress={handleSend}
             disabled={sending || !contact.phone || !message.trim()}
-            className={`mt-4 flex-row items-center justify-center gap-x-2 rounded-2xl bg-emerald-600 py-3.5 shadow-md shadow-emerald-500/20 active:bg-emerald-700 ${
+            className={`mt-4 flex-row items-center justify-center gap-x-2 rounded-2xl bg-emerald-600 py-3.5 shadow-md active:bg-emerald-700 ${
               sending || !contact.phone || !message.trim() ? 'opacity-50' : ''
             }`}
           >

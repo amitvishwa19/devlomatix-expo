@@ -10,12 +10,14 @@ import Toast from 'react-native-toast-message';
 import { useAppTheme } from '~/theme/AppTheme';
 
 import KonnectxEmptyState from '~/components/konnectx/KonnectxEmptyState';
+import KonnectxActionSheet from '~/components/konnectx/KonnectxActionSheet';
 import ChatSkeleton from '~/components/konnectx/ChatSkeleton';
 import TemplateMessageBubble from '~/components/konnectx/TemplateMessageBubble';
 import { useKonnectx } from '~/providers/KonnectxProvider';
 import * as chatsService from '~/services/konnectx/chats';
 import * as contactsService from '~/services/konnectx/contacts';
 import * as templatesService from '~/services/konnectx/templates';
+import { copyToClipboard, formatMessagesForClipboard } from '~/utils/clipboard';
 import TemplatePreview from '../template/_components/TemplatePreview';
 
 function formatTime(ts) {
@@ -114,13 +116,13 @@ function MessageStatus({ status }) {
     }
 }
 
-function MediaBubble({ msg }) {
+function MediaBubble({ msg, onLongPress }) {
     const type = msg.metadata?.type || 'text';
     const mediaUrl = msg.metadata?.mediaUrl || msg.text;
 
     if (type === 'image') {
         return (
-            <View className="rounded-xl overflow-hidden">
+            <View className="rounded-xl overflow-hidden" onLongPress={onLongPress} delayLongPress={280}>
                 <Image source={{ uri: mediaUrl }} className="h-40 w-52" resizeMode="cover" />
                 {msg.metadata?.caption ? (
                     <View className="px-2.5 py-1.5 bg-black/40">
@@ -132,6 +134,7 @@ function MediaBubble({ msg }) {
     }
     return (
         <View className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl border"
+            onLongPress={onLongPress} delayLongPress={280}
             style={{ borderColor: '#334155' }}>
             <Ionicons name={
                 type === 'video' ? 'videocam' :
@@ -182,6 +185,9 @@ export default function KonnectXChatsScreen() {
 
     const [previewTemplate, setPreviewTemplate] = useState(null);
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
+
+    const [sheetTarget, setSheetTarget] = useState(null);
+    const [headerSheetVisible, setHeaderSheetVisible] = useState(false);
 
     const flatListRef = useRef(null);
     const pollRef = useRef(null);
@@ -486,6 +492,112 @@ export default function KonnectXChatsScreen() {
         setAiSuggestions([]);
     };
 
+    /** Metadata can arrive as a JSON string on older rows. */
+const parseMeta = useCallback((msg) => {
+    const raw = msg?.metadata;
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    }
+    return {};
+}, []);
+
+const messageTextOf = useCallback((msg) => {
+        if (!msg) return '';
+        if (typeof msg.text === 'string' && msg.text.trim()) {
+            return msg.text.replace(/^\[Template:[^\]]+\]\s*/, '').trim();
+        }
+
+        const meta = parseMeta(msg);
+        if (typeof meta.caption === 'string' && meta.caption.trim()) return meta.caption.trim();
+        if (typeof msg.caption === 'string' && msg.caption.trim()) return msg.caption.trim();
+        return '';
+    }, [parseMeta]);
+
+    const copyMessage = useCallback(
+        async (msg) => {
+            const text = messageTextOf(msg);
+            if (!text) {
+                Toast.show({ type: 'error', text1: 'Nothing to copy', text2: 'This message has no text' });
+                return;
+            }
+
+            const ok = await copyToClipboard(text);
+            Toast.show({
+                type: ok ? 'success' : 'error',
+                text1: ok ? 'Copied' : 'Copy failed',
+                text2: ok ? text.slice(0, 60) : 'Clipboard is unavailable on this device'
+            });
+        },
+        [messageTextOf]
+    );
+
+    const copyConversation = useCallback(async () => {
+        const transcript = formatMessagesForClipboard(messages, {
+            nameOf: () => activeName || 'Them'
+        });
+
+        if (!transcript) {
+            Toast.show({ type: 'error', text1: 'Nothing to copy', text2: 'This chat has no text messages yet' });
+            return;
+        }
+
+        const ok = await copyToClipboard(transcript);
+        Toast.show({
+            type: ok ? 'success' : 'error',
+            text1: ok ? 'Chat copied' : 'Copy failed',
+            text2: ok ? `${messages.filter((m) => messageTextOf(m)).length} messages` : 'Clipboard is unavailable on this device'
+        });
+    }, [activeName, messageTextOf, messages]);
+
+    /** Actions offered when a bubble is long-pressed. */
+    const messageSheetActions = useCallback(
+        (msg) => {
+            const text = messageTextOf(msg);
+            const meta = parseMeta(msg);
+            const mediaLink = meta.mediaUrl || meta.mediaLink || msg.mediaUrl || msg.mediaLink || null;
+            const actions = [];
+
+            if (text) {
+                actions.push({
+                    key: 'copy',
+                    label: 'Copy text',
+                    icon: 'copy-outline',
+                    onPress: () => copyMessage(msg)
+                });
+            }
+
+            if (mediaLink) {
+                actions.push({
+                    key: 'copy-media',
+                    label: 'Copy media link',
+                    icon: 'link-outline',
+                    onPress: async () => {
+                        const ok = await copyToClipboard(mediaLink);
+                        Toast.show({ type: ok ? 'success' : 'error', text1: ok ? 'Link copied' : 'Copy failed' });
+                    }
+                });
+            }
+
+            if (msg?.fromMe && text) {
+                actions.push({
+                    key: 'reply',
+                    label: 'Quote in reply',
+                    icon: 'return-down-forward-outline',
+                    onPress: () => setInputText((prev) => (prev ? `${prev}\n${text}` : text))
+                });
+            }
+
+            return actions;
+        },
+        [copyMessage, messageTextOf, parseMeta]
+    );
+
     const deleteConversation = async (jid) => {
         try {
             await chatsService.deleteConversation(userId, jid);
@@ -675,6 +787,9 @@ export default function KonnectXChatsScreen() {
                             {selectedChat ? 'Active Conversation' : 'New Chat'}
                         </Text>
                     </View>
+                    <TouchableOpacity onPress={() => setHeaderSheetVisible(true)}>
+                        <Ionicons name="ellipsis-horizontal" size={18} color={palette.textMutedColor} />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => deleteConversation(selectedJid)}>
                         <Ionicons name="trash-outline" size={18} color="#dc2626" />
                     </TouchableOpacity>
@@ -729,15 +844,20 @@ export default function KonnectXChatsScreen() {
                                             msg={item}
                                             templateDefinition={templateDef}
                                             onPress={() => handleTemplatePreview(item)}
+                                            onLongPress={() => setSheetTarget(item)}
                                         />
                                     ) : isMedia ? (
-                                        <MediaBubble msg={item} />
+                                        <MediaBubble msg={item} onLongPress={() => setSheetTarget(item)} />
                                     ) : (
-                                        <View className="rounded-[18px] px-3 py-2" style={{
-                                            backgroundColor: isFromMe ? '#0284c7' : palette.colors.surface,
-                                            borderColor: isFromMe ? 'transparent' : palette.colors.border,
-                                            borderWidth: isFromMe ? 0 : 1,
-                                        }}>
+                                        <View
+                                            onLongPress={() => setSheetTarget(item)}
+                                            delayLongPress={280}
+                                            className="rounded-[18px] px-3 py-2"
+                                            style={{
+                                                backgroundColor: isFromMe ? '#0284c7' : palette.colors.surface,
+                                                borderColor: isFromMe ? 'transparent' : palette.colors.border,
+                                                borderWidth: isFromMe ? 0 : 1,
+                                            }}>
                                             <Text className={`text-[14px] leading-5 ${isFromMe ? 'text-white' : palette.text}`}>
                                                 {item.text}
                                             </Text>
@@ -937,6 +1057,39 @@ export default function KonnectXChatsScreen() {
                     setPreviewTemplate(null);
                 }}
                 template={previewTemplate}
+            />
+
+            {/* Long-press a message to copy its text */}
+            <KonnectxActionSheet
+                visible={Boolean(sheetTarget)}
+                title="Message"
+                subtitle={sheetTarget ? messageTextOf(sheetTarget).slice(0, 40) : undefined}
+                actions={sheetTarget ? messageSheetActions(sheetTarget) : []}
+                onClose={() => setSheetTarget(null)}
+            />
+
+            {/* Chat-level actions: copy the whole transcript */}
+            <KonnectxActionSheet
+                visible={headerSheetVisible}
+                title={activeName || 'Conversation'}
+                subtitle={`${messages.length} messages`}
+                actions={[
+                    {
+                        key: 'copy-chat',
+                        label: 'Copy chat text',
+                        icon: 'copy-outline',
+                        badge: `${messages.filter((m) => messageTextOf(m)).length}`,
+                        onPress: copyConversation
+                    },
+                    {
+                        key: 'delete-chat',
+                        label: 'Delete conversation',
+                        icon: 'trash-outline',
+                        destructive: true,
+                        onPress: () => deleteConversation(selectedJid)
+                    }
+                ]}
+                onClose={() => setHeaderSheetVisible(false)}
             />
         </SafeAreaView>
     );

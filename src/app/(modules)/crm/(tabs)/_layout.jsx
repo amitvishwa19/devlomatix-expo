@@ -46,7 +46,7 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
       }}
     >
       <Animated.View
-        className="w-[95%] flex-row items-center justify-around rounded-2xl px-1.5 py-2.5 shadow-lg border"
+        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-3 shadow-lg border"
         style={{
           backgroundColor: palette.colors.surface || '#ffffff',
           borderColor: palette.colors.border || '#e2e8f0',
@@ -78,7 +78,7 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
               key={route.key}
               layout={LinearTransition.springify().mass(0.5)}
               onPress={onPress}
-              className="flex-row items-center gap-x-1.5 rounded-xl px-2.5 py-2"
+              className="flex-row items-center gap-x-2 rounded-xl px-3 py-2"
               style={{
                 backgroundColor: isFocused ? '#4f46e5' : 'transparent',
               }}

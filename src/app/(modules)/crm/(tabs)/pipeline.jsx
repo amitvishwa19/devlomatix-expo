@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
@@ -46,14 +46,14 @@ export default function CrmPipelineTab() {
     .toLocaleString('en-IN');
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="Deals Pipeline"
         subtitle={`${activePipeline?.name || 'Sales Funnel'} • ₹${totalFilteredValue}`}
         rightActions={
           <Pressable
             onPress={() => openCreateDeal(selectedStageId !== 'ALL' ? selectedStageId : null)}
-            className="h-8.5 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
           >
             <Ionicons name="add" size={16} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Deal</Text>
@@ -65,7 +65,7 @@ export default function CrmPipelineTab() {
       <CreateDealModal />
 
       {/* Search and Priority Filter Header */}
-      <View className="bg-white px-4 py-2.5 border-b border-slate-200/80">
+      <View className="bg-white px-4 py-2.5 border-b border-slate-200">
         {/* Search Input */}
         <View className="flex-row items-center gap-x-2 rounded-xl bg-slate-100 px-3 py-2 border border-slate-200">
           <Ionicons name="search" size={16} color="#94a3b8" />
@@ -92,16 +92,14 @@ export default function CrmPipelineTab() {
           {/* All Stages Tab */}
           <Pressable
             onPress={() => setSelectedStageId('ALL')}
-            className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-1.5 ${
-              selectedStageId === 'ALL'
-                ? 'bg-slate-900 border-slate-900'
-                : 'bg-slate-50 border-slate-200 active:bg-slate-100'
-            }`}
+            className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-1.5 mr-1 ${selectedStageId === 'ALL'
+              ? 'bg-slate-900 border-slate-900'
+              : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+              }`}
           >
             <Text
-              className={`text-xs font-bold ${
-                selectedStageId === 'ALL' ? 'text-white' : 'text-slate-700'
-              }`}
+              className={`text-xs font-bold ${selectedStageId === 'ALL' ? 'text-white' : 'text-slate-700'
+                }`}
             >
               All Stages ({deals.length})
             </Text>
@@ -119,11 +117,10 @@ export default function CrmPipelineTab() {
               <Pressable
                 key={stage.id}
                 onPress={() => setSelectedStageId(stage.id)}
-                className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-2 ${
-                  isSelected
-                    ? 'bg-indigo-600 border-indigo-600'
-                    : 'bg-slate-50 border-slate-200 active:bg-slate-100'
-                }`}
+                className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-2 mr-1 ${isSelected
+                  ? 'bg-indigo-600 border-indigo-600'
+                  : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+                  }`}
               >
                 <View
                   className="h-2 w-2 rounded-full"
@@ -135,9 +132,8 @@ export default function CrmPipelineTab() {
                   {stage.name} ({stageDeals.length})
                 </Text>
                 <Text
-                  className={`text-[10px] font-semibold ${
-                    isSelected ? 'text-indigo-200' : 'text-slate-400'
-                  }`}
+                  className={`text-[10px] font-semibold ${isSelected ? 'text-indigo-200' : 'text-slate-400'
+                    }`}
                 >
                   ₹{stageVal}
                 </Text>
@@ -177,6 +173,6 @@ export default function CrmPipelineTab() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

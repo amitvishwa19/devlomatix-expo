@@ -139,7 +139,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
 
           <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
             {/* Target Deal */}
-            <View className="rounded-xl bg-slate-50 p-3 border border-slate-200/80 mb-3">
+            <View className="rounded-xl bg-slate-50 p-3 border border-slate-200 mb-3">
               <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Opportunity</Text>
               <Text className="text-sm font-black text-slate-900 mt-0.5">{deal.title}</Text>
               <Text className="text-xs text-slate-500 font-medium mt-0.5">
@@ -196,7 +196,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
             </View>
 
             {/* Totals Summary Card */}
-            <View className="rounded-xl border border-purple-100 bg-purple-50/50 p-3.5 mb-3">
+            <View className="rounded-xl border border-purple-100 bg-purple-50 p-3.5 mb-3">
               <View className="flex-row justify-between mb-1">
                 <Text className="text-xs text-slate-600">Subtotal:</Text>
                 <Text className="text-xs font-semibold text-slate-800">
@@ -209,7 +209,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
                   {deal.currency} {taxAmount.toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View className="flex-row justify-between border-t border-purple-200/80 pt-2">
+              <View className="flex-row justify-between border-t border-purple-200 pt-2">
                 <Text className="text-sm font-black text-purple-950">Grand Total:</Text>
                 <Text className="text-sm font-black text-purple-700">
                   {deal.currency} {grandTotal.toLocaleString('en-IN')}
@@ -255,7 +255,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
             <Pressable
               onPress={handleGenerate}
               disabled={submitting || baseVal <= 0}
-              className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-purple-600 py-3.5 shadow-md shadow-purple-500/20 active:bg-purple-700 ${
+              className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-purple-600 py-3.5 shadow-md active:bg-purple-700 ${
                 submitting || baseVal <= 0 ? 'opacity-50' : ''
               }`}
             >

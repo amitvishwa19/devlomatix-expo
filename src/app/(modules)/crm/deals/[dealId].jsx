@@ -10,11 +10,11 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
-import CrmHeader from '../../_components/CrmHeader';
-import QuickWhatsAppModal from '../../_components/QuickWhatsAppModal';
-import DealBillingModal from '../../_components/DealBillingModal';
+import CrmHeader from '../_components/CrmHeader';
+import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
+import DealBillingModal from '../_components/DealBillingModal';
 import * as crmService from '~/services/crm';
 
 export default function DealDossierScreen() {
@@ -88,21 +88,23 @@ export default function DealDossierScreen() {
 
   if (loading && !deal) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#4f46e5" />
-        <Text className="text-xs text-slate-400 font-semibold mt-2">Loading Opportunity Dossier...</Text>
-      </SafeAreaView>
+      <AppScreen>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#4f46e5" />
+          <Text className="text-xs text-slate-400 font-semibold mt-2">Loading Opportunity Dossier...</Text>
+        </View>
+      </AppScreen>
     );
   }
 
   if (!deal) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 p-4">
+      <AppScreen>
         <CrmHeader title="Opportunity" showBack={true} />
         <View className="flex-1 items-center justify-center">
           <Text className="text-sm font-bold text-slate-700">Deal Not Found</Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -111,7 +113,7 @@ export default function DealDossierScreen() {
   const currencySymbol = deal.currency === 'USD' ? '$' : deal.currency === 'EUR' ? '€' : '₹';
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title={deal.title}
         subtitle={`${deal.currency} ${formattedVal} • ${deal.stage?.name || 'In Funnel'}`}
@@ -119,7 +121,7 @@ export default function DealDossierScreen() {
         rightActions={
           <Pressable
             onPress={() => setBillingModalVisible(true)}
-            className="h-8.5 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-purple-600 active:bg-purple-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-purple-600 active:bg-purple-700"
           >
             <Ionicons name="card" size={14} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Invoice</Text>
@@ -141,7 +143,7 @@ export default function DealDossierScreen() {
         className="px-4 pt-3.5"
       >
         {/* Stage Progress Stepper */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
           <Text className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
             Pipeline Stage Progression
           </Text>
@@ -175,7 +177,7 @@ export default function DealDossierScreen() {
         </View>
 
         {/* Financial Value & Metrics Card */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
           <View className="flex-row items-center justify-between">
             <View>
               <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -200,7 +202,7 @@ export default function DealDossierScreen() {
         </View>
 
         {/* FlowGenix AI Intelligence Health Card */}
-        <View className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 shadow-sm mb-3.5">
+        <View className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm mb-3.5">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-x-2">
               <View className="h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
@@ -247,7 +249,7 @@ export default function DealDossierScreen() {
 
         {/* Linked Contact Card */}
         {deal.contact && (
-          <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+          <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
             <View className="flex-row items-center justify-between mb-2.5">
               <Text className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Primary Contact
@@ -288,7 +290,7 @@ export default function DealDossierScreen() {
 
         {/* Linked Company Account Card */}
         {deal.account && (
-          <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+          <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
             <View className="flex-row items-center justify-between mb-1.5">
               <Text className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Company Account
@@ -306,7 +308,7 @@ export default function DealDossierScreen() {
 
         {/* Notes & Context */}
         {deal.notes && (
-          <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+          <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
             <Text className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
               Internal Deal Notes
             </Text>
@@ -333,6 +335,6 @@ export default function DealDossierScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

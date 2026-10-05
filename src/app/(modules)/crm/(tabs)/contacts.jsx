@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import ContactCard from '../_components/ContactCard';
@@ -34,14 +34,14 @@ export default function CrmContactsTab() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="Contacts (People)"
         subtitle={`${contacts.length} Total • 360° Dossiers`}
         rightActions={
           <Pressable
             onPress={openCreateContact}
-            className="h-8.5 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
           >
             <Ionicons name="person-add" size={15} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Add</Text>
@@ -53,7 +53,7 @@ export default function CrmContactsTab() {
       <CreateContactModal />
 
       {/* Search & Tag Filter Bar */}
-      <View className="bg-white px-4 py-2.5 border-b border-slate-200/80">
+      <View className="bg-white px-4 py-2.5 border-b border-slate-200">
         <View className="flex-row items-center gap-x-2 rounded-xl bg-slate-100 px-3 py-2 border border-slate-200">
           <Ionicons name="search" size={16} color="#94a3b8" />
           <TextInput
@@ -73,7 +73,8 @@ export default function CrmContactsTab() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="mt-2.5 flex-row gap-x-2 py-0.5"
+          contentContainerStyle={{ paddingRight: 20 }}
+          className="mt-2.5 flex-row py-0.5"
         >
           {TAG_FILTERS.map((tag) => {
             const isSelected = selectedTag === tag;
@@ -81,7 +82,7 @@ export default function CrmContactsTab() {
               <Pressable
                 key={tag}
                 onPress={() => setSelectedTag(tag)}
-                className={`rounded-xl px-3 py-1.5 border ${
+                className={`mr-2.5 rounded-xl px-3.5 py-1.5 border ${
                   isSelected
                     ? 'bg-slate-900 border-slate-900'
                     : 'bg-slate-50 border-slate-200 active:bg-slate-100'
@@ -92,7 +93,7 @@ export default function CrmContactsTab() {
                     isSelected ? 'text-white' : 'text-slate-700'
                   }`}
                 >
-                  {tag}
+                  {tag.replace('_', ' ')}
                 </Text>
               </Pressable>
             );
@@ -132,6 +133,6 @@ export default function CrmContactsTab() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

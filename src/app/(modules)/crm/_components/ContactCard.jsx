@@ -30,12 +30,12 @@ export default function ContactCard({ contact }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/contacts/${contact.id}`)}
-      className="mb-2.5 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm active:bg-slate-50/80"
+      className="mb-2.5 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm active:bg-slate-100"
     >
       <View className="flex-row items-center justify-between">
         {/* Avatar & Info */}
         <View className="flex-row items-center gap-x-3 flex-1">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100/80 border border-indigo-200">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 border border-indigo-200">
             <Text className="text-sm font-black text-indigo-800">{initials}</Text>
           </View>
 
@@ -62,21 +62,21 @@ export default function ContactCard({ contact }) {
             <>
               <Pressable
                 onPress={handleWhatsApp}
-                className="h-8.5 w-8.5 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
+                className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
               >
                 <Ionicons name="logo-whatsapp" size={15} color="#059669" />
               </Pressable>
 
               <Pressable
                 onPress={handleCall}
-                className="h-8.5 w-8.5 items-center justify-center rounded-xl bg-sky-50 border border-sky-200 active:bg-sky-100"
+                className="h-9 w-9 items-center justify-center rounded-xl bg-sky-50 border border-sky-200 active:bg-sky-100"
               >
                 <Ionicons name="call-outline" size={15} color="#0284c7" />
               </Pressable>
             </>
           )}
 
-          <View className="h-8.5 w-6 items-center justify-center">
+          <View className="h-9 w-6 items-center justify-center">
             <Ionicons name="chevron-forward" size={14} color="#94a3b8" />
           </View>
         </View>

@@ -11,11 +11,11 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
-import CrmHeader from '../../_components/CrmHeader';
-import DealCard from '../../_components/DealCard';
-import QuickWhatsAppModal from '../../_components/QuickWhatsAppModal';
+import CrmHeader from '../_components/CrmHeader';
+import DealCard from '../_components/DealCard';
+import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import * as crmService from '~/services/crm';
 
 export default function ContactDossierScreen() {
@@ -80,21 +80,23 @@ export default function ContactDossierScreen() {
 
   if (loading && !contact) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#4f46e5" />
-        <Text className="text-xs text-slate-400 font-semibold mt-2">Loading 360° Contact Dossier...</Text>
-      </SafeAreaView>
+      <AppScreen>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#4f46e5" />
+          <Text className="text-xs text-slate-400 font-semibold mt-2">Loading 360° Contact Dossier...</Text>
+        </View>
+      </AppScreen>
     );
   }
 
   if (!contact) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 p-4">
+      <AppScreen>
         <CrmHeader title="Contact Dossier" showBack={true} />
         <View className="flex-1 items-center justify-center">
           <Text className="text-sm font-bold text-slate-700">Contact Not Found</Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
@@ -108,7 +110,7 @@ export default function ContactDossierScreen() {
   const deals = contact.deals || [];
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title={contact.name}
         subtitle={`${contact.jobTitle || 'Lead'} • ${contact.account?.name || 'Individual'}`}
@@ -124,7 +126,7 @@ export default function ContactDossierScreen() {
         className="px-4 pt-3.5"
       >
         {/* Contact Profile Header Card */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-3.5">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-3.5">
           <View className="flex-row items-center gap-x-3.5">
             <View className="h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 border border-indigo-200">
               <Text className="text-lg font-black text-indigo-800">{initials}</Text>
@@ -178,7 +180,7 @@ export default function ContactDossierScreen() {
 
         {/* Quick In-Page WhatsApp Messenger */}
         {contact.phone && (
-          <View className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-4 shadow-sm mb-3.5">
+          <View className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm mb-3.5">
             <View className="flex-row items-center gap-x-2 mb-2">
               <Ionicons name="logo-whatsapp" size={16} color="#059669" />
               <Text className="text-xs font-black text-emerald-950">Quick WhatsApp Touchpoint</Text>
@@ -237,6 +239,6 @@ export default function ContactDossierScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
@@ -63,7 +63,7 @@ export default function CrmDashboard() {
     .slice(0, 5);
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader title="DevX CRM" subtitle="Revenue Engine & Copilot" />
 
       {/* Global Modals */}
@@ -98,7 +98,7 @@ export default function CrmDashboard() {
         {/* Executive KPI Grid */}
         <View className="flex-row flex-wrap justify-between gap-y-2.5">
           {/* Total Pipeline */}
-          <View className="w-[48.5%] rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100">
                 <Ionicons name="pie-chart" size={16} color="#4f46e5" />
@@ -114,7 +114,7 @@ export default function CrmDashboard() {
           </View>
 
           {/* Weighted Revenue */}
-          <View className="w-[48.5%] rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-100">
                 <Ionicons name="trending-up" size={16} color="#059669" />
@@ -130,7 +130,7 @@ export default function CrmDashboard() {
           </View>
 
           {/* Win Rate */}
-          <View className="w-[48.5%] rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-50 border border-amber-100">
                 <Ionicons name="trophy" size={16} color="#d97706" />
@@ -142,7 +142,7 @@ export default function CrmDashboard() {
           </View>
 
           {/* Pending Tasks */}
-          <View className="w-[48.5%] rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-50 border border-purple-100">
                 <Ionicons name="checkbox" size={16} color="#7c3aed" />
@@ -161,7 +161,7 @@ export default function CrmDashboard() {
         <View className="mt-2 flex-row flex-wrap justify-between gap-y-2">
           <Pressable
             onPress={() => openCreateDeal()}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-indigo-200/90 bg-indigo-50/60 p-3 active:bg-indigo-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-indigo-200/90 bg-indigo-50/60 p-3 active:bg-indigo-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600">
               <Ionicons name="add" size={18} color="#ffffff" />
@@ -171,7 +171,7 @@ export default function CrmDashboard() {
 
           <Pressable
             onPress={openCreateContact}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-emerald-200/90 bg-emerald-50/60 p-3 active:bg-emerald-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-emerald-200/90 bg-emerald-50/60 p-3 active:bg-emerald-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-600">
               <Ionicons name="person-add" size={16} color="#ffffff" />
@@ -181,7 +181,7 @@ export default function CrmDashboard() {
 
           <Pressable
             onPress={() => openCreateTask()}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-purple-200/90 bg-purple-50/60 p-3 active:bg-purple-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-purple-200/90 bg-purple-50/60 p-3 active:bg-purple-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-purple-600">
               <Ionicons name="calendar" size={16} color="#ffffff" />
@@ -191,7 +191,7 @@ export default function CrmDashboard() {
 
           <Pressable
             onPress={() => router.push('/(modules)/crm/(tabs)/copilot')}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/60 p-3 active:bg-amber-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/60 p-3 active:bg-amber-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-amber-600">
               <Ionicons name="sparkles" size={16} color="#ffffff" />
@@ -201,7 +201,7 @@ export default function CrmDashboard() {
 
           <Pressable
             onPress={() => router.push('/(modules)/crm/analytics')}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-sky-200/90 bg-sky-50/60 p-3 active:bg-sky-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-sky-200/90 bg-sky-50/60 p-3 active:bg-sky-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-sky-600">
               <Ionicons name="bar-chart" size={16} color="#ffffff" />
@@ -212,7 +212,7 @@ export default function CrmDashboard() {
           <Pressable
             onPress={handleSyncWhatsApp}
             disabled={syncingWa}
-            className="w-[31.5%] items-center justify-center rounded-2xl border border-teal-200/90 bg-teal-50/60 p-3 active:bg-teal-100/70"
+            className="w-[31%] items-center justify-center rounded-2xl border border-teal-200/90 bg-teal-50/60 p-3 active:bg-teal-100/70"
           >
             <View className="h-8 w-8 items-center justify-center rounded-xl bg-teal-600">
               {syncingWa ? (
@@ -258,6 +258,6 @@ export default function CrmDashboard() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

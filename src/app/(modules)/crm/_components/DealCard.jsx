@@ -37,7 +37,7 @@ export default function DealCard({ deal, onStageChange }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/deals/${deal.id}`)}
-      className="mb-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm active:bg-slate-50/80"
+      className="mb-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-100"
     >
       {/* Top Meta: Stage Pill & Priority */}
       <View className="flex-row items-center justify-between gap-x-2">

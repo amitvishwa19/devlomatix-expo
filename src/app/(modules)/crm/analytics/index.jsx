@@ -9,7 +9,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
@@ -60,7 +60,7 @@ export default function CrmAnalyticsScreen() {
   const reps = leaderboard?.reps || leaderboard?.leaderboard || [];
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="Revenue Forecast & Leaderboard"
         subtitle="Probabilistic Analytics & Rep Quotas"
@@ -81,7 +81,7 @@ export default function CrmAnalyticsScreen() {
 
         <View className="flex-row flex-wrap justify-between gap-y-2.5 mb-4">
           {/* Weighted Expected */}
-          <View className="w-[48.5%] rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-indigo-200 bg-indigo-50 p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <Ionicons name="sparkles" size={16} color="#4f46e5" />
               <Text className="text-[9px] font-bold text-indigo-700">Most Likely</Text>
@@ -93,7 +93,7 @@ export default function CrmAnalyticsScreen() {
           </View>
 
           {/* Committed Floor */}
-          <View className="w-[48.5%] rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <Ionicons name="lock-closed" size={16} color="#059669" />
               <Text className="text-[9px] font-bold text-emerald-700">Commit Floor</Text>
@@ -105,7 +105,7 @@ export default function CrmAnalyticsScreen() {
           </View>
 
           {/* Best-Case Ceiling */}
-          <View className="w-[48.5%] rounded-2xl border border-sky-200 bg-sky-50/70 p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-sky-200 bg-sky-50 p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <Ionicons name="rocket" size={16} color="#0284c7" />
               <Text className="text-[9px] font-bold text-sky-700">Upside</Text>
@@ -117,7 +117,7 @@ export default function CrmAnalyticsScreen() {
           </View>
 
           {/* Won Revenue */}
-          <View className="w-[48.5%] rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 shadow-sm">
+          <View className="w-[48%] rounded-2xl border border-amber-200 bg-amber-50 p-3.5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <Ionicons name="trophy" size={16} color="#d97706" />
               <Text className="text-[9px] font-bold text-amber-700">Closed</Text>
@@ -131,7 +131,7 @@ export default function CrmAnalyticsScreen() {
 
         {/* Funnel Stage Conversion Velocity */}
         {funnelStages.length > 0 && (
-          <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-4">
+          <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
             <Text className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
               Stage Conversion Funnel
             </Text>
@@ -165,7 +165,7 @@ export default function CrmAnalyticsScreen() {
         )}
 
         {/* Team Sales Leaderboard Table */}
-        <View className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm mb-4">
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm mb-4">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-xs font-black uppercase tracking-wider text-slate-400">
               Sales Rep Leaderboard
@@ -224,6 +224,6 @@ export default function CrmAnalyticsScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -255,7 +255,7 @@ export default function CreateTaskModal() {
           <Pressable
             onPress={handleSubmit}
             disabled={submitting || !title.trim()}
-            className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-indigo-600 py-3.5 shadow-md shadow-indigo-500/20 active:bg-indigo-700 ${
+            className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-indigo-600 py-3.5 shadow-md active:bg-indigo-700 ${
               submitting || !title.trim() ? 'opacity-50' : ''
             }`}
           >

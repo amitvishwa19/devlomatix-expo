@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import TaskCard from '../_components/TaskCard';
@@ -11,30 +11,32 @@ import CreateTaskModal from '../_components/CreateTaskModal';
 
 export default function CrmTasksTab() {
   const router = useRouter();
-  const { tasks, loading, refreshing, refreshAll, openCreateTask } = useCrm();
+  const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
 
   const [activeTab, setActiveTab] = useState('PENDING'); // 'PENDING' | 'COMPLETED'
   const [selectedType, setSelectedType] = useState('ALL');
 
-  const pendingTasks = tasks.filter((t) => t.status !== 'COMPLETED');
-  const completedTasks = tasks.filter((t) => t.status === 'COMPLETED');
+  const taskList = Array.isArray(tasks) ? tasks : [];
+  const pendingTasks = taskList.filter((t) => t && t.status !== 'COMPLETED');
+  const completedTasks = taskList.filter((t) => t && t.status === 'COMPLETED');
 
   const currentList = activeTab === 'PENDING' ? pendingTasks : completedTasks;
 
   const filteredTasks = currentList.filter((t) => {
+    if (!t) return false;
     if (selectedType !== 'ALL' && t.type !== selectedType) return false;
     return true;
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['bottom']}>
+    <AppScreen>
       <CrmHeader
         title="Tasks & Follow-ups"
         subtitle={`${pendingTasks.length} Pending Actions`}
         rightActions={
           <Pressable
             onPress={() => openCreateTask()}
-            className="h-8.5 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
           >
             <Ionicons name="add" size={16} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Task</Text>
@@ -46,7 +48,7 @@ export default function CrmTasksTab() {
       <CreateTaskModal />
 
       {/* Tabs & Type Filters Bar */}
-      <View className="bg-white px-4 py-2.5 border-b border-slate-200/80">
+      <View className="bg-white px-4 py-2.5 border-b border-slate-200">
         {/* Status Switcher */}
         <View className="flex-row rounded-xl border border-slate-200 bg-slate-100 p-1 mb-2.5">
           <Pressable
@@ -84,7 +86,8 @@ export default function CrmTasksTab() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="flex-row gap-x-2 py-0.5"
+          contentContainerStyle={{ paddingRight: 20 }}
+          className="flex-row py-0.5"
         >
           {['ALL', 'CALL', 'WHATSAPP', 'MEETING', 'EMAIL', 'REVIEW'].map((t) => {
             const isSelected = selectedType === t;
@@ -92,7 +95,7 @@ export default function CrmTasksTab() {
               <Pressable
                 key={t}
                 onPress={() => setSelectedType(t)}
-                className={`rounded-xl px-3 py-1.5 border ${
+                className={`mr-2 rounded-xl px-3 py-1.5 border ${
                   isSelected
                     ? 'bg-slate-900 border-slate-900'
                     : 'bg-slate-50 border-slate-200 active:bg-slate-100'
@@ -145,6 +148,6 @@ export default function CrmTasksTab() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
