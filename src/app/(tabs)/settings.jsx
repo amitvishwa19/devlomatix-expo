@@ -39,31 +39,60 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     let isMounted = true;
-    const loadSession = async () => {
+    const loadProfile = async () => {
       const session = await getSession();
+      const sessionUser = session?.user ?? null;
       if (!isMounted) return;
-      setUser(session?.user ?? null);
-    };
-    loadSession();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      setUser(sessionUser);
 
-  useEffect(() => {
-    let isMounted = true;
-    const loadPerms = async () => {
+      const roleLabels = (sessionUser?.roles || [])
+        .map((role) =>
+          typeof role === "string" ? role : role.title || role.name || role.id
+        )
+        .filter(Boolean);
+
       try {
         const res = await fetchAccessData();
         const body = res?.data || res;
-        if (body?.permissions && isMounted) {
-          setPermModules(body.permissions);
-        }
+        const allRoles = body?.roles || [];
+        const allPerms = body?.permissions || [];
+
+        const roleKeys = roleLabels.map((label) => String(label).toLowerCase());
+        const matchedRoles = allRoles.filter((role) => {
+          const keys = [role.title, role.name, role.id]
+            .filter(Boolean)
+            .map((key) => String(key).toLowerCase());
+          return keys.some((key) => roleKeys.includes(key));
+        });
+
+        const resolved = [];
+        matchedRoles.forEach((role) => {
+          (role.permissions || []).forEach((perm) => {
+            let label = null;
+            if (typeof perm === "object" && perm !== null) {
+              label = perm.module || perm.title || perm.name || perm.category;
+            } else {
+              const match = allPerms.find(
+                (ap) =>
+                  ap.id === perm ||
+                  ap._id === perm ||
+                  ap.category === perm ||
+                  [ap.module, ap.title, ap.name].includes(perm)
+              );
+              label = match ? match.module || match.title || match.name : perm;
+            }
+            if (label && !resolved.some((item) => item.module === label)) {
+              resolved.push({ module: label });
+            }
+          });
+        });
+
+        if (isMounted) setPermModules(resolved);
       } catch {
         // fallback to user session data
       }
     };
-    loadPerms();
+    loadProfile();
     return () => {
       isMounted = false;
     };
@@ -355,23 +384,16 @@ export default function SettingsScreen() {
                   Permissions
                 </Text>
                 <View className="mt-2 flex-row flex-wrap gap-2">
-                  {permModules.map((mod) => {
-                    return (
-                      <View
-                        key={mod.category || mod.id}
-                        className="flex-row items-center justify-between py-3"
-                      >
-                        <View
-                          key={"label"}
-                          className="rounded-full bg-teal-600 px-3 py-1.5"
-                        >
-                          <Text className="text-[12px] font-bold text-white">
-                            {mod.module}
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  })}
+                  {permModules.map((mod) => (
+                    <View
+                      key={mod.module}
+                      className="rounded-full bg-teal-600 px-3 py-1.5"
+                    >
+                      <Text className="text-[12px] font-bold text-white">
+                        {mod.module}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               </View>
             )}

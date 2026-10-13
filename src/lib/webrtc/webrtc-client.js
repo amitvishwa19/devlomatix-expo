@@ -272,8 +272,8 @@ export class WebRtcClient {
 
     // 3. Connection state monitoring
     this.peerConnection.onconnectionstatechange = () => {
-      const state = this.peerConnection.connectionState;
-      if (this.onConnectionStateChange) {
+      const state = this.peerConnection?.connectionState;
+      if (this.onConnectionStateChange && state) {
         this.onConnectionStateChange(state);
       }
     };
@@ -433,6 +433,10 @@ export class WebRtcClient {
 
     if (this.peerConnection) {
       try {
+        this.peerConnection.onconnectionstatechange = null;
+        this.peerConnection.onicecandidate = null;
+        this.peerConnection.ontrack = null;
+        this.peerConnection.onaddstream = null;
         this.peerConnection.close();
       } catch (_) {}
       this.peerConnection = null;
