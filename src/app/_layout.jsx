@@ -31,12 +31,16 @@ import * as Notifications from "expo-notifications";
 import { getMessaging } from "@react-native-firebase/messaging";
 
 setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-    }),
+    handleNotification: async (notification) => {
+        const data = notification?.request?.content?.data || {};
+        const isCall = data?.type === 'incoming_call';
+        return {
+            shouldShowBanner: !isCall,
+            shouldShowList: !isCall,
+            shouldPlaySound: !isCall,
+            shouldSetBadge: !isCall,
+        };
+    },
 });
 
 try {

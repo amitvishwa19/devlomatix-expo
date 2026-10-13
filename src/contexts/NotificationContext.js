@@ -33,8 +33,15 @@ export const NotificationProvider = ({ children }) => {
     console.log("New Notification");
 
     const unsubFcm = onMessage(getMessaging(), async (remoteMessage) => {
-      const { title, body } = remoteMessage.notification || {};
       const data = remoteMessage.data || {}; // FCM puts data at the root, not inside notification
+
+      // Suppress notification when app is in foreground for incoming calls (handled by in-app modal)
+      if (data.type === 'incoming_call') {
+        console.log("🔥 FCM incoming call received in foreground (suppressing system notification)");
+        return;
+      }
+
+      const { title, body } = remoteMessage.notification || {};
       console.log("🔥 FCM Message received:", { title, body, data });
       Notifications.scheduleNotificationAsync({
         content: { title, body, data },
