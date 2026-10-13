@@ -69,11 +69,17 @@ export default function ActiveCallModal() {
             {/* Top Info */}
             <View className="items-center mt-6">
               <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 mb-2">
-                <View
-                  className={`w-2 h-2 rounded-full ${
-                    isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                  }`}
-                />
+                {isConnected ? (
+                  <View
+                    key="dot-connected"
+                    className="w-2 h-2 rounded-full bg-emerald-400"
+                  />
+                ) : (
+                  <View
+                    key="dot-ringing"
+                    className="w-2 h-2 rounded-full bg-amber-400"
+                  />
+                )}
                 <Text className="text-[12px] font-bold text-slate-300">
                   {isConnected ? formatDuration(callDuration) : 'Ringing...'}
                 </Text>

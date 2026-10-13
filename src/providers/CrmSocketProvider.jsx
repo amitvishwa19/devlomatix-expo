@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Platform, Alert } from 'react-native';
+import { Platform, Alert, Vibration } from 'react-native';
 import Constants from 'expo-constants';
 
 // Safely resolve native modules to prevent crashes if dev client hasn't been rebuilt yet
@@ -141,6 +141,9 @@ export function CrmSocketProvider({ children }) {
 
   // 2. Ringtone & Audio Tone Controls
   const stopRingtone = useCallback(async () => {
+    try {
+      Vibration.cancel();
+    } catch (_) {}
     if (hapticIntervalRef.current) {
       clearInterval(hapticIntervalRef.current);
       hapticIntervalRef.current = null;
@@ -174,12 +177,17 @@ export function CrmSocketProvider({ children }) {
         }
       }
 
-      if (type === 'incoming' && HapticsModule?.notificationAsync) {
-        // Periodic vibration
-        HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning);
-        hapticIntervalRef.current = setInterval(() => {
-          HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning);
-        }, 2000);
+      if (type === 'incoming') {
+        try {
+          Vibration.vibrate([0, 800, 1000, 800], true);
+        } catch (_) {}
+
+        if (HapticsModule?.notificationAsync) {
+          HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
+          hapticIntervalRef.current = setInterval(() => {
+            HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
+          }, 2000);
+        }
       }
     } catch (err) {
       console.warn('[RINGTONE_WARN] Audio/Haptics playback unavailable:', err?.message);
@@ -302,9 +310,7 @@ export function CrmSocketProvider({ children }) {
 
       setCallStatus('connected');
       if (HapticsModule?.notificationAsync) {
-        try {
-          HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Success);
-        } catch (_) {}
+        HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Success).catch(() => {});
       }
 
       // Caller creates SDP Offer

@@ -8,10 +8,12 @@ let mediaDevicesNative;
 
 try {
   const webrtc = require('react-native-webrtc');
-  RTCPeerConnectionNative = webrtc.RTCPeerConnection;
-  RTCIceCandidateNative = webrtc.RTCIceCandidate;
-  RTCSessionDescriptionNative = webrtc.RTCSessionDescription;
-  mediaDevicesNative = webrtc.mediaDevices;
+  if (webrtc) {
+    RTCPeerConnectionNative = webrtc.RTCPeerConnection;
+    RTCIceCandidateNative = webrtc.RTCIceCandidate;
+    RTCSessionDescriptionNative = webrtc.RTCSessionDescription;
+    mediaDevicesNative = webrtc.mediaDevices;
+  }
 } catch (e) {
   console.warn('[WEBRTC_IMPORT_WARN] react-native-webrtc native module fallback:', e?.message);
 }
