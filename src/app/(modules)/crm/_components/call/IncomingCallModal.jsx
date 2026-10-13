@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAppTheme } from '~/theme/AppTheme';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
+import RingtoneAudioFallback from './RingtoneAudioFallback';
 
 export default function IncomingCallModal() {
   const { palette } = useAppTheme();
@@ -49,6 +50,7 @@ export default function IncomingCallModal() {
 
   return (
     <Modal visible={isVisible} transparent animationType="slide" statusBarTranslucent>
+      <RingtoneAudioFallback />
       <View className="flex-1 items-center justify-between bg-slate-950/95 px-6 py-14">
         {/* Top Header */}
         <View className="items-center mt-6">

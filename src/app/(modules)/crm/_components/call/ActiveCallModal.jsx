@@ -92,7 +92,9 @@ export default function ActiveCallModal() {
               <Text className="text-[13px] text-slate-400 font-medium mt-1">
                 {isConnected
                   ? isVideo
-                    ? 'Encrypted HD Video Session'
+                    ? RTCViewComponent
+                      ? 'Encrypted HD Video Session'
+                      : 'Video Session Active (Build dev client for camera HW)'
                     : 'Encrypted HD Voice Session'
                   : 'Establishing Connection...'}
               </Text>
@@ -122,7 +124,7 @@ export default function ActiveCallModal() {
         )}
 
         {/* FLOATING LOCAL SELF-VIEW PIP (VIDEO MODE) */}
-        {hasLocalVideo && RTCViewComponent && (
+        {isVideo && !isCameraOff && (
           <View
             style={{
               position: 'absolute',
@@ -139,12 +141,19 @@ export default function ActiveCallModal() {
               zIndex: 50,
             }}
           >
-            <RTCViewComponent
-              streamURL={localStream.toURL()}
-              style={{ flex: 1 }}
-              objectFit="cover"
-              mirror={true}
-            />
+            {hasLocalVideo && RTCViewComponent ? (
+              <RTCViewComponent
+                streamURL={localStream.toURL()}
+                style={{ flex: 1 }}
+                objectFit="cover"
+                mirror={true}
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center bg-slate-900 p-2">
+                <Ionicons name="videocam" size={24} color="#818cf8" />
+                <Text className="text-[10px] font-bold text-slate-300 text-center mt-1">You</Text>
+              </View>
+            )}
           </View>
         )}
 

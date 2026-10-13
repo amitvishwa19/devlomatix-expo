@@ -160,8 +160,23 @@ export function CrmSocketProvider({ children }) {
   const startRingtone = useCallback(async (type) => {
     await stopRingtone();
 
-    try {
-      if (AudioModule) {
+    // 1. Native Vibration (Persistent ring cadence)
+    if (type === 'incoming') {
+      try {
+        Vibration.vibrate([0, 800, 1000, 800], true);
+      } catch (_) {}
+
+      if (HapticsModule?.notificationAsync) {
+        HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
+        hapticIntervalRef.current = setInterval(() => {
+          HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
+        }, 2000);
+      }
+    }
+
+    // 2. Native AudioModule (expo-av if native module is linked)
+    if (AudioModule) {
+      try {
         await AudioModule.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
@@ -175,22 +190,10 @@ export function CrmSocketProvider({ children }) {
           );
           soundRef.current = sound;
         }
+      } catch (err) {
+        // Fallback handled by RingtoneAudioFallback in IncomingCallModal
+        console.warn('[RINGTONE_AUDIO_WARN] expo-av playback unavailable (using RingtoneAudioFallback):', err?.message);
       }
-
-      if (type === 'incoming') {
-        try {
-          Vibration.vibrate([0, 800, 1000, 800], true);
-        } catch (_) {}
-
-        if (HapticsModule?.notificationAsync) {
-          HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
-          hapticIntervalRef.current = setInterval(() => {
-            HapticsModule.notificationAsync(HapticsModule.NotificationFeedbackType.Warning).catch(() => {});
-          }, 2000);
-        }
-      }
-    } catch (err) {
-      console.warn('[RINGTONE_WARN] Audio/Haptics playback unavailable:', err?.message);
     }
   }, [stopRingtone]);
 

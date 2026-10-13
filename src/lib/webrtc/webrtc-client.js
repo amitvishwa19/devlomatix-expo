@@ -63,9 +63,45 @@ export class SimulatedPeerConnection {
   }
 
   async createAnswer() {
+    let sdp = 'v=0\r\no=- 54321 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n';
+    if (this.remoteDescription?.sdp) {
+      const lines = this.remoteDescription.sdp.split(/\r?\n/);
+      let currentMLine = null;
+      let currentMid = null;
+
+      const finishBlock = () => {
+        if (currentMLine) {
+          const parts = currentMLine.split(' ');
+          const mediaType = parts[0]; // e.g. m=audio, m=video
+          const proto = parts[2] || 'UDP/TLS/RTP/SAVPF';
+          const payload = parts[3] || '0';
+          sdp += `${mediaType} 0 ${proto} ${payload}\r\n`;
+          sdp += `c=IN IP4 127.0.0.1\r\n`;
+          if (currentMid) {
+            sdp += `a=mid:${currentMid}\r\n`;
+          }
+          sdp += `a=inactive\r\n`;
+        }
+      };
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith('m=')) {
+          finishBlock();
+          currentMLine = line;
+          currentMid = null;
+        } else if (line.startsWith('a=mid:')) {
+          currentMid = line.substring(6).trim();
+        }
+      }
+      finishBlock();
+    } else {
+      sdp += 'm=audio 0 UDP/TLS/RTP/SAVPF 111\r\nc=IN IP4 127.0.0.1\r\na=mid:0\r\na=inactive\r\nm=video 0 UDP/TLS/RTP/SAVPF 96\r\nc=IN IP4 127.0.0.1\r\na=mid:1\r\na=inactive\r\n';
+    }
+
     this.localDescription = {
       type: 'answer',
-      sdp: 'v=0\r\no=- 54321 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n',
+      sdp,
     };
     return this.localDescription;
   }
