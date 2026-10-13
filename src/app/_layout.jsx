@@ -25,6 +25,10 @@ import { CrmSocketProvider } from "~/providers/CrmSocketProvider";
 import IncomingCallModal from "~/app/(modules)/crm/_components/call/IncomingCallModal";
 import ActiveCallModal from "~/app/(modules)/crm/_components/call/ActiveCallModal";
 import PostCallSummaryModal from "~/app/(modules)/crm/_components/call/PostCallSummaryModal";
+import CallEndedModal from "~/app/(modules)/crm/_components/call/CallEndedModal";
+
+import * as Notifications from "expo-notifications";
+import { getMessaging } from "@react-native-firebase/messaging";
 
 setNotificationHandler({
     handleNotification: async () => ({
@@ -34,6 +38,27 @@ setNotificationHandler({
         shouldSetBadge: true,
     }),
 });
+
+try {
+    getMessaging().setBackgroundMessageHandler(async (remoteMessage) => {
+        console.log("🔥 [FCM Background] Remote message received:", remoteMessage?.data);
+        const data = remoteMessage?.data || {};
+        if (data.type === 'incoming_call' && !remoteMessage?.notification) {
+            const isVideo = data.callType === 'video';
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: `📞 Incoming ${isVideo ? 'Video' : 'Voice'} Call`,
+                    body: `${data.callerName || 'Devlomatix Rep'} is calling you on Devlomatix CRM`,
+                    data,
+                    sound: 'default',
+                },
+                trigger: null,
+            });
+        }
+    });
+} catch (e) {
+    // Non-native or web fallback
+}
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -96,6 +121,7 @@ function RootLayoutNav() {
                         <IncomingCallModal />
                         <ActiveCallModal />
                         <PostCallSummaryModal />
+                        <CallEndedModal />
                         {/* <GlobalChatbot bottom={-10} right={20} /> */}
                         <Toast config={toastConfig} topOffset={34} />
                     </CrmSocketProvider>

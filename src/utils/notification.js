@@ -11,6 +11,15 @@ export async function registerForPushNotificationsAsync() {
             vibrationPattern: [0, 250, 250, 250],
             lightColor: "#FF231F7C",
         });
+
+        await Notifications.setNotificationChannelAsync("calls", {
+            name: "Incoming Calls",
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 800, 1000, 800],
+            lightColor: "#818cf8",
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
+        });
     }
 
     if (Device.isDevice) {

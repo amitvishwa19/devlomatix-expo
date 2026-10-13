@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Platform, Alert, Vibration } from 'react-native';
+import { Platform, Alert, Vibration, AppState } from 'react-native';
 import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '~/utils/notification';
 
 // Safely resolve native modules to prevent crashes if dev client hasn't been rebuilt yet
 let AudioModule = null;
@@ -16,6 +18,13 @@ try {
   HapticsModule = require('expo-haptics');
 } catch (e) {
   // Haptics native module not compiled into current binary
+}
+
+let getMessaging = null;
+try {
+  getMessaging = require('@react-native-firebase/messaging').getMessaging;
+} catch (e) {
+  // Firebase messaging fallback
 }
 
 import { getSession } from '~/utils/authStorage';
@@ -76,6 +85,8 @@ export function CrmSocketProvider({ children }) {
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [activeCallSession, setActiveCallSession] = useState(null);
   const [postCallRecord, setPostCallRecord] = useState(null);
+  const [callEndNotice, setCallEndNotice] = useState(null);
+  const dismissCallEndNotice = useCallback(() => setCallEndNotice(null), []);
 
   // Audio/Video control states
   const [isMuted, setIsMuted] = useState(false);
@@ -85,6 +96,8 @@ export function CrmSocketProvider({ children }) {
   // Media Streams
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [pushToken, setPushToken] = useState(null);
+  const [deviceToken, setDeviceToken] = useState(null);
 
   const webrtcClientRef = useRef(null);
   const socketRef = useRef(null);
@@ -92,9 +105,95 @@ export function CrmSocketProvider({ children }) {
   const soundRef = useRef(null);
   const callTimeoutRef = useRef(null);
   const hapticIntervalRef = useRef(null);
+  const incomingNotificationIdRef = useRef(null);
   const activeCallSessionRef = useRef(null);
   const callStatusRef = useRef('idle');
   const callDurationRef = useRef(0);
+
+  // Register push notifications on mount
+  useEffect(() => {
+    registerForPushNotificationsAsync()
+      .then((token) => {
+        if (token) {
+          console.log('[CRM_SOCKET] Registered push token for calls:', token);
+          setPushToken(token);
+        }
+      })
+      .catch((err) => {
+        console.warn('[CRM_SOCKET] Push notification registration notice:', err?.message);
+      });
+
+    // Also obtain direct Firebase FCM token
+    try {
+      if (getMessaging) {
+        getMessaging().getToken().then((fcmTok) => {
+          if (fcmTok) {
+            console.log('[CRM_SOCKET] Retrieved native FCM deviceToken:', fcmTok.substring(0, 20) + '...');
+            setDeviceToken(fcmTok);
+          }
+        }).catch((err) => {
+          console.warn('[CRM_SOCKET] FCM token retrieval notice:', err?.message);
+        });
+      }
+    } catch (_) {}
+  }, []);
+
+  // Monitor AppState (foreground/background) & notification taps
+  useEffect(() => {
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        if (socketRef.current && !socketRef.current.connected) {
+          console.log('[CRM_SOCKET] App foregrounded. Reconnecting socket...');
+          socketRef.current.connect();
+        }
+      }
+    });
+
+    // 1. Expo notification tap listener
+    const notifSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response?.notification?.request?.content?.data;
+      if (data?.type === 'incoming_call') {
+        console.log('[CRM_NOTIFICATION] User tapped incoming call notification:', data);
+        setIncomingCallData(data);
+        setCallStatus('incoming');
+      }
+    });
+
+    // 2. Direct FCM notification tap listener (when opened from background)
+    let unsubFcmOpened = null;
+    try {
+      if (getMessaging) {
+        unsubFcmOpened = getMessaging().onNotificationOpenedApp((remoteMessage) => {
+          const data = remoteMessage?.data;
+          if (data?.type === 'incoming_call') {
+            console.log('[CRM_FCM] App opened from background by call notification:', data);
+            setIncomingCallData(data);
+            setCallStatus('incoming');
+          }
+        });
+      }
+    } catch (_) {}
+
+    // 3. Direct FCM notification tap listener (when app cold-started from killed state)
+    try {
+      if (getMessaging) {
+        getMessaging().getInitialNotification().then((remoteMessage) => {
+          const data = remoteMessage?.data;
+          if (data?.type === 'incoming_call') {
+            console.log('[CRM_FCM] App cold-started by call notification:', data);
+            setIncomingCallData(data);
+            setCallStatus('incoming');
+          }
+        }).catch(() => {});
+      }
+    } catch (_) {}
+
+    return () => {
+      appStateSub.remove();
+      notifSub.remove();
+      if (unsubFcmOpened) unsubFcmOpened();
+    };
+  }, []);
 
   useEffect(() => {
     activeCallSessionRef.current = activeCallSession;
@@ -144,6 +243,10 @@ export function CrmSocketProvider({ children }) {
     try {
       Vibration.cancel();
     } catch (_) {}
+    if (incomingNotificationIdRef.current) {
+      Notifications.dismissNotificationAsync(incomingNotificationIdRef.current).catch(() => {});
+      incomingNotificationIdRef.current = null;
+    }
     if (hapticIntervalRef.current) {
       clearInterval(hapticIntervalRef.current);
       hapticIntervalRef.current = null;
@@ -245,6 +348,8 @@ export function CrmSocketProvider({ children }) {
         userName: currentUserName,
         avatar: currentUserAvatar,
         platform: Platform.OS,
+        expoPushToken: pushToken,
+        deviceToken: deviceToken,
       });
     });
 
@@ -284,6 +389,29 @@ export function CrmSocketProvider({ children }) {
       setIncomingCallData(data);
       setCallStatus('incoming');
       startRingtone('incoming');
+
+      // If app is running in background, pop high-priority heads-up notification banner
+      if (AppState.currentState !== 'active') {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: `📞 Incoming ${data.callType === 'video' ? 'Video' : 'Voice'} Call`,
+            body: `${data.callerName || 'Sales Representative'} is calling you on Devlomatix CRM`,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            vibrate: [0, 800, 1000, 800],
+            channelId: 'calls',
+            data: {
+              type: 'incoming_call',
+              ...data,
+            },
+          },
+          trigger: null,
+        })
+          .then((id) => {
+            incomingNotificationIdRef.current = id;
+          })
+          .catch(() => {});
+      }
 
       // Auto-decline after 35 seconds if unanswered
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
@@ -337,17 +465,30 @@ export function CrmSocketProvider({ children }) {
 
     // Caller: Callee rejected
     socket.on('call:rejected', (data) => {
+      const targetName = activeCallSessionRef.current?.targetName || 'User';
+      const targetAvatar = activeCallSessionRef.current?.targetAvatar || null;
+      const callType = activeCallSessionRef.current?.callType || 'audio';
+
       cleanupCall();
       setCallStatus('idle');
       setActiveCallSession(null);
       setIncomingCallData(null);
+
       const msg =
-        data.reason === 'busy'
+        data?.reason === 'busy'
           ? 'User is busy on another call.'
-          : data.reason === 'timeout'
+          : data?.reason === 'timeout'
           ? 'Call timed out (no answer).'
           : 'Call was declined.';
-      Alert.alert('Call Ended', msg);
+
+      setCallEndNotice({
+        title: 'Call Ended',
+        subtitle: msg,
+        reason: data?.reason || 'declined',
+        targetName,
+        targetAvatar,
+        callType,
+      });
     });
 
     // Callee: Receives SDP Offer -> creates Answer
@@ -388,7 +529,7 @@ export function CrmSocketProvider({ children }) {
     });
 
     // Call Ended
-    socket.on('call:ended', ({ duration }) => {
+    socket.on('call:ended', ({ duration, reason }) => {
       const finishedSession = activeCallSessionRef.current;
       const finalDuration = duration || callDurationRef.current;
 
@@ -397,11 +538,28 @@ export function CrmSocketProvider({ children }) {
       setActiveCallSession(null);
       setIncomingCallData(null);
 
-      // Open Post-Call Summary Modal
-      if (finishedSession) {
+      if (finishedSession && finalDuration > 0) {
         setPostCallRecord({
           ...finishedSession,
           duration: finalDuration,
+        });
+      } else if (finishedSession) {
+        const msg =
+          reason === 'declined'
+            ? 'Call was declined.'
+            : reason === 'busy'
+            ? 'User is busy on another call.'
+            : reason === 'timeout'
+            ? 'Call timed out (no answer).'
+            : 'Call was ended.';
+
+        setCallEndNotice({
+          title: 'Call Ended',
+          subtitle: msg,
+          reason: reason || 'ended',
+          targetName: finishedSession.targetName,
+          targetAvatar: finishedSession.targetAvatar,
+          callType: finishedSession.callType,
         });
       }
     });
@@ -467,8 +625,16 @@ export function CrmSocketProvider({ children }) {
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       callTimeoutRef.current = setTimeout(() => {
         if (callStatusRef.current === 'calling') {
+          const targetName = activeCallSessionRef.current?.targetName || calleeName || 'User';
           endCall();
-          Alert.alert('No Answer', `${calleeName || 'User'} is unavailable.`);
+          setCallEndNotice({
+            title: 'Call Ended',
+            subtitle: `${targetName} did not answer. Call timed out.`,
+            reason: 'timeout',
+            targetName,
+            targetAvatar: calleeAvatar,
+            callType,
+          });
         }
       }, 35000);
 
@@ -559,26 +725,55 @@ export function CrmSocketProvider({ children }) {
       callTimeoutRef.current = null;
     }
 
-    if (incomingCallData && socket) {
+    const roomId = incomingCallData?.roomId || activeCallSessionRef.current?.roomId;
+    if (roomId && socket) {
       socket.emit('call:response', {
-        roomId: incomingCallData.roomId,
+        roomId,
         accepted: false,
+        reason,
+      });
+      socket.emit('call:hangup', {
+        roomId,
+        duration: 0,
+        reason,
+      });
+      socket.emit('call:end', {
+        roomId,
+        duration: 0,
         reason,
       });
     }
 
+    cleanupCall();
     setIncomingCallData(null);
     setCallStatus('idle');
   };
 
   const endCall = () => {
+    stopRingtone();
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = null;
+    }
+
     const currentSession = activeCallSessionRef.current;
+    const currentIncoming = incomingCallData;
+    const roomId = currentSession?.roomId || currentIncoming?.roomId;
     const finalDuration = callDurationRef.current;
 
-    if (currentSession && socket) {
-      socket.emit('call:end', {
-        roomId: currentSession.roomId,
+    if (roomId && socket) {
+      socket.emit('call:hangup', {
+        roomId,
         duration: finalDuration,
+      });
+      socket.emit('call:end', {
+        roomId,
+        duration: finalDuration,
+      });
+      socket.emit('call:response', {
+        roomId,
+        accepted: false,
+        reason: 'declined',
       });
     }
 
@@ -587,7 +782,7 @@ export function CrmSocketProvider({ children }) {
     setActiveCallSession(null);
     setIncomingCallData(null);
 
-    if (currentSession) {
+    if (currentSession && finalDuration > 0) {
       setPostCallRecord({
         ...currentSession,
         duration: finalDuration,
@@ -633,6 +828,9 @@ export function CrmSocketProvider({ children }) {
         isMuted,
         isCameraOff,
         callDuration,
+        callEndNotice,
+        setCallEndNotice,
+        dismissCallEndNotice,
         startCall,
         acceptCall,
         rejectCall,
