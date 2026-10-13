@@ -12,6 +12,7 @@ const tabConfig = {
   index: { icon: 'rocket-outline', activeIcon: 'rocket', label: 'Dashboard' },
   pipeline: { icon: 'funnel-outline', activeIcon: 'funnel', label: 'Pipeline' },
   contacts: { icon: 'people-outline', activeIcon: 'people', label: 'Contacts' },
+  chat: { icon: 'chatbubbles-outline', activeIcon: 'chatbubbles', label: 'Chat' },
   tasks: { icon: 'checkbox-outline', activeIcon: 'checkbox', label: 'Tasks' },
   copilot: { icon: 'sparkles-outline', activeIcon: 'sparkles', label: 'Copilot' },
 };
@@ -25,6 +26,7 @@ export default function CrmTabLayout() {
       <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="pipeline" options={{ title: 'Pipeline' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="copilot" options={{ title: 'AI Copilot' }} />
     </Tabs>

@@ -21,6 +21,10 @@ import { WidgetProvider } from "~/contexts/WidgetContext";
 import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
 import { UniversalLoaderProvider } from "~/providers/UniversalLoaderProvider";
+import { CrmSocketProvider } from "~/providers/CrmSocketProvider";
+import IncomingCallModal from "~/app/(modules)/crm/_components/call/IncomingCallModal";
+import ActiveCallModal from "~/app/(modules)/crm/_components/call/ActiveCallModal";
+import PostCallSummaryModal from "~/app/(modules)/crm/_components/call/PostCallSummaryModal";
 
 setNotificationHandler({
     handleNotification: async () => ({
@@ -75,22 +79,26 @@ function RootLayoutNav() {
     const { palette } = useAppTheme();
 
     return (
-        <ThemeProvider
-            value={palette.navigation === "dark" ? DarkTheme : DefaultTheme}
-        >
+        <ThemeProvider value={palette.navigation === "dark" ? DarkTheme : DefaultTheme} >
             <NotificationProvider>
                 <NotificationStoreProvider>
                 <WidgetProvider>
-                <Stack>
-                    <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="(misc)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(modules)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-                </Stack>
-                {/* <GlobalChatbot bottom={-10} right={20} /> */}
-                <Toast config={toastConfig} topOffset={34} />
+                    <CrmSocketProvider>
+                        <Stack>
+                            <Stack.Screen name="index" options={{ headerShown: false }} />
+                            <Stack.Screen name="(misc)" options={{ headerShown: false }} />
+                            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                            <Stack.Screen name="(modules)" options={{ headerShown: false }} />
+                            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+                        </Stack>
+                        {/* Global In-App Calling Modals */}
+                        <IncomingCallModal />
+                        <ActiveCallModal />
+                        <PostCallSummaryModal />
+                        {/* <GlobalChatbot bottom={-10} right={20} /> */}
+                        <Toast config={toastConfig} topOffset={34} />
+                    </CrmSocketProvider>
                 </WidgetProvider>
                 </NotificationStoreProvider>
             </NotificationProvider>

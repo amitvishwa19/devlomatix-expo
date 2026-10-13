@@ -14,6 +14,7 @@ import {
 import AppScreen from '~/components/AppScreen';
 import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
@@ -24,6 +25,7 @@ export default function ContactDossierScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
   const { openQuickWhatsApp, openCreateTask, openCreateDeal, refreshAll } = useCrm();
+  const { startCall } = useCrmSocket();
 
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -177,6 +179,59 @@ export default function ContactDossierScreen() {
                 <Text className={`text-xs font-bold ${palette.text}`}>Email</Text>
               </Pressable>
             )}
+          </View>
+
+          {/* Real-Time In-App Calling & Chat */}
+          <View className={`mt-2.5 flex-row gap-x-2 pt-2.5 border-t ${palette.border}`}>
+            <Pressable
+              onPress={() =>
+                startCall({
+                  calleeId: contact.id,
+                  calleeName: contact.name,
+                  calleeAvatar: null,
+                  callType: 'audio',
+                  contactOrDealInfo: { contactId: contact.id },
+                })
+              }
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-indigo-500/15 py-2.5 border border-indigo-500/30 active:opacity-75"
+            >
+              <Ionicons name="call" size={15} color="#6366f1" />
+              <Text className="text-xs font-bold text-indigo-400">In-App Call</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() =>
+                startCall({
+                  calleeId: contact.id,
+                  calleeName: contact.name,
+                  calleeAvatar: null,
+                  callType: 'video',
+                  contactOrDealInfo: { contactId: contact.id },
+                })
+              }
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-emerald-500/15 py-2.5 border border-emerald-500/30 active:opacity-75"
+            >
+              <Ionicons name="videocam" size={15} color="#10b981" />
+              <Text className="text-xs font-bold text-emerald-400">HD Video</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(modules)/crm/chat/[chatId]',
+                  params: {
+                    chatId: contact.id,
+                    name: contact.name,
+                    phone: contact.phone || '',
+                    type: 'contacts',
+                  },
+                })
+              }
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-slate-800/80 py-2.5 border border-slate-700/60 active:opacity-75"
+            >
+              <Ionicons name="chatbubbles" size={15} color="#94a3b8" />
+              <Text className="text-xs font-bold text-slate-300">CRM Chat</Text>
+            </Pressable>
           </View>
         </View>
 

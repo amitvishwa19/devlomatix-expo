@@ -7,6 +7,8 @@ export default function CrmRootLayout() {
     <CrmProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="chat/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="chat/[chatId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="deals/[dealId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="contacts/[contactId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="accounts/[accountId]" options={{ animation: 'slide_from_right' }} />
