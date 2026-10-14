@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 import * as crmService from '~/services/crm';
 
 export default function DealBillingModal({ visible, onClose, deal }) {
   const insets = useSafeAreaInsets();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { openQuickWhatsApp, refreshAll } = useCrm();
   const [mode, setMode] = useState('INVOICE'); // 'INVOICE' | 'QUOTATION'
   const [itemDescription, setItemDescription] = useState('');
@@ -93,106 +93,167 @@ export default function DealBillingModal({ visible, onClose, deal }) {
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-end bg-black/60">
+      <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
         <Pressable className="flex-1" onPress={onClose} />
 
         <View
-          className={`max-h-[85%] rounded-t-3xl ${palette.surface} p-5 shadow-2xl border-t ${palette.border}`}
-          style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
+          className="max-h-[85%] rounded-t-3xl p-4 shadow-2xl border-t"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom + 20, 40),
+          }}
         >
           {/* Header */}
-          <View className={`flex-row items-center justify-between border-b ${palette.border} pb-3`}>
+          <View className="flex-row items-center justify-between border-b pb-3" style={{ borderColor: colors.border }}>
             <View className="flex-row items-center gap-x-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-purple-500/15 border border-purple-500/30">
-                <Ionicons name="card" size={18} color="#a855f7" />
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Ionicons name="card" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className={`text-base font-black ${palette.text}`}>PayFlow Billing Engine</Text>
-                <Text className={`text-xs ${palette.textMuted} font-medium`}>1-Click Commercial Invoicing & Quotations</Text>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                  PayFlow Billing Engine
+                </Text>
+                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                  1-Click Commercial Invoicing & Quotations
+                </Text>
               </View>
             </View>
 
             <Pressable
               onPress={onClose}
-              className={`h-8 w-8 items-center justify-center rounded-full ${palette.surfaceAlt} border ${palette.border}`}
+              className="h-8 w-8 items-center justify-center rounded-full border"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
             >
-              <Ionicons name="close" size={18} color={palette.textColor} />
+              <Ionicons name="close" size={16} color={colors.text} />
             </Pressable>
           </View>
 
           {/* Mode Switcher */}
-          <View className={`mt-3 flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1`}>
+          <View
+            className="mt-2.5 flex-row rounded-xl border p-1"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
+          >
             <Pressable
               onPress={() => { setMode('INVOICE'); setResult(null); }}
-              className={`flex-1 items-center justify-center rounded-lg py-2 ${
-                mode === 'INVOICE' ? 'bg-purple-600 shadow-sm' : 'bg-transparent'
-              }`}
+              className="flex-1 items-center justify-center rounded-lg py-1.5"
+              style={{
+                backgroundColor: mode === 'INVOICE' ? colors.copilot : 'transparent',
+              }}
             >
-              <Text className={`text-xs font-bold ${mode === 'INVOICE' ? 'text-white' : palette.textMuted}`}>
+              <Text
+                className="text-xs font-bold"
+                style={{ color: mode === 'INVOICE' ? '#ffffff' : colors.textMuted }}
+              >
                 💳 PayFlow Invoice
               </Text>
             </Pressable>
             <Pressable
               onPress={() => { setMode('QUOTATION'); setResult(null); }}
-              className={`flex-1 items-center justify-center rounded-lg py-2 ${
-                mode === 'QUOTATION' ? 'bg-purple-600 shadow-sm' : 'bg-transparent'
-              }`}
+              className="flex-1 items-center justify-center rounded-lg py-1.5"
+              style={{
+                backgroundColor: mode === 'QUOTATION' ? colors.copilot : 'transparent',
+              }}
             >
-              <Text className={`text-xs font-bold ${mode === 'QUOTATION' ? 'text-white' : palette.textMuted}`}>
+              <Text
+                className="text-xs font-bold"
+                style={{ color: mode === 'QUOTATION' ? '#ffffff' : colors.textMuted }}
+              >
                 📄 Commercial Quotation
               </Text>
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
+          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5">
             {/* Target Deal */}
-            <View className={`rounded-xl ${palette.surfaceAlt} p-3 border ${palette.border} mb-3`}>
-              <Text className={`text-[10px] font-bold uppercase tracking-wider ${palette.textMuted}`}>Opportunity</Text>
-              <Text className={`text-sm font-black ${palette.text} mt-0.5`}>{deal.title}</Text>
-              <Text className={`text-xs ${palette.textMuted} font-medium mt-0.5`}>
+            <View
+              className="rounded-xl p-2.5 border mb-2.5"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
+            >
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Opportunity
+              </Text>
+              <Text className="text-xs font-black mt-0.5" style={{ color: colors.text }}>
+                {deal.title}
+              </Text>
+              <Text className="text-[11px] font-medium mt-0.5" style={{ color: colors.textMuted }}>
                 Client: {deal.contact?.name || 'Individual'} {deal.account ? `(${deal.account.name})` : ''}
               </Text>
             </View>
 
             {/* Line Item Description */}
-            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Item Description</Text>
+            <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+              Item Description
+            </Text>
             <TextInput
               value={itemDescription}
               onChangeText={setItemDescription}
               placeholder="e.g. Implementation and enterprise software licensing"
-              placeholderTextColor={palette.textMutedColor}
-              className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm ${palette.text} mb-3`}
+              placeholderTextColor={colors.inputPlaceholder}
+              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              style={{
+                backgroundColor: colors.inputBg,
+                borderColor: colors.inputBorder,
+                color: colors.text,
+              }}
             />
 
             {/* Rate & Tax */}
-            <View className="flex-row items-center gap-x-2 mb-3">
+            <View className="flex-row items-center gap-x-2 mb-2.5">
               <View className="flex-1">
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Subtotal Amount ({deal.currency})</Text>
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  Subtotal Amount ({deal.currency})
+                </Text>
                 <TextInput
                   value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"
                   placeholder="0"
-                  placeholderTextColor={palette.textMutedColor}
-                  className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm font-bold ${palette.text}`}
+                  placeholderTextColor={colors.inputPlaceholder}
+                  className="rounded-xl border px-3 py-2 text-xs font-bold"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  }}
                 />
               </View>
 
               <View className="w-28">
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>GST Tax</Text>
-                <View className={`flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1`}>
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  GST Tax
+                </Text>
+                <View
+                  className="flex-row rounded-xl border p-1"
+                  style={{
+                    backgroundColor: colors.cardAlt,
+                    borderColor: colors.border,
+                  }}
+                >
                   {[0, 18].map((t) => (
                     <Pressable
                       key={t}
                       onPress={() => setTaxRate(t)}
-                      className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
-                        taxRate === t ? 'bg-purple-600' : 'bg-transparent'
-                      }`}
+                      className="flex-1 items-center justify-center rounded-lg py-1"
+                      style={{
+                        backgroundColor: taxRate === t ? colors.copilot : 'transparent',
+                      }}
                     >
                       <Text
-                        className={`text-xs font-bold ${
-                          taxRate === t ? 'text-white' : palette.textMuted
-                        }`}
+                        className="text-xs font-bold"
+                        style={{ color: taxRate === t ? '#ffffff' : colors.textMuted }}
                       >
                         {t}%
                       </Text>
@@ -203,22 +264,31 @@ export default function DealBillingModal({ visible, onClose, deal }) {
             </View>
 
             {/* Totals Summary Card */}
-            <View className="rounded-xl border border-purple-500/30 bg-purple-500/15 p-3.5 mb-3">
+            <View
+              className="rounded-xl border p-3 mb-2.5"
+              style={{
+                backgroundColor: colors.copilotSoft,
+                borderColor: colors.copilotBorder,
+              }}
+            >
               <View className="flex-row justify-between mb-1">
-                <Text className={`text-xs ${palette.textSoft}`}>Subtotal:</Text>
-                <Text className={`text-xs font-semibold ${palette.text}`}>
+                <Text className="text-xs" style={{ color: colors.textMuted }}>Subtotal:</Text>
+                <Text className="text-xs font-semibold" style={{ color: colors.text }}>
                   {deal.currency} {baseVal.toLocaleString('en-IN')}
                 </Text>
               </View>
               <View className="flex-row justify-between mb-1.5">
-                <Text className={`text-xs ${palette.textSoft}`}>Tax ({taxRate}%):</Text>
-                <Text className={`text-xs font-semibold ${palette.text}`}>
+                <Text className="text-xs" style={{ color: colors.textMuted }}>Tax ({taxRate}%):</Text>
+                <Text className="text-xs font-semibold" style={{ color: colors.text }}>
                   {deal.currency} {taxAmount.toLocaleString('en-IN')}
                 </Text>
               </View>
-              <View className="flex-row justify-between border-t border-purple-500/30 pt-2">
-                <Text className="text-sm font-black text-purple-300">Grand Total:</Text>
-                <Text className="text-sm font-black text-purple-400">
+              <View
+                className="flex-row justify-between border-t pt-1.5"
+                style={{ borderColor: colors.copilotBorder }}
+              >
+                <Text className="text-xs font-black" style={{ color: colors.copilot }}>Grand Total:</Text>
+                <Text className="text-sm font-black" style={{ color: colors.copilot }}>
                   {deal.currency} {grandTotal.toLocaleString('en-IN')}
                 </Text>
               </View>
@@ -226,21 +296,28 @@ export default function DealBillingModal({ visible, onClose, deal }) {
 
             {/* Success result banner */}
             {result && (
-              <View className="mb-3 rounded-2xl bg-emerald-500/15 p-3.5 border border-emerald-500/30">
+              <View
+                className="mb-2.5 rounded-xl p-3 border"
+                style={{
+                  backgroundColor: colors.successSoft,
+                  borderColor: colors.successBorder,
+                }}
+              >
                 <View className="flex-row items-center gap-x-2">
-                  <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                  <Text className="text-xs font-bold text-emerald-400">
+                  <Ionicons name="checkmark-circle" size={17} color={colors.success} />
+                  <Text className="text-xs font-bold" style={{ color: colors.success }}>
                     {mode === 'INVOICE' ? 'Invoice Issued Successfully!' : 'Quotation Generated!'}
                   </Text>
                 </View>
-                <Text className="text-[11px] text-emerald-300 mt-1 font-mono">
+                <Text className="text-[11px] mt-1 font-mono" style={{ color: colors.success }}>
                   Document ID: {result.invoiceId || result.quotationId || 'SUCCESS'}
                 </Text>
 
                 {deal.contact?.phone && (
                   <Pressable
                     onPress={handleShareWhatsApp}
-                    className="mt-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl bg-emerald-600 py-2.5 active:bg-emerald-700"
+                    className="mt-2 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 active:opacity-80"
+                    style={{ backgroundColor: colors.whatsapp }}
                   >
                     <Ionicons name="logo-whatsapp" size={14} color="#ffffff" />
                     <Text className="text-xs font-black text-white">Share via WhatsApp</Text>
@@ -251,8 +328,16 @@ export default function DealBillingModal({ visible, onClose, deal }) {
 
             {/* Error banner */}
             {error && (
-              <View className="mb-3 rounded-xl bg-rose-500/15 p-2.5 border border-rose-500/30">
-                <Text className="text-xs font-bold text-rose-400 text-center">{error}</Text>
+              <View
+                className="mb-2.5 rounded-xl p-2 border"
+                style={{
+                  backgroundColor: colors.dangerSoft,
+                  borderColor: colors.dangerBorder,
+                }}
+              >
+                <Text className="text-xs font-bold text-center" style={{ color: colors.danger }}>
+                  {error}
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -262,16 +347,18 @@ export default function DealBillingModal({ visible, onClose, deal }) {
             <Pressable
               onPress={handleGenerate}
               disabled={submitting || baseVal <= 0}
-              className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-purple-600 py-3.5 shadow-md active:bg-purple-700 ${
-                submitting || baseVal <= 0 ? 'opacity-50' : ''
-              }`}
+              className="mt-3 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-md active:opacity-80"
+              style={{
+                backgroundColor: colors.copilot,
+                opacity: submitting || baseVal <= 0 ? 0.5 : 1,
+              }}
             >
               {submitting ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Ionicons name="flash" size={16} color="#ffffff" />
-                  <Text className="text-sm font-black text-white">
+                  <Ionicons name="flash" size={15} color="#ffffff" />
+                  <Text className="text-xs font-black text-white">
                     {mode === 'INVOICE' ? 'Issue PayFlow Invoice' : 'Generate Quotation'}
                   </Text>
                 </>

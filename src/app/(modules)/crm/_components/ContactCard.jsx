@@ -2,12 +2,12 @@ import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 
 export default function ContactCard({ contact }) {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
 
   if (!contact) return null;
@@ -32,26 +32,50 @@ export default function ContactCard({ contact }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/contacts/${contact.id}`)}
-      className={`mb-2.5 rounded-2xl border ${palette.surface} ${palette.border} p-3.5 shadow-sm active:opacity-80`}
+      className="mb-2 rounded-[16px] border p-3 shadow-sm active:opacity-80"
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+      }}
     >
       <View className="flex-row items-center justify-between">
         {/* Avatar & Info */}
-        <View className="flex-row items-center gap-x-3 flex-1">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600/20 border border-indigo-500/30">
-            <Text className="text-sm font-black text-indigo-400">{initials}</Text>
+        <View className="flex-row items-center gap-x-2.5 flex-1">
+          <View
+            className="h-9 w-9 items-center justify-center rounded-xl border"
+            style={{
+              backgroundColor: colors.primarySoft,
+              borderColor: colors.primaryBorder,
+            }}
+          >
+            <Text className="text-xs font-black" style={{ color: colors.primary }}>
+              {initials}
+            </Text>
           </View>
 
           <View className="flex-1">
-            <Text className={`text-sm font-black ${palette.text} tracking-tight`} numberOfLines={1}>
+            <Text
+              className="text-[13px] font-black tracking-tight"
+              style={{ color: colors.text }}
+              numberOfLines={1}
+            >
               {contact.name}
             </Text>
-            <Text className={`text-[11px] font-medium ${palette.textMuted} mt-0.5`} numberOfLines={1}>
+            <Text
+              className="text-[11px] font-medium mt-0.5"
+              style={{ color: colors.textMuted }}
+              numberOfLines={1}
+            >
               {contact.jobTitle ? `${contact.jobTitle} • ` : ''}
               {contact.account?.name || 'Individual'}
             </Text>
 
             {contact.phone ? (
-              <Text className={`text-[10px] font-mono ${palette.textSoft} mt-0.5`} numberOfLines={1}>
+              <Text
+                className="text-[10px] font-mono mt-0.5"
+                style={{ color: colors.textSoft }}
+                numberOfLines={1}
+              >
                 {contact.phone}
               </Text>
             ) : null}
@@ -64,39 +88,56 @@ export default function ContactCard({ contact }) {
             <>
               <Pressable
                 onPress={handleWhatsApp}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 active:opacity-70"
+                className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+                style={{
+                  backgroundColor: colors.whatsappSoft,
+                  borderColor: colors.whatsappBorder,
+                }}
               >
-                <Ionicons name="logo-whatsapp" size={15} color="#10b981" />
+                <Ionicons name="logo-whatsapp" size={14} color={colors.whatsapp} />
               </Pressable>
 
               <Pressable
                 onPress={handleCall}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 border border-sky-500/30 active:opacity-70"
+                className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+                style={{
+                  backgroundColor: colors.callSoft,
+                  borderColor: colors.callBorder,
+                }}
               >
-                <Ionicons name="call-outline" size={15} color="#0ea5e9" />
+                <Ionicons name="call-outline" size={14} color={colors.call} />
               </Pressable>
             </>
           )}
 
-          <View className="h-9 w-6 items-center justify-center">
-            <Ionicons name="chevron-forward" size={14} color={palette.textMutedColor} />
+          <View className="h-8 w-5 items-center justify-center">
+            <Ionicons name="chevron-forward" size={14} color={colors.textSoft} />
           </View>
         </View>
       </View>
 
       {/* Tags Row */}
       {contact.tags && contact.tags.length > 0 && (
-        <View className={`mt-2.5 flex-row flex-wrap items-center gap-1.5 pt-2 border-t ${palette.border}`}>
+        <View
+          className="mt-2 flex-row flex-wrap items-center gap-1.5 pt-2 border-t"
+          style={{ borderColor: colors.border }}
+        >
           {contact.tags.slice(0, 3).map((tag, idx) => (
             <View
               key={idx}
-              className={`rounded-lg ${palette.surfaceAlt} px-2 py-0.5 border ${palette.border}`}
+              className="rounded-lg px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
             >
-              <Text className={`text-[9px] font-bold ${palette.textMuted}`}>{tag}</Text>
+              <Text className="text-[9px] font-bold" style={{ color: colors.textMuted }}>
+                {tag}
+              </Text>
             </View>
           ))}
           {contact.tags.length > 3 && (
-            <Text className={`text-[9px] ${palette.textMuted} font-semibold`}>
+            <Text className="text-[9px] font-semibold" style={{ color: colors.textMuted }}>
               +{contact.tags.length - 3} more
             </Text>
           )}
@@ -105,3 +146,4 @@ export default function ContactCard({ contact }) {
     </Pressable>
   );
 }
+

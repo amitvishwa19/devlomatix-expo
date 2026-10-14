@@ -11,20 +11,14 @@ import {
   View,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
+import { CRM_COPILOT_SUGGESTED_PROMPTS } from '../utils/constants';
 import * as crmService from '~/services/crm';
 import CrmHeader from '../_components/CrmHeader';
 
-const SUGGESTED_PROMPTS = [
-  '⚡ Analyze pipeline risks & stalled deals',
-  '🎯 Which top deals have the highest close momentum?',
-  '✍️ Draft an irresistible WhatsApp follow-up pitch',
-  '💡 How to overcome enterprise pricing objections?',
-];
-
 export default function CrmCopilotTab() {
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { deals, forecast } = useCrm();
   const scrollViewRef = useRef(null);
 
@@ -116,10 +110,16 @@ export default function CrmCopilotTab() {
         rightActions={
           <Pressable
             onPress={clearChat}
-            className={`h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border ${palette.border} ${palette.surfaceAlt} active:opacity-75`}
+            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border active:opacity-75"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
           >
-            <Ionicons name="trash-outline" size={14} color={palette.textMutedColor} />
-            <Text className={`text-[11px] font-semibold ${palette.textMuted}`}>Clear</Text>
+            <Ionicons name="trash-outline" size={14} color={colors.textMuted} />
+            <Text className="text-[11px] font-semibold" style={{ color: colors.textMuted }}>
+              Clear
+            </Text>
           </Pressable>
         }
       />
@@ -133,7 +133,7 @@ export default function CrmCopilotTab() {
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+          contentContainerStyle={{ padding: 14, paddingBottom: 24 }}
           className="flex-1"
         >
           {messages.map((m) => {
@@ -141,27 +141,34 @@ export default function CrmCopilotTab() {
             return (
               <View
                 key={m.id}
-                className={`mb-3.5 flex-row items-start gap-x-2.5 ${
+                className={`mb-3 flex-row items-start gap-x-2 ${
                   isUser ? 'justify-end' : 'justify-start'
                 }`}
               >
                 {!isUser && (
-                  <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
-                    <Ionicons name="sparkles" size={15} color="#ffffff" />
+                  <View
+                    className="h-7 w-7 items-center justify-center rounded-xl shadow-sm mt-0.5"
+                    style={{ backgroundColor: colors.copilot }}
+                  >
+                    <Ionicons name="sparkles" size={13} color="#ffffff" />
                   </View>
                 )}
 
                 <View
-                  className={`max-w-[82%] rounded-2xl p-3.5 shadow-sm ${
-                    isUser
-                      ? 'bg-indigo-600 rounded-tr-sm'
-                      : `${palette.surface} border ${palette.border} rounded-tl-sm`
+                  className={`max-w-[84%] rounded-2xl p-3 shadow-sm ${
+                    isUser ? 'rounded-tr-xs' : 'rounded-tl-xs border'
                   }`}
+                  style={{
+                    backgroundColor: isUser ? colors.primary : colors.card,
+                    borderColor: isUser ? colors.primary : colors.border,
+                  }}
                 >
                   <Text
-                    className={`text-xs leading-5 ${
-                      isUser ? 'font-bold text-white' : `font-medium ${palette.text}`
-                    }`}
+                    className="text-xs leading-5"
+                    style={{
+                      color: isUser ? '#ffffff' : colors.text,
+                      fontWeight: isUser ? '700' : '500',
+                    }}
                   >
                     {m.content}
                   </Text>
@@ -171,12 +178,21 @@ export default function CrmCopilotTab() {
           })}
 
           {loading && (
-            <View className="flex-row items-start gap-x-2.5 mb-3.5">
-              <View className="h-8 w-8 items-center justify-center rounded-xl bg-indigo-600">
+            <View className="flex-row items-start gap-x-2 mb-3">
+              <View
+                className="h-7 w-7 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.copilot }}
+              >
                 <ActivityIndicator size="small" color="#ffffff" />
               </View>
-              <View className={`rounded-2xl ${palette.surface} border ${palette.border} p-3.5 rounded-tl-sm shadow-sm`}>
-                <Text className="text-xs font-semibold text-indigo-400 italic">
+              <View
+                className="rounded-2xl border p-3 rounded-tl-xs shadow-sm"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text className="text-xs font-semibold italic" style={{ color: colors.copilot }}>
                   FlowGenix AI is synthesizing pipeline intelligence...
                 </Text>
               </View>
@@ -185,20 +201,33 @@ export default function CrmCopilotTab() {
         </ScrollView>
 
         {/* Suggested Prompts Horizon */}
-        <View className={`${palette.surface} border-t ${palette.border} px-3 pt-2`} style={{ paddingBottom: 76 }}>
+        <View
+          className="border-t px-3 pt-2"
+          style={{
+            backgroundColor: colors.header,
+            borderColor: colors.border,
+            paddingBottom: 76,
+          }}
+        >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="flex-row gap-x-1.5 pb-2"
           >
-            {SUGGESTED_PROMPTS.map((p, idx) => (
+            {CRM_COPILOT_SUGGESTED_PROMPTS.map((p, idx) => (
               <Pressable
                 key={idx}
                 onPress={() => handleSend(p)}
                 disabled={loading}
-                className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3 py-1.5 active:opacity-75 mr-1`}
+                className="rounded-xl border px-2.5 py-1.5 active:opacity-75 mr-1"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
               >
-                <Text className={`text-[11px] font-bold ${palette.text}`}>{p}</Text>
+                <Text className="text-[11px] font-bold" style={{ color: colors.text }}>
+                  {p}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -209,20 +238,27 @@ export default function CrmCopilotTab() {
               value={inputText}
               onChangeText={setInputText}
               placeholder="Ask Copilot anything about your CRM..."
-              placeholderTextColor={palette.textMutedColor}
+              placeholderTextColor={colors.inputPlaceholder}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
-              className={`flex-1 rounded-2xl border ${palette.border} ${palette.surfaceAlt} px-4 py-2.5 text-xs ${palette.text}`}
+              className="flex-1 rounded-2xl border px-3.5 py-2 text-xs"
+              style={{
+                backgroundColor: colors.inputBg,
+                borderColor: colors.inputBorder,
+                color: colors.text,
+              }}
             />
 
             <Pressable
               onPress={() => handleSend()}
               disabled={loading || !inputText.trim()}
-              className={`h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 active:bg-indigo-700 ${
-                loading || !inputText.trim() ? 'opacity-50' : ''
-              }`}
+              className="h-9 w-9 items-center justify-center rounded-2xl active:opacity-80"
+              style={{
+                backgroundColor: colors.primary,
+                opacity: loading || !inputText.trim() ? 0.5 : 1,
+              }}
             >
-              <Ionicons name="arrow-up" size={18} color="#ffffff" />
+              <Ionicons name="arrow-up" size={17} color="#ffffff" />
             </Pressable>
           </View>
         </View>
@@ -230,3 +266,4 @@ export default function CrmCopilotTab() {
     </AppScreen>
   );
 }
+

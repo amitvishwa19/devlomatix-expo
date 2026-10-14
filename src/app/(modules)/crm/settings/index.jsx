@@ -10,14 +10,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
+import { useCrmTheme } from '../utils/colors';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
 
 export default function CrmSettingsScreen() {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors, isDark } = useCrmTheme();
   const { pipelines, activePipeline, refreshAll, refreshing } = useCrm();
 
   const [syncingWa, setSyncingWa] = useState(false);
@@ -47,7 +47,7 @@ export default function CrmSettingsScreen() {
   const stages = activePipeline?.stages || [];
 
   return (
-    <AppScreen>
+    <AppScreen style={{ backgroundColor: colors.background }}>
       <CrmHeader
         title="CRM Settings & Bridges"
         subtitle="Ecosystem Integrations & Pipeline Config"
@@ -58,22 +58,36 @@ export default function CrmSettingsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 60 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
-        className="px-4 pt-3.5"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
+        className="px-3 pt-2.5"
       >
         {/* Active Pipeline & Stage Config */}
-        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-4`}>
-          <View className="flex-row items-center justify-between mb-3">
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-3"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <View className="flex-row items-center justify-between mb-2.5">
             <View>
-              <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted}`}>
+              <Text
+                className="text-xs font-black uppercase tracking-wider"
+                style={{ color: colors.textMuted }}
+              >
                 Active Deal Pipeline
               </Text>
-              <Text className={`text-base font-black ${palette.text} mt-0.5`}>
+              <Text className="text-sm font-black mt-0.5" style={{ color: colors.text }}>
                 {activePipeline?.name || 'Default Sales Pipeline'}
               </Text>
             </View>
-            <View className="rounded-full bg-indigo-500/15 px-2 py-0.5 border border-indigo-500/30">
-              <Text className="text-[9px] font-bold text-indigo-400">{stages.length} Stages</Text>
+            <View
+              className="rounded-full px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.primarySoft,
+                borderColor: colors.primaryBorder,
+              }}
+            >
+              <Text className="text-[9px] font-bold" style={{ color: colors.primary }}>
+                {stages.length} Stages
+              </Text>
             </View>
           </View>
 
@@ -81,17 +95,22 @@ export default function CrmSettingsScreen() {
           {stages.map((stage, idx) => (
             <View
               key={stage.id}
-              className={`flex-row items-center justify-between py-2.5 ${
-                idx !== 0 ? `border-t ${palette.border}` : ''
-              }`}
+              className="flex-row items-center justify-between py-2"
+              style={{
+                borderTopWidth: idx !== 0 ? 1 : 0,
+                borderTopColor: colors.borderLight,
+              }}
             >
-              <View className="flex-row items-center gap-x-2.5">
-                <View className="h-3 w-3 rounded-full" style={{ backgroundColor: stage.color || '#4f46e5' }} />
-                <Text className={`text-xs font-bold ${palette.text}`}>
+              <View className="flex-row items-center gap-x-2">
+                <View
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: stage.color || colors.primary }}
+                />
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   {idx + 1}. {stage.name}
                 </Text>
               </View>
-              <Text className={`text-xs font-semibold ${palette.textMuted}`}>
+              <Text className="text-[11px] font-semibold" style={{ color: colors.textMuted }}>
                 {stage.probability}% win probability
               </Text>
             </View>
@@ -99,31 +118,47 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* 1-Click WhatsApp Chat Sync Card */}
-        <View className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 p-4 shadow-sm mb-4">
-          <View className="flex-row items-center gap-x-2.5 mb-1.5">
-            <View className="h-8 w-8 items-center justify-center rounded-xl bg-emerald-600">
-              <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-3"
+          style={{
+            backgroundColor: colors.whatsappSoft,
+            borderColor: colors.whatsappBorder,
+          }}
+        >
+          <View className="flex-row items-center gap-x-2 mb-1.5">
+            <View
+              className="h-7 w-7 items-center justify-center rounded-xl"
+              style={{ backgroundColor: colors.whatsapp }}
+            >
+              <Ionicons name="logo-whatsapp" size={15} color="#ffffff" />
             </View>
             <View>
-              <Text className="text-sm font-black text-emerald-400">KonnectX WhatsApp Bridge</Text>
-              <Text className="text-[11px] text-emerald-300">Auto-scan conversations & sync contacts</Text>
+              <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+                KonnectX WhatsApp Bridge
+              </Text>
+              <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                Auto-scan conversations & sync contacts
+              </Text>
             </View>
           </View>
 
-          <Text className={`text-xs ${palette.textSoft} mt-2 leading-5`}>
+          <Text className="text-xs mt-1.5 leading-5" style={{ color: colors.textSecondary }}>
             Scans your KonnectX WhatsApp Cloud inbox, auto-registers new client profiles into CRM, and links full chat history to contact dossiers.
           </Text>
 
           {syncResult && (
             <View
-              className={`mt-3 rounded-xl p-2.5 border ${
-                syncResult.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-rose-500/20 border-rose-500/40'
-              }`}
+              className="mt-2.5 rounded-xl p-2 border"
+              style={{
+                backgroundColor: syncResult.type === 'success' ? colors.successSoft : colors.dangerSoft,
+                borderColor: syncResult.type === 'success' ? colors.successBorder : colors.dangerBorder,
+              }}
             >
               <Text
-                className={`text-xs font-bold ${
-                  syncResult.type === 'success' ? 'text-emerald-300' : 'text-rose-300'
-                }`}
+                className="text-xs font-bold"
+                style={{
+                  color: syncResult.type === 'success' ? colors.success : colors.danger,
+                }}
               >
                 {syncResult.text}
               </Text>
@@ -133,15 +168,17 @@ export default function CrmSettingsScreen() {
           <Pressable
             onPress={handleSyncWhatsApp}
             disabled={syncingWa}
-            className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-xl bg-emerald-600 py-3 shadow-sm active:bg-emerald-700 ${
-              syncingWa ? 'opacity-50' : ''
-            }`}
+            className="mt-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2.5 shadow-sm active:opacity-80"
+            style={{
+              backgroundColor: colors.whatsapp,
+              opacity: syncingWa ? 0.5 : 1,
+            }}
           >
             {syncingWa ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <>
-                <Ionicons name="sync" size={16} color="#ffffff" />
+                <Ionicons name="sync" size={15} color="#ffffff" />
                 <Text className="text-xs font-black text-white">Sync WhatsApp Chats Now</Text>
               </>
             )}
@@ -149,50 +186,98 @@ export default function CrmSettingsScreen() {
         </View>
 
         {/* Cross-Module Bridges Overview */}
-        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-4`}>
-          <Text className={`text-xs font-black uppercase tracking-wider ${palette.textMuted} mb-3`}>
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-3"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <Text
+            className="text-xs font-black uppercase tracking-wider mb-2.5"
+            style={{ color: colors.textMuted }}
+          >
             Active Ecosystem Bridges
           </Text>
 
           {/* PayFlow Bridge */}
-          <View className={`flex-row items-center justify-between py-2.5 border-b ${palette.border}`}>
-            <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="card-outline" size={18} color="#a855f7" />
+          <View
+            className="flex-row items-center justify-between py-2 border-b"
+            style={{ borderBottomColor: colors.borderLight }}
+          >
+            <View className="flex-row items-center gap-x-2">
+              <Ionicons name="card-outline" size={16} color={colors.copilot} />
               <View>
-                <Text className={`text-xs font-bold ${palette.text}`}>PayFlow Billing Bridge</Text>
-                <Text className={`text-[10px] ${palette.textMuted}`}>1-Click Invoice & Quotations</Text>
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  PayFlow Billing Bridge
+                </Text>
+                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                  1-Click Invoice & Quotations
+                </Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
-              <Text className="text-[9px] font-bold text-emerald-400">Connected</Text>
+            <View
+              className="rounded-full px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.successSoft,
+                borderColor: colors.successBorder,
+              }}
+            >
+              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+                Connected
+              </Text>
             </View>
           </View>
 
           {/* FlowGenix Bridge */}
-          <View className={`flex-row items-center justify-between py-2.5 border-b ${palette.border}`}>
-            <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="sparkles-outline" size={18} color="#818cf8" />
+          <View
+            className="flex-row items-center justify-between py-2 border-b"
+            style={{ borderBottomColor: colors.borderLight }}
+          >
+            <View className="flex-row items-center gap-x-2">
+              <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
               <View>
-                <Text className={`text-xs font-bold ${palette.text}`}>FlowGenix AI Agent</Text>
-                <Text className={`text-[10px] ${palette.textMuted}`}>Sales Intelligence & Health Scoring</Text>
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  FlowGenix AI Agent
+                </Text>
+                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                  Sales Intelligence & Health Scoring
+                </Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
-              <Text className="text-[9px] font-bold text-emerald-400">Active</Text>
+            <View
+              className="rounded-full px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.successSoft,
+                borderColor: colors.successBorder,
+              }}
+            >
+              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+                Active
+              </Text>
             </View>
           </View>
 
           {/* Hireflow Bridge */}
-          <View className="flex-row items-center justify-between py-2.5">
-            <View className="flex-row items-center gap-x-2.5">
-              <Ionicons name="briefcase-outline" size={18} color="#0ea5e9" />
+          <View className="flex-row items-center justify-between py-2">
+            <View className="flex-row items-center gap-x-2">
+              <Ionicons name="briefcase-outline" size={16} color={colors.info} />
               <View>
-                <Text className={`text-xs font-bold ${palette.text}`}>Hireflow ATS Bridge</Text>
-                <Text className={`text-[10px] ${palette.textMuted}`}>Candidate ⇄ Lead Conversion</Text>
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  Hireflow ATS Bridge
+                </Text>
+                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                  Candidate ⇄ Lead Conversion
+                </Text>
               </View>
             </View>
-            <View className="rounded-full bg-emerald-500/15 px-2 py-0.5 border border-emerald-500/30">
-              <Text className="text-[9px] font-bold text-emerald-400">Connected</Text>
+            <View
+              className="rounded-full px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.successSoft,
+                borderColor: colors.successBorder,
+              }}
+            >
+              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+                Connected
+              </Text>
             </View>
           </View>
         </View>

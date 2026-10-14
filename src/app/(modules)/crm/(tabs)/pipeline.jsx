@@ -3,8 +3,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
@@ -12,11 +12,10 @@ import CreateDealModal from '../_components/CreateDealModal';
 
 export default function CrmPipelineTab() {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const {
     pipelines,
     activePipeline,
-    setActivePipeline,
     stages,
     deals,
     loading,
@@ -55,7 +54,8 @@ export default function CrmPipelineTab() {
         rightActions={
           <Pressable
             onPress={() => openCreateDeal(selectedStageId !== 'ALL' ? selectedStageId : null)}
-            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+            style={{ backgroundColor: colors.primary }}
           >
             <Ionicons name="add" size={16} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Deal</Text>
@@ -67,20 +67,33 @@ export default function CrmPipelineTab() {
       <CreateDealModal />
 
       {/* Search and Priority Filter Header */}
-      <View className={`${palette.surface} px-4 py-2.5 border-b ${palette.border}`}>
+      <View
+        className="px-3 py-2 border-b"
+        style={{
+          backgroundColor: colors.header,
+          borderColor: colors.border,
+        }}
+      >
         {/* Search Input */}
-        <View className={`flex-row items-center gap-x-2 rounded-xl ${palette.surfaceAlt} px-3 py-2 border ${palette.border}`}>
-          <Ionicons name="search" size={16} color={palette.textMutedColor} />
+        <View
+          className="flex-row items-center gap-x-2 rounded-xl px-3 py-2 border"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+          }}
+        >
+          <Ionicons name="search" size={15} color={colors.textMuted} />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search deals, contacts, companies..."
-            placeholderTextColor={palette.textMutedColor}
-            className={`flex-1 text-xs ${palette.text}`}
+            placeholderTextColor={colors.inputPlaceholder}
+            className="flex-1 text-xs"
+            style={{ color: colors.text }}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={14} color={palette.textMutedColor} />
+              <Ionicons name="close-circle" size={14} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
@@ -89,21 +102,22 @@ export default function CrmPipelineTab() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="mt-2.5 flex-row gap-x-2 py-0.5"
+          className="mt-2 flex-row py-0.5"
         >
           {/* All Stages Tab */}
           <Pressable
             onPress={() => setSelectedStageId('ALL')}
-            className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-1.5 mr-1 ${
-              selectedStageId === 'ALL'
-                ? 'bg-indigo-600 border-indigo-600'
-                : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-            }`}
+            className="rounded-xl px-3 py-1.5 border flex-row items-center gap-x-1.5 mr-1.5"
+            style={{
+              backgroundColor: selectedStageId === 'ALL' ? colors.primary : colors.cardAlt,
+              borderColor: selectedStageId === 'ALL' ? colors.primary : colors.border,
+            }}
           >
             <Text
-              className={`text-xs font-bold ${
-                selectedStageId === 'ALL' ? 'text-white' : palette.text
-              }`}
+              className="text-xs font-bold"
+              style={{
+                color: selectedStageId === 'ALL' ? '#ffffff' : colors.text,
+              }}
             >
               All Stages ({deals.length})
             </Text>
@@ -121,25 +135,27 @@ export default function CrmPipelineTab() {
               <Pressable
                 key={stage.id}
                 onPress={() => setSelectedStageId(stage.id)}
-                className={`rounded-xl px-3 py-2 border flex-row items-center gap-x-2 mr-1 ${
-                  isSelected
-                    ? 'bg-indigo-600 border-indigo-600'
-                    : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-                }`}
+                className="rounded-xl px-3 py-1.5 border flex-row items-center gap-x-2 mr-1.5"
+                style={{
+                  backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                }}
               >
                 <View
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: isSelected ? '#ffffff' : stage.color || '#4f46e5' }}
+                  style={{ backgroundColor: isSelected ? '#ffffff' : stage.color || colors.primary }}
                 />
                 <Text
-                  className={`text-xs font-bold ${isSelected ? 'text-white' : palette.text}`}
+                  className="text-xs font-bold"
+                  style={{ color: isSelected ? '#ffffff' : colors.text }}
                 >
                   {stage.name} ({stageDeals.length})
                 </Text>
                 <Text
-                  className={`text-[10px] font-semibold ${
-                    isSelected ? 'text-indigo-200' : palette.textMuted
-                  }`}
+                  className="text-[10px] font-semibold"
+                  style={{
+                    color: isSelected ? 'rgba(255,255,255,0.8)' : colors.textMuted,
+                  }}
                 >
                   ₹{stageVal}
                 </Text>
@@ -153,26 +169,37 @@ export default function CrmPipelineTab() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
-        className="px-4 pt-3.5"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
+        className="px-3 pt-3"
       >
         {loading && deals.length === 0 ? (
           <View className="py-14 items-center justify-center">
-            <ActivityIndicator size="large" color="#6366f1" />
-            <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading pipeline deals...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
+              Loading pipeline deals...
+            </Text>
           </View>
         ) : filteredDeals.length > 0 ? (
           filteredDeals.map((deal) => <DealCard key={deal.id} deal={deal} />)
         ) : (
-          <View className={`rounded-2xl border border-dashed ${palette.border} p-8 items-center justify-center ${palette.surface}`}>
-            <Ionicons name="funnel-outline" size={32} color={palette.textMutedColor} />
-            <Text className={`text-sm font-bold ${palette.text} mt-2`}>No Deals Found</Text>
-            <Text className={`text-xs ${palette.textMuted} text-center mt-1`}>
+          <View
+            className="rounded-[16px] border border-dashed p-6 items-center justify-center"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="funnel-outline" size={32} color={colors.textSoft} />
+            <Text className="text-sm font-bold mt-2" style={{ color: colors.text }}>
+              No Deals Found
+            </Text>
+            <Text className="text-xs text-center mt-1" style={{ color: colors.textMuted }}>
               {searchQuery ? 'No opportunities match your search filter.' : 'This stage currently has no active deals.'}
             </Text>
             <Pressable
               onPress={() => openCreateDeal(selectedStageId !== 'ALL' ? selectedStageId : null)}
-              className="mt-3.5 rounded-xl bg-indigo-600 px-4 py-2"
+              className="mt-3 rounded-xl px-4 py-2"
+              style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-xs font-bold text-white">+ Create Deal in this Stage</Text>
             </Pressable>
@@ -182,3 +209,4 @@ export default function CrmPipelineTab() {
     </AppScreen>
   );
 }
+

@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
+import { useCrmTheme } from '../utils/colors';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
@@ -21,7 +21,7 @@ import * as crmService from '~/services/crm';
 export default function DealDossierScreen() {
   const { dealId } = useLocalSearchParams();
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors, isDark } = useCrmTheme();
   const { openQuickWhatsApp, openCreateTask, refreshAll } = useCrm();
 
   const [deal, setDeal] = useState(null);
@@ -90,10 +90,12 @@ export default function DealDossierScreen() {
 
   if (loading && !deal) {
     return (
-      <AppScreen>
+      <AppScreen style={{ backgroundColor: colors.background }}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#6366f1" />
-          <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading Opportunity Dossier...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
+            Loading Opportunity Dossier...
+          </Text>
         </View>
       </AppScreen>
     );
@@ -101,10 +103,12 @@ export default function DealDossierScreen() {
 
   if (!deal) {
     return (
-      <AppScreen>
+      <AppScreen style={{ backgroundColor: colors.background }}>
         <CrmHeader title="Opportunity" showBack={true} />
         <View className="flex-1 items-center justify-center">
-          <Text className={`text-sm font-bold ${palette.text}`}>Deal Not Found</Text>
+          <Text className="text-sm font-bold" style={{ color: colors.text }}>
+            Deal Not Found
+          </Text>
         </View>
       </AppScreen>
     );
@@ -113,9 +117,10 @@ export default function DealDossierScreen() {
   const stages = deal.pipeline?.stages || [];
   const formattedVal = (parseFloat(deal.value) || 0).toLocaleString('en-IN');
   const currencySymbol = deal.currency === 'USD' ? '$' : deal.currency === 'EUR' ? '€' : '₹';
+  const dealPriority = colors.priority[deal.priority] || colors.priority.MEDIUM;
 
   return (
-    <AppScreen>
+    <AppScreen style={{ backgroundColor: colors.background }}>
       <CrmHeader
         title={deal.title}
         subtitle={`${deal.currency} ${formattedVal} • ${deal.stage?.name || 'In Funnel'}`}
@@ -123,9 +128,10 @@ export default function DealDossierScreen() {
         rightActions={
           <Pressable
             onPress={() => setBillingModalVisible(true)}
-            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-purple-600 active:bg-purple-700"
+            className="h-8 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+            style={{ backgroundColor: colors.copilot }}
           >
-            <Ionicons name="card" size={14} color="#ffffff" />
+            <Ionicons name="card" size={13} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Invoice</Text>
           </Pressable>
         }
@@ -141,16 +147,22 @@ export default function DealDossierScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 60 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        className="px-4 pt-3.5"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        className="px-3 pt-2.5"
       >
         {/* Stage Progress Stepper */}
-        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
-          <Text className={`text-[10px] font-black uppercase tracking-wider ${palette.textMuted} mb-2`}>
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-2.5"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <Text
+            className="text-[10px] font-black uppercase tracking-wider mb-2"
+            style={{ color: colors.textMuted }}
+          >
             Pipeline Stage Progression
           </Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 py-1">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 py-0.5">
             {stages.map((stg, idx) => {
               const isActive = deal.stageId === stg.id;
               return (
@@ -158,16 +170,15 @@ export default function DealDossierScreen() {
                   key={stg.id}
                   onPress={() => handleStageSelect(stg.id)}
                   disabled={stageUpdating}
-                  className={`rounded-xl border px-3 py-2 flex-row items-center gap-x-1.5 ${
-                    isActive
-                      ? 'bg-indigo-600 border-indigo-600'
-                      : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-                  }`}
+                  className="rounded-xl border px-2.5 py-1.5 flex-row items-center gap-x-1.5"
+                  style={{
+                    backgroundColor: isActive ? colors.primary : colors.cardAlt,
+                    borderColor: isActive ? colors.primary : colors.border,
+                  }}
                 >
                   <Text
-                    className={`text-[11px] font-bold ${
-                      isActive ? 'text-white' : palette.text
-                    }`}
+                    className="text-[11px] font-bold"
+                    style={{ color: isActive ? '#ffffff' : colors.text }}
                   >
                     {idx + 1}. {stg.name}
                   </Text>
@@ -179,24 +190,36 @@ export default function DealDossierScreen() {
         </View>
 
         {/* Financial Value & Metrics Card */}
-        <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-2.5"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
           <View className="flex-row items-center justify-between">
             <View>
-              <Text className={`text-[10px] font-bold uppercase tracking-wider ${palette.textMuted}`}>
+              <Text
+                className="text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: colors.textMuted }}
+              >
                 Commercial Value
               </Text>
-              <Text className="text-2xl font-black text-indigo-400 mt-0.5">
+              <Text className="text-xl font-black mt-0.5" style={{ color: colors.primary }}>
                 {currencySymbol} {formattedVal}
               </Text>
             </View>
 
             <View className="items-end">
-              <View className={`rounded-full ${palette.surfaceAlt} px-2.5 py-1 border ${palette.border}`}>
-                <Text className={`text-[10px] font-bold ${palette.text}`}>
-                  Priority: {deal.priority || 'MEDIUM'}
+              <View
+                className="rounded-full px-2 py-0.5 border"
+                style={{
+                  backgroundColor: dealPriority.bg,
+                  borderColor: dealPriority.border,
+                }}
+              >
+                <Text className="text-[10px] font-bold" style={{ color: dealPriority.text }}>
+                  {deal.priority || 'MEDIUM'}
                 </Text>
               </View>
-              <Text className={`text-[11px] font-semibold ${palette.textMuted} mt-1`}>
+              <Text className="text-[11px] font-semibold mt-1" style={{ color: colors.textMuted }}>
                 Win Prob: {deal.stage?.probability ?? 50}%
               </Text>
             </View>
@@ -204,40 +227,68 @@ export default function DealDossierScreen() {
         </View>
 
         {/* FlowGenix AI Intelligence Health Card */}
-        <View className="rounded-2xl border border-indigo-500/30 bg-indigo-500/15 p-4 shadow-sm mb-3.5">
+        <View
+          className="rounded-2xl border p-3 shadow-sm mb-2.5"
+          style={{
+            backgroundColor: colors.copilotSoft,
+            borderColor: colors.copilotBorder,
+          }}
+        >
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-x-2">
-              <View className="h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
-                <Ionicons name="sparkles" size={14} color="#ffffff" />
+              <View
+                className="h-6 w-6 items-center justify-center rounded-lg"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Ionicons name="sparkles" size={13} color="#ffffff" />
               </View>
-              <Text className="text-xs font-black text-indigo-300">FlowGenix AI Health & Win Score</Text>
+              <Text className="text-xs font-black" style={{ color: colors.copilot }}>
+                AI Health & Win Score
+              </Text>
             </View>
 
             {healthAi?.healthScore !== undefined ? (
-              <View className="rounded-full bg-indigo-600 px-2.5 py-0.5">
-                <Text className="text-[10px] font-black text-white">{healthAi.healthScore}/100 Score</Text>
+              <View
+                className="rounded-full px-2 py-0.5"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Text className="text-[10px] font-black text-white">
+                  {healthAi.healthScore}/100 Score
+                </Text>
               </View>
             ) : null}
           </View>
 
           {loadingAi ? (
-            <View className="py-3 items-center justify-center">
-              <ActivityIndicator size="small" color="#6366f1" />
-              <Text className="text-[11px] text-indigo-300 font-semibold mt-1">
+            <View className="py-2.5 items-center justify-center">
+              <ActivityIndicator size="small" color={colors.copilot} />
+              <Text className="text-[11px] font-semibold mt-1" style={{ color: colors.copilot }}>
                 Evaluating deal velocity and momentum...
               </Text>
             </View>
           ) : healthAi ? (
             <View>
-              <Text className="text-xs text-indigo-200 font-medium leading-5">{healthAi.summary}</Text>
+              <Text className="text-xs font-medium leading-5" style={{ color: colors.textSecondary }}>
+                {healthAi.summary}
+              </Text>
 
               {healthAi.nextBestActions && healthAi.nextBestActions.length > 0 && (
-                <View className="mt-2.5 pt-2 border-t border-indigo-500/30">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 mb-1">
+                <View
+                  className="mt-2 pt-2 border-t"
+                  style={{ borderTopColor: colors.copilotBorder }}
+                >
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: colors.copilot }}
+                  >
                     Recommended Next Actions:
                   </Text>
                   {healthAi.nextBestActions.map((act, i) => (
-                    <Text key={i} className="text-xs text-indigo-200 font-semibold mt-0.5">
+                    <Text
+                      key={i}
+                      className="text-xs font-semibold mt-0.5"
+                      style={{ color: colors.textSecondary }}
+                    >
                       • {act}
                     </Text>
                   ))}
@@ -245,28 +296,44 @@ export default function DealDossierScreen() {
               )}
             </View>
           ) : (
-            <Text className={`text-xs ${palette.textMuted} italic`}>No AI telemetry computed yet.</Text>
+            <Text className="text-xs italic" style={{ color: colors.textMuted }}>
+              No AI telemetry computed yet.
+            </Text>
           )}
         </View>
 
         {/* Linked Contact Card */}
         {deal.contact && (
-          <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
-            <View className="flex-row items-center justify-between mb-2.5">
-              <Text className={`text-[10px] font-black uppercase tracking-wider ${palette.textMuted}`}>
+          <View
+            className="rounded-2xl border p-3 shadow-sm mb-2.5"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <View className="flex-row items-center justify-between mb-2">
+              <Text
+                className="text-[10px] font-black uppercase tracking-wider"
+                style={{ color: colors.textMuted }}
+              >
                 Primary Contact
               </Text>
               <Pressable onPress={() => router.push(`/(modules)/crm/contacts/${deal.contact.id}`)}>
-                <Text className="text-xs font-bold text-indigo-400">View Dossier →</Text>
+                <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                  View Dossier →
+                </Text>
               </Pressable>
             </View>
 
             <View className="flex-row items-center justify-between">
-              <View>
-                <Text className={`text-sm font-black ${palette.text}`}>{deal.contact.name}</Text>
-                <Text className={`text-xs ${palette.textMuted} mt-0.5`}>{deal.contact.jobTitle || 'Lead'}</Text>
+              <View className="flex-1 mr-2">
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                  {deal.contact.name}
+                </Text>
+                <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                  {deal.contact.jobTitle || 'Lead'}
+                </Text>
                 {deal.contact.phone && (
-                  <Text className={`text-xs font-mono ${palette.textSoft} mt-0.5`}>{deal.contact.phone}</Text>
+                  <Text className="text-xs font-mono mt-0.5" style={{ color: colors.textSoft }}>
+                    {deal.contact.phone}
+                  </Text>
                 )}
               </View>
 
@@ -274,15 +341,23 @@ export default function DealDossierScreen() {
                 <View className="flex-row items-center gap-x-1.5">
                   <Pressable
                     onPress={() => openQuickWhatsApp(deal.contact, deal)}
-                    className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 active:opacity-75"
+                    className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-75"
+                    style={{
+                      backgroundColor: colors.whatsappSoft,
+                      borderColor: colors.whatsappBorder,
+                    }}
                   >
-                    <Ionicons name="logo-whatsapp" size={16} color="#10b981" />
+                    <Ionicons name="logo-whatsapp" size={15} color={colors.whatsapp} />
                   </Pressable>
                   <Pressable
                     onPress={() => Linking.openURL(`tel:${deal.contact.phone}`)}
-                    className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 border border-sky-500/30 active:opacity-75"
+                    className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-75"
+                    style={{
+                      backgroundColor: colors.callSoft,
+                      borderColor: colors.callBorder,
+                    }}
                   >
-                    <Ionicons name="call-outline" size={16} color="#0ea5e9" />
+                    <Ionicons name="call-outline" size={15} color={colors.call} />
                   </Pressable>
                 </View>
               )}
@@ -292,17 +367,27 @@ export default function DealDossierScreen() {
 
         {/* Linked Company Account Card */}
         {deal.account && (
-          <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
-            <View className="flex-row items-center justify-between mb-1.5">
-              <Text className={`text-[10px] font-black uppercase tracking-wider ${palette.textMuted}`}>
+          <View
+            className="rounded-2xl border p-3 shadow-sm mb-2.5"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text
+                className="text-[10px] font-black uppercase tracking-wider"
+                style={{ color: colors.textMuted }}
+              >
                 Company Account
               </Text>
               <Pressable onPress={() => router.push(`/(modules)/crm/accounts/${deal.account.id}`)}>
-                <Text className="text-xs font-bold text-indigo-400">Account Sheet →</Text>
+                <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                  Account Sheet →
+                </Text>
               </Pressable>
             </View>
-            <Text className={`text-sm font-black ${palette.text}`}>{deal.account.name}</Text>
-            <Text className={`text-xs ${palette.textMuted} mt-0.5`}>
+            <Text className="text-sm font-black" style={{ color: colors.text }}>
+              {deal.account.name}
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
               {deal.account.industry || 'General Industry'} • {deal.account.size || 'Enterprise'}
             </Text>
           </View>
@@ -310,29 +395,39 @@ export default function DealDossierScreen() {
 
         {/* Notes & Context */}
         {deal.notes && (
-          <View className={`rounded-2xl border ${palette.border} ${palette.surface} p-4 shadow-sm mb-3.5`}>
-            <Text className={`text-[10px] font-black uppercase tracking-wider ${palette.textMuted} mb-1`}>
+          <View
+            className="rounded-2xl border p-3 shadow-sm mb-2.5"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <Text
+              className="text-[10px] font-black uppercase tracking-wider mb-1"
+              style={{ color: colors.textMuted }}
+            >
               Internal Deal Notes
             </Text>
-            <Text className={`text-xs ${palette.text} leading-5`}>{deal.notes}</Text>
+            <Text className="text-xs leading-5" style={{ color: colors.text }}>
+              {deal.notes}
+            </Text>
           </View>
         )}
 
         {/* Action Shortcuts */}
-        <View className="flex-row gap-x-2 mt-2">
+        <View className="flex-row gap-x-2 mt-1.5">
           <Pressable
             onPress={() => openCreateTask({ dealId: deal.id, contactId: deal.contactId, title: `Follow up on ${deal.title}` })}
-            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-2xl bg-indigo-600 py-3.5 shadow-sm active:bg-indigo-700"
+            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-sm active:opacity-80"
+            style={{ backgroundColor: colors.primary }}
           >
-            <Ionicons name="calendar" size={16} color="#ffffff" />
+            <Ionicons name="calendar" size={15} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Add Task</Text>
           </Pressable>
 
           <Pressable
             onPress={() => setBillingModalVisible(true)}
-            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-2xl bg-purple-600 py-3.5 shadow-sm active:bg-purple-700"
+            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-sm active:opacity-80"
+            style={{ backgroundColor: colors.copilot }}
           >
-            <Ionicons name="card" size={16} color="#ffffff" />
+            <Ionicons name="card" size={15} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Issue Invoice</Text>
           </Pressable>
         </View>

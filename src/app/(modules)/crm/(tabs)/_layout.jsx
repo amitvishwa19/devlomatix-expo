@@ -4,7 +4,7 @@ import { Tabs } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '~/theme/AppTheme';
+import { useCrmTheme } from '../utils/colors';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -35,7 +35,7 @@ export default function CrmTabLayout() {
 
 function CrmCustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
 
   return (
     <View
@@ -48,11 +48,14 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
       }}
     >
       <Animated.View
-        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-3 shadow-lg border"
+        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-2.5 border"
         style={{
-          backgroundColor: palette.colors.surface || '#ffffff',
-          borderColor: palette.colors.border || '#e2e8f0',
-          shadowColor: palette.colors.shadow || '#000000',
+          backgroundColor: colors.tabBar,
+          borderColor: colors.tabBarBorder,
+          shadowColor: colors.shadowColor,
+          shadowOpacity: colors.shadowOpacity,
+          shadowOffset: { width: 0, height: 8 },
+          shadowRadius: 16,
           zIndex: 100,
           elevation: 20,
         }}
@@ -62,7 +65,6 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
           const label = options.title || route.name;
           const isFocused = state.index === index;
           const cfg = tabConfig[route.name] || { icon: 'ellipse-outline', activeIcon: 'ellipse', label };
-          const activeColor = '#4f46e5'; // Indigo brand color for DevX CRM
 
           const onPress = () => {
             const event = navigation.emit({
@@ -80,21 +82,22 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
               key={route.key}
               layout={LinearTransition.springify().mass(0.5)}
               onPress={onPress}
-              className="flex-row items-center gap-x-2 rounded-xl px-3 py-2"
+              className="flex-row items-center gap-x-1.5 rounded-xl px-2.5 py-2"
               style={{
-                backgroundColor: isFocused ? '#4f46e5' : 'transparent',
+                backgroundColor: isFocused ? colors.tabBarActiveBg : 'transparent',
               }}
             >
               <Ionicons
                 size={18}
                 name={isFocused ? cfg.activeIcon : cfg.icon}
-                color={isFocused ? '#ffffff' : palette.textMutedColor || '#64748b'}
+                color={isFocused ? colors.tabBarActiveText : colors.tabBarInactive}
               />
               {isFocused ? (
                 <Animated.Text
                   entering={FadeIn.duration(200)}
                   exiting={FadeOut.duration(200)}
-                  className="text-[11px] font-bold text-white tracking-tight"
+                  className="text-[11px] font-bold tracking-tight"
+                  style={{ color: colors.tabBarActiveText }}
                 >
                   {label}
                 </Animated.Text>

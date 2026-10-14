@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 import * as crmService from '~/services/crm';
 
 const TEMPLATES = [
@@ -31,7 +31,7 @@ const TEMPLATES = [
 
 export default function QuickWhatsAppModal() {
   const insets = useSafeAreaInsets();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { quickWhatsAppTarget, closeQuickWhatsApp, refreshAll } = useCrm();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -92,75 +92,110 @@ export default function QuickWhatsAppModal() {
       animationType="slide"
       onRequestClose={closeQuickWhatsApp}
     >
-      <View className="flex-1 justify-end bg-black/60">
+      <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
         <Pressable className="flex-1" onPress={closeQuickWhatsApp} />
 
         <View
-          className={`rounded-t-3xl ${palette.surface} p-5 shadow-2xl border-t ${palette.border}`}
-          style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
+          className="rounded-t-3xl p-4 shadow-2xl border-t"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom + 20, 40),
+          }}
         >
           {/* Header */}
-          <View className={`flex-row items-center justify-between border-b ${palette.border} pb-3.5`}>
+          <View className="flex-row items-center justify-between border-b pb-3" style={{ borderColor: colors.border }}>
             <View className="flex-row items-center gap-x-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
-                <Ionicons name="logo-whatsapp" size={18} color="#10b981" />
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.whatsapp }}
+              >
+                <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className={`text-base font-black ${palette.text}`}>WhatsApp Outreach</Text>
-                <Text className={`text-xs ${palette.textMuted} font-medium`}>
-                  To: <Text className={`font-bold ${palette.text}`}>{contact.name}</Text> ({contact.phone || 'No phone'})
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                  WhatsApp Outreach
+                </Text>
+                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                  To: <Text className="font-bold" style={{ color: colors.text }}>{contact.name}</Text> ({contact.phone || 'No phone'})
                 </Text>
               </View>
             </View>
 
             <Pressable
               onPress={closeQuickWhatsApp}
-              className={`h-8 w-8 items-center justify-center rounded-full ${palette.surfaceAlt} border ${palette.border}`}
+              className="h-8 w-8 items-center justify-center rounded-full border"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
             >
-              <Ionicons name="close" size={18} color={palette.textColor} />
+              <Ionicons name="close" size={16} color={colors.text} />
             </Pressable>
           </View>
 
           {/* Attached Deal Context */}
           {deal && (
-            <View className="mt-3 flex-row items-center gap-x-2 rounded-xl bg-indigo-500/15 px-3 py-2 border border-indigo-500/30">
-              <Ionicons name="briefcase-outline" size={14} color="#818cf8" />
-              <Text className="text-xs font-semibold text-indigo-300" numberOfLines={1}>
+            <View
+              className="mt-2.5 flex-row items-center gap-x-2 rounded-xl px-3 py-1.5 border"
+              style={{
+                backgroundColor: colors.primarySoft,
+                borderColor: colors.primaryBorder,
+              }}
+            >
+              <Ionicons name="briefcase-outline" size={13} color={colors.primary} />
+              <Text className="text-[11px] font-semibold" style={{ color: colors.primary }} numberOfLines={1}>
                 Attached Deal: <Text className="font-black">{deal.title}</Text> ({deal.currency} {deal.value})
               </Text>
             </View>
           )}
 
           {/* Quick Template Chips */}
-          <Text className={`mt-3 text-[11px] font-bold uppercase tracking-wider ${palette.textMuted}`}>
+          <Text
+            className="mt-2.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: colors.textMuted }}
+          >
             Quick AI & Standard Templates
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="mt-1.5 flex-row gap-x-2 py-1"
+            className="mt-1 flex-row gap-x-2 py-0.5"
           >
             {TEMPLATES.map((t) => (
               <Pressable
                 key={t.id}
                 onPress={() => applyTemplate(t)}
-                className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3 py-1.5 active:opacity-75`}
+                className="rounded-xl border px-2.5 py-1.5 active:opacity-75 mr-1"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
               >
-                <Text className={`text-xs font-semibold ${palette.text}`}>{t.title}</Text>
+                <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
+                  {t.title}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
 
           {/* Message Input */}
-          <View className={`mt-3.5 rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3`}>
+          <View
+            className="mt-2.5 rounded-xl border p-2.5"
+            style={{
+              backgroundColor: colors.inputBg,
+              borderColor: colors.inputBorder,
+            }}
+          >
             <TextInput
               multiline
               numberOfLines={4}
               value={message}
               onChangeText={setMessage}
               placeholder="Type WhatsApp message here..."
-              placeholderTextColor={palette.textMutedColor}
-              className={`min-h-[90px] text-sm ${palette.text} leading-5`}
+              placeholderTextColor={colors.inputPlaceholder}
+              className="min-h-[80px] text-xs leading-5"
+              style={{ color: colors.text }}
               textAlignVertical="top"
             />
           </View>
@@ -168,16 +203,15 @@ export default function QuickWhatsAppModal() {
           {/* Feedback Status */}
           {statusMsg && (
             <View
-              className={`mt-3 rounded-xl p-2.5 border ${
-                statusMsg.type === 'success'
-                  ? 'bg-emerald-500/15 border-emerald-500/30'
-                  : 'bg-rose-500/15 border-rose-500/30'
-              }`}
+              className="mt-2.5 rounded-xl p-2 border"
+              style={{
+                backgroundColor: statusMsg.type === 'success' ? colors.successSoft : colors.dangerSoft,
+                borderColor: statusMsg.type === 'success' ? colors.successBorder : colors.dangerBorder,
+              }}
             >
               <Text
-                className={`text-xs font-bold text-center ${
-                  statusMsg.type === 'success' ? 'text-emerald-400' : 'text-rose-400'
-                }`}
+                className="text-xs font-bold text-center"
+                style={{ color: statusMsg.type === 'success' ? colors.success : colors.danger }}
               >
                 {statusMsg.text}
               </Text>
@@ -188,16 +222,18 @@ export default function QuickWhatsAppModal() {
           <Pressable
             onPress={handleSend}
             disabled={sending || !contact.phone || !message.trim()}
-            className={`mt-4 flex-row items-center justify-center gap-x-2 rounded-2xl bg-emerald-600 py-3.5 shadow-md active:bg-emerald-700 ${
-              sending || !contact.phone || !message.trim() ? 'opacity-50' : ''
-            }`}
+            className="mt-3 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-md active:opacity-80"
+            style={{
+              backgroundColor: colors.whatsapp,
+              opacity: sending || !contact.phone || !message.trim() ? 0.5 : 1,
+            }}
           >
             {sending ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <>
-                <Ionicons name="send" size={16} color="#ffffff" />
-                <Text className="text-sm font-black text-white">Send via KonnectX Cloud</Text>
+                <Ionicons name="send" size={15} color="#ffffff" />
+                <Text className="text-xs font-black text-white">Send via KonnectX Cloud</Text>
               </>
             )}
           </Pressable>
@@ -206,3 +242,4 @@ export default function QuickWhatsAppModal() {
     </Modal>
   );
 }
+

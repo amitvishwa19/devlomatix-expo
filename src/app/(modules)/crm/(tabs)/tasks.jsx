@@ -3,8 +3,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
+import { CRM_TASK_TYPES } from '../utils/constants';
 import CrmHeader from '../_components/CrmHeader';
 import TaskCard from '../_components/TaskCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
@@ -12,7 +13,7 @@ import CreateTaskModal from '../_components/CreateTaskModal';
 
 export default function CrmTasksTab() {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
 
   const [activeTab, setActiveTab] = useState('PENDING'); // 'PENDING' | 'COMPLETED'
@@ -38,7 +39,8 @@ export default function CrmTasksTab() {
         rightActions={
           <Pressable
             onPress={() => openCreateTask()}
-            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl bg-indigo-600 active:bg-indigo-700"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+            style={{ backgroundColor: colors.primary }}
           >
             <Ionicons name="add" size={16} color="#ffffff" />
             <Text className="text-xs font-bold text-white">Task</Text>
@@ -50,19 +52,33 @@ export default function CrmTasksTab() {
       <CreateTaskModal />
 
       {/* Tabs & Type Filters Bar */}
-      <View className={`${palette.surface} px-4 py-2.5 border-b ${palette.border}`}>
+      <View
+        className="px-3 py-2 border-b"
+        style={{
+          backgroundColor: colors.header,
+          borderColor: colors.border,
+        }}
+      >
         {/* Status Switcher */}
-        <View className={`flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1 mb-2.5`}>
+        <View
+          className="flex-row rounded-xl border p-1 mb-2"
+          style={{
+            backgroundColor: colors.cardAlt,
+            borderColor: colors.border,
+          }}
+        >
           <Pressable
             onPress={() => setActiveTab('PENDING')}
-            className={`flex-1 items-center justify-center rounded-lg py-2 ${
-              activeTab === 'PENDING' ? 'bg-indigo-600 shadow-sm' : 'bg-transparent'
-            }`}
+            className="flex-1 items-center justify-center rounded-lg py-1.5"
+            style={{
+              backgroundColor: activeTab === 'PENDING' ? colors.primary : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-bold ${
-                activeTab === 'PENDING' ? 'text-white' : palette.textMuted
-              }`}
+              className="text-xs font-bold"
+              style={{
+                color: activeTab === 'PENDING' ? '#ffffff' : colors.textMuted,
+              }}
             >
               Pending ({pendingTasks.length})
             </Text>
@@ -70,14 +86,16 @@ export default function CrmTasksTab() {
 
           <Pressable
             onPress={() => setActiveTab('COMPLETED')}
-            className={`flex-1 items-center justify-center rounded-lg py-2 ${
-              activeTab === 'COMPLETED' ? 'bg-indigo-600 shadow-sm' : 'bg-transparent'
-            }`}
+            className="flex-1 items-center justify-center rounded-lg py-1.5"
+            style={{
+              backgroundColor: activeTab === 'COMPLETED' ? colors.primary : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-bold ${
-                activeTab === 'COMPLETED' ? 'text-white' : palette.textMuted
-              }`}
+              className="text-xs font-bold"
+              style={{
+                color: activeTab === 'COMPLETED' ? '#ffffff' : colors.textMuted,
+              }}
             >
               Completed ({completedTasks.length})
             </Text>
@@ -91,22 +109,23 @@ export default function CrmTasksTab() {
           contentContainerStyle={{ paddingRight: 20 }}
           className="flex-row py-0.5"
         >
-          {['ALL', 'CALL', 'WHATSAPP', 'MEETING', 'EMAIL', 'REVIEW'].map((t) => {
+          {CRM_TASK_TYPES.map((t) => {
             const isSelected = selectedType === t;
             return (
               <Pressable
                 key={t}
                 onPress={() => setSelectedType(t)}
-                className={`mr-2 rounded-xl px-3 py-1.5 border ${
-                  isSelected
-                    ? 'bg-indigo-600 border-indigo-600'
-                    : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-                }`}
+                className="mr-2 rounded-xl px-3 py-1.5 border"
+                style={{
+                  backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                }}
               >
                 <Text
-                  className={`text-[11px] font-bold ${
-                    isSelected ? 'text-white' : palette.text
-                  }`}
+                  className="text-[11px] font-bold"
+                  style={{
+                    color: isSelected ? '#ffffff' : colors.text,
+                  }}
                 >
                   {t}
                 </Text>
@@ -120,30 +139,39 @@ export default function CrmTasksTab() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
-        refreshControl={<RefreshControl refreshing={refreshAll} onRefresh={refreshAll} />}
-        className="px-4 pt-3.5"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
+        className="px-3 pt-3"
       >
         {loading && tasks.length === 0 ? (
           <View className="py-14 items-center justify-center">
-            <ActivityIndicator size="large" color="#6366f1" />
-            <Text className={`text-xs ${palette.textMuted} font-semibold mt-2`}>Loading follow-ups...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
+              Loading follow-ups...
+            </Text>
           </View>
         ) : filteredTasks.length > 0 ? (
           filteredTasks.map((task) => <TaskCard key={task.id} task={task} />)
         ) : (
-          <View className={`rounded-2xl border border-dashed ${palette.border} p-8 items-center justify-center ${palette.surface}`}>
-            <Ionicons name="checkmark-done-circle-outline" size={36} color="#10b981" />
-            <Text className={`text-sm font-bold ${palette.text} mt-2`}>
+          <View
+            className="rounded-[16px] border border-dashed p-6 items-center justify-center"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <Ionicons name="checkmark-done-circle-outline" size={36} color={colors.success} />
+            <Text className="text-sm font-bold mt-2" style={{ color: colors.text }}>
               {activeTab === 'PENDING' ? 'All Follow-ups Completed!' : 'No Completed Tasks'}
             </Text>
-            <Text className={`text-xs ${palette.textMuted} text-center mt-1`}>
+            <Text className="text-xs text-center mt-1" style={{ color: colors.textMuted }}>
               {activeTab === 'PENDING'
                 ? 'Great job! Schedule a new follow-up to keep deals moving.'
                 : 'Tasks you complete will be archived here for audit history.'}
             </Text>
             <Pressable
               onPress={() => openCreateTask()}
-              className="mt-3.5 rounded-xl bg-indigo-600 px-4 py-2"
+              className="mt-3 rounded-xl px-4 py-2"
+              style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-xs font-bold text-white">+ Schedule New Follow-up</Text>
             </Pressable>
@@ -153,3 +181,4 @@ export default function CrmTasksTab() {
     </AppScreen>
   );
 }
+

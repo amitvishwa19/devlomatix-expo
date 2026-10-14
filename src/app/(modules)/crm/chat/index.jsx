@@ -12,16 +12,16 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import { getSession } from '~/utils/authStorage';
 import * as crmService from '~/services/crm';
 import { fetchAccessData } from '~/services/access-management';
+import { useCrmTheme } from '../utils/colors';
 import CrmHeader from '../_components/CrmHeader';
 
 export default function CrmChatDirectoryScreen() {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { onlineUsers, startCall, isConnected } = useCrmSocket();
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -152,53 +152,91 @@ export default function CrmChatDirectoryScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => openConversation(item)}
-        className={`flex-row items-center justify-between p-3 mb-2 rounded-2xl border ${palette.border} ${palette.surface} shadow-sm`}
+        className="flex-row items-center justify-between p-3 mb-2 rounded-[16px] border shadow-sm"
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+        }}
       >
         {/* Left: Avatar with Online indicator */}
-        <View className="flex-row items-center gap-3 flex-1 mr-2">
+        <View className="flex-row items-center gap-2.5 flex-1 mr-2">
           <View className="relative">
-            <View className="w-10 h-10 rounded-full bg-indigo-500/15 border border-indigo-500/30 items-center justify-center overflow-hidden">
+            <View
+              className="w-9 h-9 rounded-xl border items-center justify-center overflow-hidden"
+              style={{
+                backgroundColor: colors.primarySoft,
+                borderColor: colors.primaryBorder,
+              }}
+            >
               {item.avatar ? (
                 <Image source={{ uri: item.avatar }} className="w-full h-full" resizeMode="cover" />
               ) : (
-                <Text className="text-[14px] font-extrabold text-indigo-400">{initial}</Text>
+                <Text className="text-[13px] font-black" style={{ color: colors.primary }}>
+                  {initial}
+                </Text>
               )}
             </View>
 
-            {/* Online Green Indicator Dot */}
+            {/* Online Indicator Dot */}
             {online && (
-              <View className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-950" />
+              <View
+                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                style={{
+                  backgroundColor: colors.success,
+                  borderColor: colors.card,
+                }}
+              />
             )}
           </View>
 
           {/* User Details */}
           <View className="flex-1">
             <View className="flex-row items-center gap-1.5">
-              <Text className={`text-[13px] font-extrabold ${palette.text} truncate`}>
+              <Text
+                className="text-[13px] font-black tracking-tight"
+                style={{ color: colors.text }}
+                numberOfLines={1}
+              >
                 {item.name}
               </Text>
               {online && (
-                <Text className="text-[10px] font-bold text-emerald-400">Online</Text>
+                <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+                  Online
+                </Text>
               )}
             </View>
 
             {activeTab === 'team' ? (
               <View className="flex-row items-center gap-1.5 mt-0.5">
                 {item.role ? (
-                  <View className="px-1.5 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30">
-                    <Text className="text-[10px] font-bold text-indigo-400">
+                  <View
+                    className="px-1.5 py-0.5 rounded-md border"
+                    style={{
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primaryBorder,
+                    }}
+                  >
+                    <Text className="text-[9px] font-bold" style={{ color: colors.primary }}>
                       {item.role}
                     </Text>
                   </View>
                 ) : null}
                 {item.email ? (
-                  <Text className={`text-[11px] ${palette.textMuted} truncate flex-1`}>
+                  <Text
+                    className="text-[11px] truncate flex-1"
+                    style={{ color: colors.textMuted }}
+                    numberOfLines={1}
+                  >
                     {item.email}
                   </Text>
                 ) : null}
               </View>
             ) : (
-              <Text className={`text-[11px] ${palette.textMuted} truncate mt-0.5`}>
+              <Text
+                className="text-[11px] mt-0.5"
+                style={{ color: colors.textMuted }}
+                numberOfLines={1}
+              >
                 {item.jobTitle || item.account?.name || item.phone || 'CRM Contact'}
               </Text>
             )}
@@ -210,25 +248,37 @@ export default function CrmChatDirectoryScreen() {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleStartCall(item, 'audio')}
-            className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/30 items-center justify-center"
+            className="w-8 h-8 rounded-xl border items-center justify-center"
+            style={{
+              backgroundColor: colors.callSoft,
+              borderColor: colors.callBorder,
+            }}
           >
-            <Ionicons name="call" size={14} color="#6366f1" />
+            <Ionicons name="call" size={13} color={colors.call} />
           </TouchableOpacity>
 
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => handleStartCall(item, 'video')}
-            className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 items-center justify-center"
+            className="w-8 h-8 rounded-xl border items-center justify-center"
+            style={{
+              backgroundColor: colors.successSoft,
+              borderColor: colors.successBorder,
+            }}
           >
-            <Ionicons name="videocam" size={14} color="#10b981" />
+            <Ionicons name="videocam" size={13} color={colors.success} />
           </TouchableOpacity>
 
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => openConversation(item)}
-            className="w-8 h-8 rounded-xl bg-slate-800/60 border border-slate-700/50 items-center justify-center"
+            className="w-8 h-8 rounded-xl border items-center justify-center"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
           >
-            <Ionicons name="chatbubble-ellipses" size={14} color={palette.textMutedColor} />
+            <Ionicons name="chatbubble-ellipses" size={13} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -243,26 +293,34 @@ export default function CrmChatDirectoryScreen() {
         showBack={true}
       />
 
-      <View className="px-4 flex-1">
+      <View className="px-3 flex-1 pt-1">
         {/* Segmented Tab Bar */}
-        <View className="flex-row p-1 rounded-2xl bg-slate-800/40 border border-slate-700/40 mb-3 mt-1">
+        <View
+          className="flex-row p-1 rounded-xl border mb-2.5"
+          style={{
+            backgroundColor: colors.cardAlt,
+            borderColor: colors.border,
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab('team')}
-            className={`flex-1 py-2 rounded-xl items-center justify-center ${
-              activeTab === 'team' ? 'bg-indigo-600 shadow-md' : ''
-            }`}
+            className="flex-1 py-1.5 rounded-lg items-center justify-center"
+            style={{
+              backgroundColor: activeTab === 'team' ? colors.primary : 'transparent',
+            }}
           >
             <View className="flex-row items-center gap-1.5">
               <Ionicons
                 name="people"
-                size={14}
-                color={activeTab === 'team' ? '#ffffff' : palette.textMutedColor}
+                size={13}
+                color={activeTab === 'team' ? '#ffffff' : colors.textMuted}
               />
               <Text
-                className={`text-[12px] font-bold ${
-                  activeTab === 'team' ? 'text-white' : palette.textMuted
-                }`}
+                className="text-[11px] font-bold"
+                style={{
+                  color: activeTab === 'team' ? '#ffffff' : colors.textMuted,
+                }}
               >
                 Sales Team ({teamMembers.length})
               </Text>
@@ -272,20 +330,22 @@ export default function CrmChatDirectoryScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab('contacts')}
-            className={`flex-1 py-2 rounded-xl items-center justify-center ${
-              activeTab === 'contacts' ? 'bg-indigo-600 shadow-md' : ''
-            }`}
+            className="flex-1 py-1.5 rounded-lg items-center justify-center"
+            style={{
+              backgroundColor: activeTab === 'contacts' ? colors.primary : 'transparent',
+            }}
           >
             <View className="flex-row items-center gap-1.5">
               <Ionicons
                 name="person-circle"
-                size={14}
-                color={activeTab === 'contacts' ? '#ffffff' : palette.textMutedColor}
+                size={13}
+                color={activeTab === 'contacts' ? '#ffffff' : colors.textMuted}
               />
               <Text
-                className={`text-[12px] font-bold ${
-                  activeTab === 'contacts' ? 'text-white' : palette.textMuted
-                }`}
+                className="text-[11px] font-bold"
+                style={{
+                  color: activeTab === 'contacts' ? '#ffffff' : colors.textMuted,
+                }}
               >
                 Contacts ({contacts.length})
               </Text>
@@ -294,18 +354,25 @@ export default function CrmChatDirectoryScreen() {
         </View>
 
         {/* Search Filter Bar */}
-        <View className={`flex-row items-center px-3 py-2 rounded-2xl border ${palette.border} ${palette.surfaceAlt} mb-3`}>
-          <Ionicons name="search" size={16} color={palette.textMutedColor} />
+        <View
+          className="flex-row items-center px-3 py-2 rounded-xl border mb-2.5"
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+          }}
+        >
+          <Ionicons name="search" size={15} color={colors.textMuted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={`Search ${activeTab === 'team' ? 'team members' : 'contacts'}...`}
-            placeholderTextColor={palette.textMutedColor}
-            className={`flex-1 ml-2 text-[13px] ${palette.text}`}
+            placeholderTextColor={colors.inputPlaceholder}
+            className="flex-1 ml-2 text-xs"
+            style={{ color: colors.text }}
           />
           {search ? (
             <TouchableOpacity onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={16} color={palette.textMutedColor} />
+              <Ionicons name="close-circle" size={15} color={colors.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -313,8 +380,10 @@ export default function CrmChatDirectoryScreen() {
         {/* Directory List */}
         {loading && !refreshing ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="small" color="#6366f1" />
-            <Text className={`text-[12px] ${palette.textMuted} mt-2`}>Loading Directory...</Text>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text className="text-xs mt-2" style={{ color: colors.textMuted }}>
+              Loading Directory...
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -323,14 +392,14 @@ export default function CrmChatDirectoryScreen() {
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 60 }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListEmptyComponent={
               <View className="items-center justify-center py-12">
-                <Ionicons name="chatbubbles-outline" size={36} color={palette.textMutedColor} />
-                <Text className={`text-[13px] font-bold ${palette.text} mt-2`}>
+                <Ionicons name="chatbubbles-outline" size={36} color={colors.textSoft} />
+                <Text className="text-[13px] font-bold mt-2" style={{ color: colors.text }}>
                   No {activeTab === 'team' ? 'team members' : 'contacts'} found
                 </Text>
-                <Text className={`text-[11px] ${palette.textMuted} mt-0.5 text-center px-6`}>
+                <Text className="text-xs mt-0.5 text-center px-6" style={{ color: colors.textMuted }}>
                   {search ? 'Try adjusting your search filter' : 'Contacts and teammates will appear here.'}
                 </Text>
               </View>
@@ -341,3 +410,4 @@ export default function CrmChatDirectoryScreen() {
     </AppScreen>
   );
 }
+

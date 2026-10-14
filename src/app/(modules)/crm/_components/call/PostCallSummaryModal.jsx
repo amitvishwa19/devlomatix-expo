@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useAppTheme } from '~/theme/AppTheme';
+import { useCrmTheme } from '../../utils/colors';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import * as crmService from '~/services/crm';
 
@@ -30,7 +30,7 @@ const formatDuration = (seconds = 0) => {
 };
 
 export default function PostCallSummaryModal() {
-  const { palette } = useAppTheme();
+  const { colors, isDark } = useCrmTheme();
   const { postCallRecord, setPostCallRecord } = useCrmSocket();
 
   const [outcome, setOutcome] = useState('FOLLOWUP_SCHEDULED');
@@ -75,37 +75,47 @@ export default function PostCallSummaryModal() {
 
   return (
     <Modal visible={!!postCallRecord} transparent animationType="slide" statusBarTranslucent>
-      <View className="flex-1 justify-end bg-black/60">
+      <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
         <View
-          className={`w-full rounded-t-[28px] border-t ${palette.border} ${palette.surface} p-5 pb-8 shadow-2xl max-h-[85%]`}
+          className="w-full rounded-t-[28px] border-t p-4 pb-7 shadow-2xl max-h-[85%]"
+          style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
         >
           {/* Header Row */}
-          <View className="flex-row items-center justify-between pb-3 border-b border-slate-700/20">
+          <View
+            className="flex-row items-center justify-between pb-2.5 border-b"
+            style={{ borderBottomColor: colors.border }}
+          >
             <View className="flex-row items-center gap-2">
-              <View className="p-2 rounded-xl bg-indigo-500/15 border border-indigo-500/30">
-                <Ionicons name="document-text-outline" size={18} color="#6366f1" />
+              <View
+                className="p-1.5 rounded-xl border"
+                style={{
+                  backgroundColor: colors.primarySoft,
+                  borderColor: colors.primaryBorder,
+                }}
+              >
+                <Ionicons name="document-text-outline" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text className={`text-[16px] font-extrabold ${palette.text}`}>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
                   Post-Call Summary
                 </Text>
-                <Text className={`text-[11px] ${palette.textMuted}`}>
+                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
                   {targetName} • {formatDuration(duration)}
                 </Text>
               </View>
             </View>
 
-            <TouchableOpacity onPress={handleDismiss} className="p-1.5 rounded-full">
-              <Ionicons name="close" size={20} color={palette.textMutedColor} />
+            <TouchableOpacity onPress={handleDismiss} className="p-1 rounded-full">
+              <Ionicons name="close" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
+          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5">
             {/* Outcome Selection */}
-            <Text className={`text-[12px] font-bold ${palette.text} mb-2`}>
+            <Text className="text-xs font-bold mb-1.5" style={{ color: colors.text }}>
               Call Outcome
             </Text>
-            <View className="flex-row flex-wrap gap-1.5 mb-4">
+            <View className="flex-row flex-wrap gap-1.5 mb-3">
               {OUTCOMES.map((item) => {
                 const isSelected = outcome === item.value;
                 return (
@@ -113,16 +123,17 @@ export default function PostCallSummaryModal() {
                     key={item.value}
                     activeOpacity={0.7}
                     onPress={() => setOutcome(item.value)}
-                    className={`px-3 py-1.5 rounded-xl border ${
-                      isSelected
-                        ? 'bg-indigo-600 border-indigo-500'
-                        : `${palette.surfaceAlt} ${palette.border}`
-                    }`}
+                    className="px-2.5 py-1.5 rounded-xl border"
+                    style={{
+                      backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    }}
                   >
                     <Text
-                      className={`text-[11px] font-bold ${
-                        isSelected ? 'text-white' : palette.text
-                      }`}
+                      className="text-[11px] font-bold"
+                      style={{
+                        color: isSelected ? '#ffffff' : colors.text,
+                      }}
                     >
                       {item.label}
                     </Text>
@@ -132,27 +143,33 @@ export default function PostCallSummaryModal() {
             </View>
 
             {/* Conversation Notes Input */}
-            <Text className={`text-[12px] font-bold ${palette.text} mb-1.5`}>
+            <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
               Meeting Notes & Next Steps
             </Text>
             <TextInput
               multiline
-              numberOfLines={4}
+              numberOfLines={3}
               textAlignVertical="top"
               value={notes}
               onChangeText={setNotes}
               placeholder="Enter brief discussion summary, commitments, or follow-up date..."
-              placeholderTextColor={palette.textMutedColor}
-              className={`w-full rounded-2xl border ${palette.border} ${palette.surfaceAlt} p-3 text-[13px] ${palette.text} mb-5 min-h-[90px]`}
+              placeholderTextColor={colors.inputPlaceholder}
+              className="w-full rounded-2xl border p-2.5 text-xs mb-4 min-h-[75px]"
+              style={{
+                backgroundColor: colors.inputBg,
+                borderColor: colors.inputBorder,
+                color: colors.text,
+              }}
             />
 
             {/* Action Buttons */}
             <View className="flex-row items-center gap-2">
               <TouchableOpacity
                 onPress={handleDismiss}
-                className={`flex-1 py-3 rounded-xl border ${palette.border} items-center justify-center`}
+                className="flex-1 py-2.5 rounded-xl border items-center justify-center"
+                style={{ borderColor: colors.border }}
               >
-                <Text className={`text-[13px] font-bold ${palette.textMuted}`}>
+                <Text className="text-xs font-bold" style={{ color: colors.textMuted }}>
                   Skip
                 </Text>
               </TouchableOpacity>
@@ -160,14 +177,18 @@ export default function PostCallSummaryModal() {
               <TouchableOpacity
                 onPress={handleSave}
                 disabled={saving}
-                className="flex-1 py-3 rounded-xl bg-indigo-600 items-center justify-center shadow-md shadow-indigo-600/30 flex-row gap-2"
+                className="flex-1 py-2.5 rounded-xl items-center justify-center shadow-md flex-row gap-1.5"
+                style={{
+                  backgroundColor: colors.primary,
+                  opacity: saving ? 0.7 : 1,
+                }}
               >
                 {saving ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
                   <>
-                    <Ionicons name="checkmark-circle-outline" size={16} color="#ffffff" />
-                    <Text className="text-[13px] font-bold text-white">
+                    <Ionicons name="checkmark-circle-outline" size={15} color="#ffffff" />
+                    <Text className="text-xs font-bold text-white">
                       Save to CRM DCR
                     </Text>
                   </>

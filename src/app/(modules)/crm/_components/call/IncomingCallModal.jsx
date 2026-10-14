@@ -8,12 +8,10 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import RingtoneAudioFallback from './RingtoneAudioFallback';
 
 export default function IncomingCallModal() {
-  const { palette } = useAppTheme();
   const { callStatus, incomingCallData, acceptCall, rejectCall } = useCrmSocket();
 
   const isVisible = callStatus === 'incoming' && !!incomingCallData;

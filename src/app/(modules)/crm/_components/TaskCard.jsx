@@ -2,28 +2,29 @@ import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 import * as crmService from '~/services/crm';
 
 const TASK_TYPE_ICONS = {
-  CALL: { icon: 'call-outline', color: '#0ea5e9', bg: 'bg-sky-500/15 border-sky-500/30' },
-  WHATSAPP: { icon: 'logo-whatsapp', color: '#10b981', bg: 'bg-emerald-500/15 border-emerald-500/30' },
-  MEETING: { icon: 'people-outline', color: '#a855f7', bg: 'bg-purple-500/15 border-purple-500/30' },
-  EMAIL: { icon: 'mail-outline', color: '#f97316', bg: 'bg-orange-500/15 border-orange-500/30' },
-  REVIEW: { icon: 'document-text-outline', color: '#818cf8', bg: 'bg-indigo-500/15 border-indigo-500/30' },
+  CALL: 'call-outline',
+  WHATSAPP: 'logo-whatsapp',
+  MEETING: 'people-outline',
+  EMAIL: 'mail-outline',
+  REVIEW: 'document-text-outline',
 };
 
 export default function TaskCard({ task, onStatusChange }) {
   const router = useRouter();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const { openQuickWhatsApp, loadTasks } = useCrm();
   const [isCompleted, setIsCompleted] = useState(task?.status === 'COMPLETED');
   const [updating, setUpdating] = useState(false);
 
   if (!task) return null;
 
-  const typeConfig = TASK_TYPE_ICONS[task.type] || TASK_TYPE_ICONS.CALL;
+  const typeConfig = colors.taskType[task.type] || colors.taskType.CALL;
+  const typeIcon = TASK_TYPE_ICONS[task.type] || 'calendar-outline';
 
   const toggleComplete = async () => {
     try {
@@ -48,34 +49,35 @@ export default function TaskCard({ task, onStatusChange }) {
 
   return (
     <View
-      className={`mb-2.5 rounded-2xl border ${palette.surface} ${
-        isCompleted
-          ? `${palette.border} opacity-60`
-          : isOverdue
-          ? 'border-rose-400'
-          : palette.border
-      } p-3.5 shadow-sm`}
+      className="mb-2 rounded-[16px] border p-3 shadow-sm"
+      style={{
+        backgroundColor: colors.card,
+        borderColor: isOverdue ? colors.danger : colors.border,
+        opacity: isCompleted ? 0.65 : 1,
+      }}
     >
       <View className="flex-row items-start justify-between gap-x-2">
         {/* Checkbox & Details */}
-        <View className="flex-row items-start gap-x-3 flex-1">
+        <View className="flex-row items-start gap-x-2.5 flex-1">
           <Pressable
             onPress={toggleComplete}
             disabled={updating}
-            className={`mt-0.5 h-6 w-6 items-center justify-center rounded-lg border ${
-              isCompleted
-                ? 'bg-indigo-600 border-indigo-600'
-                : `${palette.surfaceAlt} ${palette.border}`
-            }`}
+            className="mt-0.5 h-5 w-5 items-center justify-center rounded-lg border"
+            style={{
+              backgroundColor: isCompleted ? colors.primary : colors.cardAlt,
+              borderColor: isCompleted ? colors.primary : colors.border,
+            }}
           >
-            {isCompleted && <Ionicons name="checkmark" size={14} color="#ffffff" />}
+            {isCompleted && <Ionicons name="checkmark" size={13} color="#ffffff" />}
           </Pressable>
 
           <View className="flex-1">
             <Text
-              className={`text-sm font-bold tracking-tight ${
-                isCompleted ? `line-through ${palette.textMuted}` : palette.text
-              }`}
+              className="text-xs font-bold tracking-tight"
+              style={{
+                color: isCompleted ? colors.textMuted : colors.text,
+                textDecorationLine: isCompleted ? 'line-through' : 'none',
+              }}
             >
               {task.title}
             </Text>
@@ -86,10 +88,14 @@ export default function TaskCard({ task, onStatusChange }) {
                 {task.deal && (
                   <Pressable
                     onPress={() => router.push(`/(modules)/crm/deals/${task.deal.id}`)}
-                    className="flex-row items-center gap-x-1 rounded-md bg-indigo-500/15 px-1.5 py-0.5 border border-indigo-500/30"
+                    className="flex-row items-center gap-x-1 rounded-md px-1.5 py-0.5 border"
+                    style={{
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primaryBorder,
+                    }}
                   >
-                    <Ionicons name="briefcase-outline" size={10} color="#818cf8" />
-                    <Text className="text-[10px] font-bold text-indigo-400" numberOfLines={1}>
+                    <Ionicons name="briefcase-outline" size={10} color={colors.primary} />
+                    <Text className="text-[10px] font-bold" style={{ color: colors.primary }} numberOfLines={1}>
                       {task.deal.title}
                     </Text>
                   </Pressable>
@@ -98,10 +104,14 @@ export default function TaskCard({ task, onStatusChange }) {
                 {task.contact && (
                   <Pressable
                     onPress={() => router.push(`/(modules)/crm/contacts/${task.contact.id}`)}
-                    className={`flex-row items-center gap-x-1 rounded-md ${palette.surfaceAlt} px-1.5 py-0.5 border ${palette.border}`}
+                    className="flex-row items-center gap-x-1 rounded-md px-1.5 py-0.5 border"
+                    style={{
+                      backgroundColor: colors.cardAlt,
+                      borderColor: colors.border,
+                    }}
                   >
-                    <Ionicons name="person-outline" size={10} color={palette.textMutedColor} />
-                    <Text className={`text-[10px] font-medium ${palette.textSoft}`} numberOfLines={1}>
+                    <Ionicons name="person-outline" size={10} color={colors.textSoft} />
+                    <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }} numberOfLines={1}>
                       {task.contact.name}
                     </Text>
                   </Pressable>
@@ -112,8 +122,14 @@ export default function TaskCard({ task, onStatusChange }) {
         </View>
 
         {/* Type Icon Badge */}
-        <View className={`rounded-xl border px-2 py-1 flex-row items-center gap-x-1 ${typeConfig.bg}`}>
-          <Ionicons name={typeConfig.icon} size={12} color={typeConfig.color} />
+        <View
+          className="rounded-xl border px-2 py-0.5 flex-row items-center gap-x-1"
+          style={{
+            backgroundColor: typeConfig.bg,
+            borderColor: typeConfig.border,
+          }}
+        >
+          <Ionicons name={typeIcon} size={11} color={typeConfig.color} />
           <Text className="text-[9px] font-bold" style={{ color: typeConfig.color }}>
             {task.type || 'CALL'}
           </Text>
@@ -121,17 +137,19 @@ export default function TaskCard({ task, onStatusChange }) {
       </View>
 
       {/* Footer Info: Due Date & Action */}
-      <View className={`mt-2.5 flex-row items-center justify-between border-t ${palette.border} pt-2`}>
+      <View
+        className="mt-2 flex-row items-center justify-between border-t pt-2"
+        style={{ borderColor: colors.border }}
+      >
         <View className="flex-row items-center gap-x-1">
           <Ionicons
             name={isOverdue ? 'alert-circle' : 'calendar-outline'}
             size={12}
-            color={isOverdue ? '#e11d48' : palette.textMutedColor}
+            color={isOverdue ? colors.danger : colors.textSoft}
           />
           <Text
-            className={`text-[10px] font-semibold ${
-              isOverdue ? 'text-rose-500 font-bold' : palette.textMuted
-            }`}
+            className="text-[10px] font-semibold"
+            style={{ color: isOverdue ? colors.danger : colors.textMuted }}
           >
             {isOverdue ? `Overdue (${dueDateFormatted})` : `Due: ${dueDateFormatted}`}
           </Text>
@@ -140,13 +158,20 @@ export default function TaskCard({ task, onStatusChange }) {
         {task.contact?.phone && (
           <Pressable
             onPress={() => openQuickWhatsApp(task.contact, task.deal, `Hi ${task.contact.name}, regarding ${task.title}...`)}
-            className="flex-row items-center gap-x-1 rounded-lg bg-emerald-500/15 px-2 py-1 border border-emerald-500/30"
+            className="flex-row items-center gap-x-1 rounded-lg px-2 py-0.5 border"
+            style={{
+              backgroundColor: colors.whatsappSoft,
+              borderColor: colors.whatsappBorder,
+            }}
           >
-            <Ionicons name="logo-whatsapp" size={11} color="#10b981" />
-            <Text className="text-[9px] font-bold text-emerald-400">Quick Follow-up</Text>
+            <Ionicons name="logo-whatsapp" size={11} color={colors.whatsapp} />
+            <Text className="text-[9px] font-bold" style={{ color: colors.whatsapp }}>
+              Follow-up
+            </Text>
           </Pressable>
         )}
       </View>
     </View>
   );
 }
+

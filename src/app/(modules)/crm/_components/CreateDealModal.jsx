@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '../utils/colors';
 import * as crmService from '~/services/crm';
 
 export default function CreateDealModal() {
   const insets = useSafeAreaInsets();
-  const { palette } = useAppTheme();
+  const { colors } = useCrmTheme();
   const {
     createDealVisible,
     setCreateDealVisible,
@@ -94,72 +94,111 @@ export default function CreateDealModal() {
       animationType="slide"
       onRequestClose={() => setCreateDealVisible(false)}
     >
-      <View className="flex-1 justify-end bg-black/60">
+      <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
         <Pressable className="flex-1" onPress={() => setCreateDealVisible(false)} />
 
         <View
-          className={`max-h-[85%] rounded-t-3xl ${palette.surface} p-5 shadow-2xl border-t ${palette.border}`}
-          style={{ paddingBottom: Math.max(insets.bottom + 24, 44) }}
+          className="max-h-[85%] rounded-t-3xl p-4 shadow-2xl border-t"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom + 20, 40),
+          }}
         >
           {/* Header */}
-          <View className={`flex-row items-center justify-between border-b ${palette.border} pb-3`}>
+          <View className="flex-row items-center justify-between border-b pb-3" style={{ borderColor: colors.border }}>
             <View className="flex-row items-center gap-x-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15 border border-indigo-500/30">
-                <Ionicons name="briefcase" size={18} color="#818cf8" />
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.primary }}
+              >
+                <Ionicons name="briefcase" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className={`text-base font-black ${palette.text}`}>Create New Deal</Text>
-                <Text className={`text-xs ${palette.textMuted} font-medium`}>Add opportunity to sales pipeline</Text>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                  Create New Deal
+                </Text>
+                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                  Add opportunity to sales pipeline
+                </Text>
               </View>
             </View>
 
             <Pressable
               onPress={() => setCreateDealVisible(false)}
-              className={`h-8 w-8 items-center justify-center rounded-full ${palette.surfaceAlt} border ${palette.border}`}
+              className="h-8 w-8 items-center justify-center rounded-full border"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
             >
-              <Ionicons name="close" size={18} color={palette.textColor} />
+              <Ionicons name="close" size={16} color={colors.text} />
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
+          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5">
             {/* Title */}
-            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Deal Title *</Text>
+            <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+              Deal Title *
+            </Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. Enterprise Cloud Migration"
-              placeholderTextColor={palette.textMutedColor}
-              className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm ${palette.text} mb-3`}
+              placeholderTextColor={colors.inputPlaceholder}
+              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              style={{
+                backgroundColor: colors.inputBg,
+                borderColor: colors.inputBorder,
+                color: colors.text,
+              }}
             />
 
             {/* Value & Currency */}
-            <View className="flex-row items-center gap-x-2 mb-3">
+            <View className="flex-row items-center gap-x-2 mb-2.5">
               <View className="flex-1">
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Estimated Value</Text>
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  Estimated Value
+                </Text>
                 <TextInput
                   value={value}
                   onChangeText={setValue}
                   keyboardType="numeric"
                   placeholder="e.g. 250000"
-                  placeholderTextColor={palette.textMutedColor}
-                  className={`rounded-xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2.5 text-sm ${palette.text}`}
+                  placeholderTextColor={colors.inputPlaceholder}
+                  className="rounded-xl border px-3 py-2 text-xs"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  }}
                 />
               </View>
               <View className="w-24">
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Currency</Text>
-                <View className={`flex-row rounded-xl border ${palette.border} ${palette.surfaceAlt} p-1`}>
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  Currency
+                </Text>
+                <View
+                  className="flex-row rounded-xl border p-1"
+                  style={{
+                    backgroundColor: colors.cardAlt,
+                    borderColor: colors.border,
+                  }}
+                >
                   {['INR', 'USD'].map((c) => (
                     <Pressable
                       key={c}
                       onPress={() => setCurrency(c)}
-                      className={`flex-1 items-center justify-center rounded-lg py-1.5 ${
-                        currency === c ? 'bg-indigo-600' : 'bg-transparent'
-                      }`}
+                      className="flex-1 items-center justify-center rounded-lg py-1"
+                      style={{
+                        backgroundColor: currency === c ? colors.primary : 'transparent',
+                      }}
                     >
                       <Text
-                        className={`text-xs font-bold ${
-                          currency === c ? 'text-white' : palette.textMuted
-                        }`}
+                        className="text-xs font-bold"
+                        style={{
+                          color: currency === c ? '#ffffff' : colors.textMuted,
+                        }}
                       >
                         {c}
                       </Text>
@@ -170,85 +209,102 @@ export default function CreateDealModal() {
             </View>
 
             {/* Stage Selector */}
-            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Pipeline Stage</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
-              {currentStages.map((s) => (
-                <Pressable
-                  key={s.id}
-                  onPress={() => setStageId(s.id)}
-                  className={`rounded-xl border px-3 py-2 flex-row items-center gap-x-1.5 ${
-                    stageId === s.id
-                      ? 'bg-indigo-600 border-indigo-600'
-                      : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-                  }`}
-                >
-                  <View
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: stageId === s.id ? '#ffffff' : s.color || '#4f46e5' }}
-                  />
-                  <Text
-                    className={`text-xs font-bold ${
-                      stageId === s.id ? 'text-white' : palette.text
-                    }`}
+            <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+              Pipeline Stage
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-2.5 py-1">
+              {currentStages.map((s) => {
+                const isSelected = stageId === s.id;
+                return (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => setStageId(s.id)}
+                    className="rounded-xl border px-3 py-1.5 flex-row items-center gap-x-1.5"
+                    style={{
+                      backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    }}
                   >
-                    {s.name}
-                  </Text>
-                </Pressable>
-              ))}
+                    <View
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: isSelected ? '#ffffff' : s.color || colors.primary }}
+                    />
+                    <Text
+                      className="text-xs font-bold"
+                      style={{ color: isSelected ? '#ffffff' : colors.text }}
+                    >
+                      {s.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
 
             {/* Priority Selector */}
-            <Text className={`text-xs font-bold ${palette.text} mb-1`}>Priority</Text>
-            <View className="flex-row gap-x-2 mb-3">
-              {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
-                <Pressable
-                  key={p}
-                  onPress={() => setPriority(p)}
-                  className={`flex-1 items-center justify-center rounded-xl border py-2 ${
-                    priority === p
-                      ? 'bg-indigo-600 border-indigo-600'
-                      : `${palette.surfaceAlt} ${palette.border} active:opacity-75`
-                  }`}
-                >
-                  <Text
-                    className={`text-[10px] font-bold ${
-                      priority === p ? 'text-white' : palette.text
-                    }`}
+            <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+              Priority
+            </Text>
+            <View className="flex-row gap-x-2 mb-2.5">
+              {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => {
+                const isSelected = priority === p;
+                return (
+                  <Pressable
+                    key={p}
+                    onPress={() => setPriority(p)}
+                    className="flex-1 items-center justify-center rounded-xl border py-1.5"
+                    style={{
+                      backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    }}
                   >
-                    {p}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      className="text-[10px] font-bold"
+                      style={{ color: isSelected ? '#ffffff' : colors.text }}
+                    >
+                      {p}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             {/* Contact Linkage */}
             {contacts.length > 0 && (
               <>
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Link Contact</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  Link Contact
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-2.5 py-1">
                   <Pressable
                     onPress={() => setContactId('')}
-                    className={`rounded-xl border px-3 py-1.5 ${
-                      !contactId ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
-                    }`}
+                    className="rounded-xl border px-3 py-1.5"
+                    style={{
+                      backgroundColor: !contactId ? colors.primary : colors.cardAlt,
+                      borderColor: !contactId ? colors.primary : colors.border,
+                    }}
                   >
-                    <Text className={`text-xs font-semibold ${!contactId ? 'text-white' : palette.textMuted}`}>
+                    <Text className="text-xs font-semibold" style={{ color: !contactId ? '#ffffff' : colors.textMuted }}>
                       None
                     </Text>
                   </Pressable>
-                  {contacts.map((c) => (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => setContactId(c.id)}
-                      className={`rounded-xl border px-3 py-1.5 ${
-                        contactId === c.id ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
-                      }`}
-                    >
-                      <Text className={`text-xs font-semibold ${contactId === c.id ? 'text-white' : palette.text}`}>
-                        {c.name}
-                      </Text>
-                    </Pressable>
-                  ))}
+                  {contacts.map((c) => {
+                    const isSelected = contactId === c.id;
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => setContactId(c.id)}
+                        className="rounded-xl border px-3 py-1.5"
+                        style={{
+                          backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                          borderColor: isSelected ? colors.primary : colors.border,
+                        }}
+                      >
+                        <Text className="text-xs font-semibold" style={{ color: isSelected ? '#ffffff' : colors.text }}>
+                          {c.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </ScrollView>
               </>
             )}
@@ -256,39 +312,56 @@ export default function CreateDealModal() {
             {/* Account Linkage */}
             {accounts.length > 0 && (
               <>
-                <Text className={`text-xs font-bold ${palette.text} mb-1`}>Link Company Account</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-3 py-1">
+                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                  Link Company Account
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-2.5 py-1">
                   <Pressable
                     onPress={() => setAccountId('')}
-                    className={`rounded-xl border px-3 py-1.5 ${
-                      !accountId ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
-                    }`}
+                    className="rounded-xl border px-3 py-1.5"
+                    style={{
+                      backgroundColor: !accountId ? colors.primary : colors.cardAlt,
+                      borderColor: !accountId ? colors.primary : colors.border,
+                    }}
                   >
-                    <Text className={`text-xs font-semibold ${!accountId ? 'text-white' : palette.textMuted}`}>
+                    <Text className="text-xs font-semibold" style={{ color: !accountId ? '#ffffff' : colors.textMuted }}>
                       Independent
                     </Text>
                   </Pressable>
-                  {accounts.map((a) => (
-                    <Pressable
-                      key={a.id}
-                      onPress={() => setAccountId(a.id)}
-                      className={`rounded-xl border px-3 py-1.5 ${
-                        accountId === a.id ? 'bg-indigo-600 border-indigo-600' : `${palette.surfaceAlt} ${palette.border}`
-                      }`}
-                    >
-                      <Text className={`text-xs font-semibold ${accountId === a.id ? 'text-white' : palette.text}`}>
-                        {a.name}
-                      </Text>
-                    </Pressable>
-                  ))}
+                  {accounts.map((a) => {
+                    const isSelected = accountId === a.id;
+                    return (
+                      <Pressable
+                        key={a.id}
+                        onPress={() => setAccountId(a.id)}
+                        className="rounded-xl border px-3 py-1.5"
+                        style={{
+                          backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                          borderColor: isSelected ? colors.primary : colors.border,
+                        }}
+                      >
+                        <Text className="text-xs font-semibold" style={{ color: isSelected ? '#ffffff' : colors.text }}>
+                          {a.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </ScrollView>
               </>
             )}
 
             {/* Error banner */}
             {error && (
-              <View className="mb-3 rounded-xl bg-rose-500/15 p-2.5 border border-rose-500/30">
-                <Text className="text-xs font-bold text-rose-400 text-center">{error}</Text>
+              <View
+                className="mb-2.5 rounded-xl p-2.5 border"
+                style={{
+                  backgroundColor: colors.dangerSoft,
+                  borderColor: colors.dangerBorder,
+                }}
+              >
+                <Text className="text-xs font-bold text-center" style={{ color: colors.danger }}>
+                  {error}
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -297,16 +370,18 @@ export default function CreateDealModal() {
           <Pressable
             onPress={handleSubmit}
             disabled={submitting || !title.trim()}
-            className={`mt-3 flex-row items-center justify-center gap-x-2 rounded-2xl bg-indigo-600 py-3.5 shadow-md active:bg-indigo-700 ${
-              submitting || !title.trim() ? 'opacity-50' : ''
-            }`}
+            className="mt-3 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-md active:opacity-80"
+            style={{
+              backgroundColor: colors.primary,
+              opacity: submitting || !title.trim() ? 0.5 : 1,
+            }}
           >
             {submitting ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <>
-                <Ionicons name="add-circle" size={18} color="#ffffff" />
-                <Text className="text-sm font-black text-white">Create Opportunity</Text>
+                <Ionicons name="add-circle" size={17} color="#ffffff" />
+                <Text className="text-xs font-black text-white">Create Opportunity</Text>
               </>
             )}
           </Pressable>
@@ -315,3 +390,4 @@ export default function CreateDealModal() {
     </Modal>
   );
 }
+

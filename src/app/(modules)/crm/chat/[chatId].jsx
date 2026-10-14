@@ -14,7 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import AppScreen from '~/components/AppScreen';
-import { useAppTheme } from '~/theme/AppTheme';
+import { useCrmTheme } from '../utils/colors';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import { getSession } from '~/utils/authStorage';
 
@@ -31,7 +31,7 @@ const formatTime = (isoString) => {
 export default function CrmConversationScreen() {
   const router = useRouter();
   const { chatId, name, avatar, phone, email, role, type } = useLocalSearchParams();
-  const { palette } = useAppTheme();
+  const { colors, isDark } = useCrmTheme();
   const { socket, onlineUsers, startCall } = useCrmSocket();
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -240,24 +240,29 @@ export default function CrmConversationScreen() {
 
       return (
         <View className="items-center my-2">
-          <View className="flex-row items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md max-w-[85%]">
+          <View
+            className="flex-row items-center gap-3 px-3.5 py-2.5 rounded-2xl border shadow-md max-w-[85%]"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
             <View
-              className={`w-9 h-9 rounded-xl items-center justify-center ${
-                isMissed ? 'bg-rose-500/20 border border-rose-500/30' : 'bg-indigo-500/20 border border-indigo-500/30'
-              }`}
+              className="w-8 h-8 rounded-xl items-center justify-center border"
+              style={{
+                backgroundColor: isMissed ? colors.dangerSoft : colors.primarySoft,
+                borderColor: isMissed ? colors.dangerBorder : colors.primaryBorder,
+              }}
             >
               <Ionicons
                 name={isVideo ? 'videocam' : isMissed ? 'call-outline' : 'call'}
-                size={16}
-                color={isMissed ? '#f43f5e' : '#6366f1'}
+                size={15}
+                color={isMissed ? colors.danger : colors.primary}
               />
             </View>
 
             <View className="flex-1">
-              <Text className="text-[12px] font-bold text-white">
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
                 {isMissed ? `Missed ${isVideo ? 'Video' : 'Voice'} Call` : `${isVideo ? 'Video' : 'Voice'} Call`}
               </Text>
-              <Text className="text-[10px] text-slate-400 mt-0.5">
+              <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
                 {durLabel ? `Duration: ${durLabel} • ` : ''}
                 {formatTime(item.timestamp)}
               </Text>
@@ -266,7 +271,8 @@ export default function CrmConversationScreen() {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleStartCall(isVideo ? 'video' : 'audio')}
-              className="px-2.5 py-1.5 rounded-xl bg-indigo-600 active:opacity-75"
+              className="px-2.5 py-1.5 rounded-xl active:opacity-75"
+              style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-[10px] font-bold text-white">Call Back</Text>
             </TouchableOpacity>
@@ -279,9 +285,14 @@ export default function CrmConversationScreen() {
     return (
       <View className={`my-1 flex-row ${isSelf ? 'justify-end' : 'justify-start'}`}>
         <View
-          className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${
-            isSelf ? 'bg-indigo-600 rounded-br-xs' : `${palette.surface} border ${palette.border} rounded-bl-xs`
-          } shadow-sm`}
+          className="max-w-[80%] rounded-2xl px-3 py-2 shadow-sm"
+          style={{
+            backgroundColor: isSelf ? colors.primary : colors.card,
+            borderColor: isSelf ? colors.primary : colors.border,
+            borderWidth: isSelf ? 0 : 1,
+            borderBottomRightRadius: isSelf ? 2 : 16,
+            borderBottomLeftRadius: isSelf ? 16 : 2,
+          }}
         >
           {item.attachments && item.attachments[0]?.url ? (
             <Image
@@ -291,19 +302,25 @@ export default function CrmConversationScreen() {
             />
           ) : null}
 
-          <Text className={`text-[13px] ${isSelf ? 'text-white' : palette.text} leading-4`}>
+          <Text
+            className="text-[13px] leading-4"
+            style={{ color: isSelf ? '#ffffff' : colors.text }}
+          >
             {item.message}
           </Text>
 
           <View className="flex-row items-center justify-end gap-1 mt-1">
-            <Text className={`text-[9px] ${isSelf ? 'text-indigo-200' : palette.textMuted}`}>
+            <Text
+              className="text-[9px]"
+              style={{ color: isSelf ? 'rgba(255, 255, 255, 0.7)' : colors.textMuted }}
+            >
               {formatTime(item.timestamp)}
             </Text>
             {isSelf && (
               <Ionicons
                 name={item.delivered ? 'checkmark-done' : 'checkmark'}
                 size={12}
-                color={item.read ? '#38bdf8' : '#c7d2fe'}
+                color={item.read ? colors.info : '#ffffff'}
               />
             )}
           </View>
@@ -313,46 +330,66 @@ export default function CrmConversationScreen() {
   };
 
   return (
-    <AppScreen>
+    <AppScreen style={{ backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         {/* CUSTOM CONVERSATION HEADER */}
-        <View className={`flex-row items-center justify-between px-4 py-2.5 border-b ${palette.border} ${palette.surface}`}>
-          <View className="flex-row items-center gap-2.5 flex-1">
+        <View
+          className="flex-row items-center justify-between px-3 py-2 border-b"
+          style={{ backgroundColor: colors.header, borderBottomColor: colors.border }}
+        >
+          <View className="flex-row items-center gap-2 flex-1">
             <TouchableOpacity onPress={() => router.back()} className="p-1 -ml-1">
-              <Ionicons name="arrow-back" size={20} color={palette.textMutedColor} />
+              <Ionicons name="arrow-back" size={18} color={colors.text} />
             </TouchableOpacity>
 
             <View className="relative">
-              <View className="w-9 h-9 rounded-full bg-indigo-500/15 border border-indigo-500/30 items-center justify-center overflow-hidden">
+              <View
+                className="w-8 h-8 rounded-full border items-center justify-center overflow-hidden"
+                style={{
+                  backgroundColor: colors.primarySoft,
+                  borderColor: colors.primaryBorder,
+                }}
+              >
                 {avatar ? (
                   <Image source={{ uri: avatar }} className="w-full h-full" resizeMode="cover" />
                 ) : (
-                  <Text className="text-[14px] font-extrabold text-indigo-400">
+                  <Text className="text-xs font-black" style={{ color: colors.primary }}>
                     {(name || 'U').charAt(0).toUpperCase()}
                   </Text>
                 )}
               </View>
               {isPeerOnline && (
-                <View className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-950" />
+                <View
+                  className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border"
+                  style={{
+                    backgroundColor: colors.whatsapp,
+                    borderColor: colors.card,
+                  }}
+                />
               )}
             </View>
 
             <View className="flex-1">
-              <Text className={`text-[13px] font-extrabold ${palette.text} truncate`}>{name}</Text>
+              <Text className="text-xs font-black truncate" style={{ color: colors.text }}>
+                {name}
+              </Text>
               <View className="flex-row items-center gap-1 flex-wrap">
-                <Text className="text-[10px] text-emerald-400 font-semibold">
+                <Text
+                  className="text-[10px] font-semibold"
+                  style={{ color: isPeerOnline ? colors.whatsapp : colors.textMuted }}
+                >
                   {remoteTyping ? 'Typing...' : isPeerOnline ? 'Online' : 'Offline'}
                 </Text>
                 {role ? (
-                  <Text className={`text-[10px] ${palette.textMuted} truncate`}>
+                  <Text className="text-[10px] truncate" style={{ color: colors.textMuted }}>
                     • {role}
                   </Text>
                 ) : null}
                 {email ? (
-                  <Text className={`text-[10px] ${palette.textMuted} truncate`}>
+                  <Text className="text-[10px] truncate" style={{ color: colors.textMuted }}>
                     • {email}
                   </Text>
                 ) : null}
@@ -361,31 +398,41 @@ export default function CrmConversationScreen() {
           </View>
 
           {/* Call Launcher Icons */}
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-1.5">
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleStartCall('audio')}
-              className="w-8 h-8 rounded-full bg-indigo-500/15 border border-indigo-500/30 items-center justify-center"
+              className="w-8 h-8 rounded-full border items-center justify-center"
+              style={{
+                backgroundColor: colors.callSoft,
+                borderColor: colors.callBorder,
+              }}
             >
-              <Ionicons name="call" size={15} color="#6366f1" />
+              <Ionicons name="call" size={14} color={colors.call} />
             </TouchableOpacity>
 
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => handleStartCall('video')}
-              className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 items-center justify-center"
+              className="w-8 h-8 rounded-full border items-center justify-center"
+              style={{
+                backgroundColor: colors.whatsappSoft,
+                borderColor: colors.whatsappBorder,
+              }}
             >
-              <Ionicons name="videocam" size={15} color="#10b981" />
+              <Ionicons name="videocam" size={14} color={colors.whatsapp} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* MESSAGES STREAM */}
-        <View className="flex-1 px-4 pt-2">
+        <View className="flex-1 px-3 pt-2">
           {loadingHistory ? (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="small" color="#6366f1" />
-              <Text className={`text-[11px] ${palette.textMuted} mt-2`}>Loading conversation history...</Text>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text className="text-xs mt-2" style={{ color: colors.textMuted }}>
+                Loading conversation history...
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -402,35 +449,54 @@ export default function CrmConversationScreen() {
           {/* Remote Typing Notice */}
           {remoteTyping && (
             <View className="flex-row items-center gap-1.5 py-1 px-2 mb-1">
-              <View className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
-              <Text className={`text-[11px] italic ${palette.textMuted}`}>{name} is typing...</Text>
+              <View
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: colors.primary }}
+              />
+              <Text className="text-[11px] italic" style={{ color: colors.textMuted }}>
+                {name} is typing...
+              </Text>
             </View>
           )}
         </View>
 
         {/* INPUT BAR */}
-        <View className={`flex-row items-center px-3 py-2 border-t ${palette.border} ${palette.surface} gap-2`}>
-          <TouchableOpacity onPress={handlePickImage} className="p-1.5 rounded-full">
-            <Ionicons name="image-outline" size={20} color={palette.textMutedColor} />
+        <View
+          className="flex-row items-center px-3 py-2 border-t gap-2"
+          style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
+        >
+          <TouchableOpacity onPress={handlePickImage} className="p-1 rounded-full">
+            <Ionicons name="image-outline" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TextInput
             value={inputText}
             onChangeText={handleTextChange}
             placeholder="Type a message..."
-            placeholderTextColor={palette.textMutedColor}
-            className={`flex-1 rounded-2xl border ${palette.border} ${palette.surfaceAlt} px-3.5 py-2 text-[13px] ${palette.text}`}
+            placeholderTextColor={colors.inputPlaceholder}
+            className="flex-1 rounded-xl border px-3 py-1.5 text-xs"
+            style={{
+              backgroundColor: colors.inputBg,
+              borderColor: colors.inputBorder,
+              color: colors.text,
+            }}
           />
 
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleSend}
             disabled={!inputText.trim()}
-            className={`w-9 h-9 rounded-full items-center justify-center ${
-              inputText.trim() ? 'bg-indigo-600 shadow-sm' : 'bg-slate-800'
-            }`}
+            className="w-8 h-8 rounded-full items-center justify-center"
+            style={{
+              backgroundColor: inputText.trim() ? colors.primary : colors.cardAlt,
+              opacity: inputText.trim() ? 1 : 0.6,
+            }}
           >
-            <Ionicons name="send" size={14} color="#ffffff" />
+            <Ionicons
+              name="send"
+              size={13}
+              color={inputText.trim() ? '#ffffff' : colors.textMuted}
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
