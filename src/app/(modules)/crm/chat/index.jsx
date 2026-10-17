@@ -16,18 +16,21 @@ import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import { getSession } from '~/utils/authStorage';
 import * as crmService from '~/services/crm';
 import { fetchAccessData } from '~/services/access-management';
+import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
 import CrmHeader from '../_components/CrmHeader';
+import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 
 export default function CrmChatDirectoryScreen() {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { onlineUsers, startCall, isConnected } = useCrmSocket();
+  const { openQuickWhatsApp } = useCrm();
   const [currentUser, setCurrentUser] = useState(null);
 
   const currentUserId = currentUser?.id || currentUser?.userId || currentUser?._id;
 
-  const [activeTab, setActiveTab] = useState('team'); // 'team' | 'contacts'
+  const [activeTab, setActiveTab] = useState('team'); // 'team' | 'contacts' | 'whatsapp'
   const [search, setSearch] = useState('');
   const [teamMembers, setTeamMembers] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -105,8 +108,13 @@ export default function CrmChatDirectoryScreen() {
     loadData();
   };
 
+  // WhatsApp contacts with phone or synced
+  const waContacts = contacts.filter((c) => c.phone || c.moduleAccess?.modules?.includes('konnectx'));
+
   // Filtered directory items
-  const currentItems = activeTab === 'team' ? teamMembers : contacts;
+  const currentItems =
+    activeTab === 'team' ? teamMembers : activeTab === 'contacts' ? contacts : waContacts;
+
   const filteredItems = currentItems.filter((item) => {
     const q = search.toLowerCase();
     const nameMatch = (item.name || '').toLowerCase().includes(q);
@@ -120,6 +128,10 @@ export default function CrmChatDirectoryScreen() {
   };
 
   const openConversation = (item) => {
+    if (activeTab === 'whatsapp') {
+      openQuickWhatsApp(item);
+      return;
+    }
     router.push({
       pathname: '/(modules)/crm/chat/[chatId]',
       params: {
@@ -335,14 +347,14 @@ export default function CrmChatDirectoryScreen() {
               backgroundColor: activeTab === 'contacts' ? colors.primary : 'transparent',
             }}
           >
-            <View className="flex-row items-center gap-1.5">
+            <View className="flex-row items-center gap-1">
               <Ionicons
                 name="person-circle"
                 size={13}
                 color={activeTab === 'contacts' ? '#ffffff' : colors.textMuted}
               />
               <Text
-                className="text-[11px] font-bold"
+                className="text-[10px] font-bold"
                 style={{
                   color: activeTab === 'contacts' ? '#ffffff' : colors.textMuted,
                 }}
@@ -351,7 +363,34 @@ export default function CrmChatDirectoryScreen() {
               </Text>
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setActiveTab('whatsapp')}
+            className="flex-1 py-1.5 rounded-lg items-center justify-center"
+            style={{
+              backgroundColor: activeTab === 'whatsapp' ? colors.whatsapp : 'transparent',
+            }}
+          >
+            <View className="flex-row items-center gap-1">
+              <Ionicons
+                name="logo-whatsapp"
+                size={12}
+                color={activeTab === 'whatsapp' ? '#ffffff' : colors.textMuted}
+              />
+              <Text
+                className="text-[10px] font-bold"
+                style={{
+                  color: activeTab === 'whatsapp' ? '#ffffff' : colors.textMuted,
+                }}
+              >
+                WhatsApp ({waContacts.length})
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
+
+        <QuickWhatsAppModal />
 
         {/* Search Filter Bar */}
         <View

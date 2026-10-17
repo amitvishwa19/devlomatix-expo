@@ -15,6 +15,11 @@ export default function CrmRootLayout() {
         <Stack.Screen name="analytics/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="dcr/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="settings/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="quotations/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="quotations/new" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="quotations/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="candidates/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="candidates/[id]" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </CrmProvider>
   );

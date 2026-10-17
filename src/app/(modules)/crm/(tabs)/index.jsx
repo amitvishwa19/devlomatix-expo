@@ -371,6 +371,44 @@ export default function CrmDashboard() {
               Sync WA
             </Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(modules)/crm/quotations')}
+            className="w-[31%] items-center justify-center rounded-[16px] border p-2.5 active:opacity-75"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: colors.primaryDark }}
+            >
+              <Ionicons name="receipt-outline" size={16} color="#ffffff" />
+            </View>
+            <Text className="mt-1.5 text-[11px] font-bold" style={{ color: colors.text }}>
+              Quotations
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(modules)/crm/candidates')}
+            className="w-[31%] items-center justify-center rounded-[16px] border p-2.5 active:opacity-75"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: colors.accent }}
+            >
+              <Ionicons name="briefcase-outline" size={16} color="#ffffff" />
+            </View>
+            <Text className="mt-1.5 text-[11px] font-bold" style={{ color: colors.text }}>
+              Candidates
+            </Text>
+          </Pressable>
         </View>
 
         {/* Top Priority Opportunities */}

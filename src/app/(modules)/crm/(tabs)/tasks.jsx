@@ -10,18 +10,30 @@ import CrmHeader from '../_components/CrmHeader';
 import TaskCard from '../_components/TaskCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import CreateTaskModal from '../_components/CreateTaskModal';
+import KanbanColumnView from '../_components/KanbanColumnView';
+import * as crmService from '~/services/crm';
 
 export default function CrmTasksTab() {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
 
+  const [viewMode, setViewMode] = useState('LIST'); // 'LIST' | 'KANBAN'
   const [activeTab, setActiveTab] = useState('PENDING'); // 'PENDING' | 'COMPLETED'
   const [selectedType, setSelectedType] = useState('ALL');
 
   const taskList = Array.isArray(tasks) ? tasks : [];
   const pendingTasks = taskList.filter((t) => t && t.status !== 'COMPLETED');
   const completedTasks = taskList.filter((t) => t && t.status === 'COMPLETED');
+
+  const handleUpdateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await crmService.updateTask(taskId, { status: newStatus });
+      refreshAll();
+    } catch (e) {
+      console.warn('Failed to update task status:', e?.message || e);
+    }
+  };
 
   const currentList = activeTab === 'PENDING' ? pendingTasks : completedTasks;
 
@@ -34,24 +46,55 @@ export default function CrmTasksTab() {
   return (
     <AppScreen>
       <CrmHeader
-        title="Tasks & Follow-ups"
-        subtitle={`${pendingTasks.length} Pending Actions`}
+        title="Tasks & Kanban"
+        subtitle={`${pendingTasks.length} Pending Actions • ${viewMode === 'KANBAN' ? 'Board View' : 'List View'}`}
         rightActions={
-          <Pressable
-            onPress={() => openCreateTask()}
-            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
-            style={{ backgroundColor: colors.primary }}
-          >
-            <Ionicons name="add" size={16} color="#ffffff" />
-            <Text className="text-xs font-bold text-white">Task</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={() => setViewMode((prev) => (prev === 'LIST' ? 'KANBAN' : 'LIST'))}
+              className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: viewMode === 'KANBAN' ? colors.primarySoft : colors.cardAlt,
+                borderColor: viewMode === 'KANBAN' ? colors.primaryBorder : colors.border,
+              }}
+            >
+              <Ionicons
+                name={viewMode === 'KANBAN' ? 'list' : 'grid-outline'}
+                size={14}
+                color={viewMode === 'KANBAN' ? colors.primary : colors.text}
+              />
+              <Text
+                className="text-[11px] font-bold"
+                style={{ color: viewMode === 'KANBAN' ? colors.primary : colors.text }}
+              >
+                {viewMode === 'KANBAN' ? 'List' : 'Board'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => openCreateTask()}
+              className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Ionicons name="add" size={16} color="#ffffff" />
+              <Text className="text-xs font-bold text-white">Task</Text>
+            </Pressable>
+          </View>
         }
       />
 
       <QuickWhatsAppModal />
       <CreateTaskModal />
 
-      {/* Tabs & Type Filters Bar */}
+      {viewMode === 'KANBAN' ? (
+        <KanbanColumnView
+          tasks={taskList}
+          onUpdateStatus={handleUpdateTaskStatus}
+          onAddTask={() => openCreateTask()}
+        />
+      ) : (
+        <>
+          {/* Tabs & Type Filters Bar */}
       <View
         className="px-3 py-2 border-b"
         style={{
@@ -178,6 +221,8 @@ export default function CrmTasksTab() {
           </View>
         )}
       </ScrollView>
+        </>
+      )}
     </AppScreen>
   );
 }

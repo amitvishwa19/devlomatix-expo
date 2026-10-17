@@ -10,6 +10,15 @@ import CrmHeader from '../_components/CrmHeader';
 import ContactCard from '../_components/ContactCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import CreateContactModal from '../_components/CreateContactModal';
+import ShareContactModal from '../_components/ShareContactModal';
+
+const SCOPE_FILTERS = [
+  { id: 'ALL', label: 'All Contacts' },
+  { id: 'ATS_LINKED', label: 'ATS Linked' },
+  { id: 'WA_SYNCED', label: 'WhatsApp Synced' },
+  { id: 'SHARED', label: 'Shared' },
+  ...CRM_TAG_FILTERS.filter((t) => t !== 'ALL').map((t) => ({ id: t, label: t.replace('_', ' ') })),
+];
 
 export default function CrmContactsTab() {
   const router = useRouter();
@@ -17,11 +26,22 @@ export default function CrmContactsTab() {
   const { contacts, loading, refreshing, refreshAll, openCreateContact } = useCrm();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState('ALL');
+  const [selectedScope, setSelectedScope] = useState('ALL');
+  const [shareContact, setShareContact] = useState(null);
 
   const filteredContacts = contacts.filter((c) => {
-    if (selectedTag !== 'ALL') {
-      if (!c.tags || !c.tags.includes(selectedTag)) return false;
+    if (selectedScope !== 'ALL') {
+      const ma = c.moduleAccess || {};
+      const mods = Array.isArray(ma.modules) ? ma.modules : [];
+      if (selectedScope === 'ATS_LINKED') {
+        if (!mods.includes('ats')) return false;
+      } else if (selectedScope === 'WA_SYNCED') {
+        if (!mods.includes('konnectx')) return false;
+      } else if (selectedScope === 'SHARED') {
+        if (!Array.isArray(ma.sharedWith) || ma.sharedWith.length === 0) return false;
+      } else {
+        if (!c.tags || !c.tags.includes(selectedScope)) return false;
+      }
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -53,6 +73,12 @@ export default function CrmContactsTab() {
 
       <QuickWhatsAppModal />
       <CreateContactModal />
+      <ShareContactModal
+        contact={shareContact}
+        visible={!!shareContact}
+        onClose={() => setShareContact(null)}
+        onUpdated={refreshAll}
+      />
 
       {/* Search & Tag Filter Bar */}
       <View
@@ -91,12 +117,12 @@ export default function CrmContactsTab() {
           contentContainerStyle={{ paddingRight: 20 }}
           className="mt-2 flex-row py-0.5"
         >
-          {CRM_TAG_FILTERS.map((tag) => {
-            const isSelected = selectedTag === tag;
+          {SCOPE_FILTERS.map((f) => {
+            const isSelected = selectedScope === f.id;
             return (
               <Pressable
-                key={tag}
-                onPress={() => setSelectedTag(tag)}
+                key={f.id}
+                onPress={() => setSelectedScope(f.id)}
                 className="mr-2 rounded-xl px-3 py-1.5 border"
                 style={{
                   backgroundColor: isSelected ? colors.primary : colors.cardAlt,
@@ -109,7 +135,7 @@ export default function CrmContactsTab() {
                     color: isSelected ? '#ffffff' : colors.text,
                   }}
                 >
-                  {tag.replace('_', ' ')}
+                  {f.label}
                 </Text>
               </Pressable>
             );
@@ -132,7 +158,13 @@ export default function CrmContactsTab() {
             </Text>
           </View>
         ) : filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => <ContactCard key={contact.id} contact={contact} />)
+          filteredContacts.map((contact) => (
+            <ContactCard
+              key={contact.id}
+              contact={contact}
+              onShare={(c) => setShareContact(c)}
+            />
+          ))
         ) : (
           <View
             className="rounded-[16px] border border-dashed p-6 items-center justify-center"

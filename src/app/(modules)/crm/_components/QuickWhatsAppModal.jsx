@@ -1,30 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
 import * as crmService from '~/services/crm';
+import api from '~/utils/axios';
+import { apiUrls } from '~/utils/api';
+import { resolveWorkspaceId } from '~/utils/workspace';
 
-const TEMPLATES = [
+const DEFAULT_TEMPLATES = [
   {
     id: 'followup',
     title: 'Proposal Follow-up',
+    category: 'UTILITY',
     text: 'Hi {{name}}, just following up on the proposal we shared. We would love to address any questions you have and finalize the next steps!',
   },
   {
     id: 'meeting',
     title: 'Meeting Confirmation',
+    category: 'UTILITY',
     text: 'Hello {{name}}, confirming our upcoming discussion. Looking forward to connecting and reviewing the project scope with you.',
   },
   {
     id: 'payment',
     title: 'Commercial Milestone',
+    category: 'UTILITY',
     text: 'Hi {{name}}, sharing our commercial details and invoice link for your review. Please let us know once processed.',
   },
   {
     id: 'checkin',
     title: 'Quick Check-in',
+    category: 'MARKETING',
     text: 'Hope you are doing well {{name}}! Just checking in to see if you have any updates regarding our recent conversation.',
   },
 ];
@@ -33,12 +49,43 @@ export default function QuickWhatsAppModal() {
   const insets = useSafeAreaInsets();
   const { colors } = useCrmTheme();
   const { quickWhatsAppTarget, closeQuickWhatsApp, refreshAll } = useCrm();
+
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
+  const [templates, setTemplates] = useState(DEFAULT_TEMPLATES);
 
   const contact = quickWhatsAppTarget?.contact;
   const deal = quickWhatsAppTarget?.deal;
+
+  // Load Approved Meta Templates
+  useEffect(() => {
+    async function loadMetaTemplates() {
+      try {
+        const wsId = await resolveWorkspaceId();
+        const res = await api.get(apiUrls.templates, { params: { workspaceId: wsId } });
+        const remote = res?.data?.templates || res?.data || [];
+        if (Array.isArray(remote) && remote.length > 0) {
+          const formatted = remote
+            .map((t) => ({
+              id: t.id || t._id,
+              title: t.name || t.title,
+              category: t.category || 'UTILITY',
+              text: t.body || t.text || t.content || '',
+            }))
+            .filter((t) => t.text);
+          if (formatted.length > 0) {
+            setTemplates([...formatted, ...DEFAULT_TEMPLATES]);
+          }
+        }
+      } catch {
+        // Fallback to presets
+      }
+    }
+    if (contact) {
+      loadMetaTemplates();
+    }
+  }, [contact]);
 
   useEffect(() => {
     if (contact) {
@@ -55,11 +102,15 @@ export default function QuickWhatsAppModal() {
   if (!quickWhatsAppTarget || !contact) return null;
 
   const applyTemplate = (tpl) => {
-    const customized = tpl.text.replace(/\{\{name\}\}/g, contact.name || 'there');
+    let customized = tpl.text
+      .replace(/\{\{name\}\}/gi, contact.name || 'there')
+      .replace(/\{\{1\}\}/g, contact.name || 'there')
+      .replace(/\{\{company\}\}/gi, contact.account?.name || deal?.title || 'our firm')
+      .replace(/\{\{2\}\}/g, deal?.title || contact.account?.name || 'our proposal');
     setMessage(customized);
   };
 
-  const handleSend = async () => {
+  const handleSendCloud = async () => {
     if (!message.trim()) return;
     try {
       setSending(true);
@@ -69,14 +120,14 @@ export default function QuickWhatsAppModal() {
         dealId: deal?.id,
       });
 
-      if (res.success) {
-        setStatusMsg({ type: 'success', text: 'WhatsApp message dispatched successfully via KonnectX Cloud API!' });
+      if (res?.success) {
+        setStatusMsg({ type: 'success', text: 'WhatsApp message dispatched via KonnectX Cloud API!' });
         setTimeout(() => {
           closeQuickWhatsApp();
           refreshAll();
         }, 1200);
       } else {
-        setStatusMsg({ type: 'error', text: res.error || 'Failed to send WhatsApp message' });
+        setStatusMsg({ type: 'error', text: res?.error || 'Failed to send WhatsApp message' });
       }
     } catch (e) {
       setStatusMsg({ type: 'error', text: e.message || 'Error dispatching message' });
@@ -85,22 +136,28 @@ export default function QuickWhatsAppModal() {
     }
   };
 
+  const handleOpenWhatsAppApp = () => {
+    if (!message.trim()) return;
+    const cleanPhone = (contact.phone || '').replace(/[^\d+]/g, '');
+    const encoded = encodeURIComponent(message.trim());
+    const url = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone.replace('+', '')}&text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+    Linking.openURL(url);
+    closeQuickWhatsApp();
+  };
+
   return (
-    <Modal
-      visible={true}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={closeQuickWhatsApp}
-    >
+    <Modal visible={true} transparent={true} animationType="slide" onRequestClose={closeQuickWhatsApp}>
       <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
         <Pressable className="flex-1" onPress={closeQuickWhatsApp} />
 
         <View
-          className="rounded-t-3xl p-4 shadow-2xl border-t"
+          className="rounded-t-3xl p-4 shadow-2xl border-t max-h-[85%]"
           style={{
             backgroundColor: colors.card,
             borderColor: colors.border,
-            paddingBottom: Math.max(insets.bottom + 20, 40),
+            paddingBottom: Math.max(insets.bottom + 15, 30),
           }}
         >
           {/* Header */}
@@ -110,7 +167,7 @@ export default function QuickWhatsAppModal() {
                 className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.whatsapp }}
               >
-                <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
+                <Ionicons name="logo-whatsapp" size={17} color="#ffffff" />
               </View>
               <View>
                 <Text className="text-sm font-black" style={{ color: colors.text }}>
@@ -124,13 +181,13 @@ export default function QuickWhatsAppModal() {
 
             <Pressable
               onPress={closeQuickWhatsApp}
-              className="h-8 w-8 items-center justify-center rounded-full border"
+              className="h-7 w-7 items-center justify-center rounded-full border"
               style={{
                 backgroundColor: colors.cardAlt,
                 borderColor: colors.border,
               }}
             >
-              <Ionicons name="close" size={16} color={colors.text} />
+              <Ionicons name="close" size={15} color={colors.text} />
             </Pressable>
           </View>
 
@@ -155,16 +212,16 @@ export default function QuickWhatsAppModal() {
             className="mt-2.5 text-[10px] font-bold uppercase tracking-wider"
             style={{ color: colors.textMuted }}
           >
-            Quick AI & Standard Templates
+            Meta Approved & Quick Templates
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="mt-1 flex-row gap-x-2 py-0.5"
+            className="mt-1 flex-row gap-x-1.5 py-0.5"
           >
-            {TEMPLATES.map((t) => (
+            {templates.map((t, idx) => (
               <Pressable
-                key={t.id}
+                key={t.id || idx}
                 onPress={() => applyTemplate(t)}
                 className="rounded-xl border px-2.5 py-1.5 active:opacity-75 mr-1"
                 style={{
@@ -179,9 +236,37 @@ export default function QuickWhatsAppModal() {
             ))}
           </ScrollView>
 
+          {/* Interactive WhatsApp Bubble Preview */}
+          <View
+            className="mt-2.5 rounded-2xl p-3 border"
+            style={{
+              backgroundColor: '#0b141a',
+              borderColor: '#1f2c34',
+            }}
+          >
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
+                Live WhatsApp Bubble Preview
+              </Text>
+              <Text className="text-[9px] text-slate-400">Outgoing</Text>
+            </View>
+            <View
+              className="rounded-2xl rounded-tr-xs p-2.5 self-end max-w-[90%]"
+              style={{ backgroundColor: '#005c4b' }}
+            >
+              <Text className="text-xs text-white leading-relaxed">
+                {message || 'Type message below...'}
+              </Text>
+              <View className="flex-row items-center justify-end gap-x-1 mt-1">
+                <Text className="text-[9px] text-emerald-200">Just now</Text>
+                <Ionicons name="checkmark-done" size={12} color="#53bdeb" />
+              </View>
+            </View>
+          </View>
+
           {/* Message Input */}
           <View
-            className="mt-2.5 rounded-xl border p-2.5"
+            className="mt-2 rounded-xl border p-2"
             style={{
               backgroundColor: colors.inputBg,
               borderColor: colors.inputBorder,
@@ -189,13 +274,13 @@ export default function QuickWhatsAppModal() {
           >
             <TextInput
               multiline
-              numberOfLines={4}
+              numberOfLines={3}
               value={message}
               onChangeText={setMessage}
-              placeholder="Type WhatsApp message here..."
+              placeholder="Edit WhatsApp message here..."
               placeholderTextColor={colors.inputPlaceholder}
-              className="min-h-[80px] text-xs leading-5"
-              style={{ color: colors.text }}
+              className="text-xs leading-5"
+              style={{ color: colors.text, maxHeight: 80 }}
               textAlignVertical="top"
             />
           </View>
@@ -203,7 +288,7 @@ export default function QuickWhatsAppModal() {
           {/* Feedback Status */}
           {statusMsg && (
             <View
-              className="mt-2.5 rounded-xl p-2 border"
+              className="mt-2 rounded-xl p-2 border"
               style={{
                 backgroundColor: statusMsg.type === 'success' ? colors.successSoft : colors.dangerSoft,
                 borderColor: statusMsg.type === 'success' ? colors.successBorder : colors.dangerBorder,
@@ -218,28 +303,42 @@ export default function QuickWhatsAppModal() {
             </View>
           )}
 
-          {/* Send Button */}
-          <Pressable
-            onPress={handleSend}
-            disabled={sending || !contact.phone || !message.trim()}
-            className="mt-3 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-md active:opacity-80"
-            style={{
-              backgroundColor: colors.whatsapp,
-              opacity: sending || !contact.phone || !message.trim() ? 0.5 : 1,
-            }}
-          >
-            {sending ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <>
-                <Ionicons name="send" size={15} color="#ffffff" />
-                <Text className="text-xs font-black text-white">Send via KonnectX Cloud</Text>
-              </>
-            )}
-          </Pressable>
+          {/* Dual Action Send Buttons */}
+          <View className="mt-3 flex-row items-center gap-x-2">
+            <Pressable
+              onPress={handleOpenWhatsAppApp}
+              disabled={!message.trim()}
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 py-3 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
+            >
+              <Ionicons name="open-outline" size={14} color={colors.text} />
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>Open in App</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSendCloud}
+              disabled={sending || !contact.phone || !message.trim()}
+              className="flex-2 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-md active:opacity-80"
+              style={{
+                backgroundColor: colors.whatsapp,
+                opacity: sending || !contact.phone || !message.trim() ? 0.5 : 1,
+              }}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <Ionicons name="send" size={14} color="#ffffff" />
+                  <Text className="text-xs font-black text-white">Send via Cloud API</Text>
+                </>
+              )}
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
   );
 }
-

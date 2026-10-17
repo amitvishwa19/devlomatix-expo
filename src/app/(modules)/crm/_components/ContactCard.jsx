@@ -5,7 +5,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
 
-export default function ContactCard({ contact }) {
+export default function ContactCard({ contact, onShare }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
@@ -28,6 +28,11 @@ export default function ContactCard({ contact }) {
   const handleWhatsApp = () => {
     openQuickWhatsApp(contact);
   };
+
+  const ma = contact.moduleAccess || {};
+  const isAts = Array.isArray(ma.modules) && ma.modules.includes('ats');
+  const isKonnectx = Array.isArray(ma.modules) && ma.modules.includes('konnectx');
+  const isShared = Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0;
 
   return (
     <Pressable
@@ -54,13 +59,33 @@ export default function ContactCard({ contact }) {
           </View>
 
           <View className="flex-1">
-            <Text
-              className="text-[13px] font-black tracking-tight"
-              style={{ color: colors.text }}
-              numberOfLines={1}
-            >
-              {contact.name}
-            </Text>
+            <View className="flex-row items-center gap-x-1.5">
+              <Text
+                className="text-[13px] font-black tracking-tight"
+                style={{ color: colors.text }}
+                numberOfLines={1}
+              >
+                {contact.name}
+              </Text>
+
+              {/* Module Visibility Badges */}
+              {isAts && (
+                <View className="rounded px-1.5 py-0.2 border" style={{ backgroundColor: colors.infoSoft, borderColor: colors.infoBorder }}>
+                  <Text className="text-[8px] font-bold" style={{ color: colors.info }}>ATS</Text>
+                </View>
+              )}
+              {isKonnectx && (
+                <View className="rounded px-1.5 py-0.2 border" style={{ backgroundColor: colors.whatsappSoft, borderColor: colors.whatsappBorder }}>
+                  <Text className="text-[8px] font-bold" style={{ color: colors.whatsapp }}>WA</Text>
+                </View>
+              )}
+              {isShared && (
+                <View className="rounded px-1.5 py-0.2 border" style={{ backgroundColor: colors.copilotSoft, borderColor: colors.copilotBorder }}>
+                  <Text className="text-[8px] font-bold" style={{ color: colors.copilot }}>Shared</Text>
+                </View>
+              )}
+            </View>
+
             <Text
               className="text-[11px] font-medium mt-0.5"
               style={{ color: colors.textMuted }}
@@ -108,6 +133,19 @@ export default function ContactCard({ contact }) {
                 <Ionicons name="call-outline" size={14} color={colors.call} />
               </Pressable>
             </>
+          )}
+
+          {onShare && (
+            <Pressable
+              onPress={() => onShare(contact)}
+              className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
+            >
+              <Ionicons name="share-social-outline" size={14} color={colors.textMuted} />
+            </Pressable>
           )}
 
           <View className="h-8 w-5 items-center justify-center">
