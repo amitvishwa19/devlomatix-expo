@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
@@ -16,6 +17,8 @@ import * as crmService from '~/services/crm';
 export default function CrmTasksTab() {
   const router = useRouter();
   const { colors } = useCrmTheme();
+  const scrollRef = useRef(null);
+  useScrollToTop(scrollRef);
   const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
 
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' | 'KANBAN'
@@ -180,6 +183,7 @@ export default function CrmTasksTab() {
 
       {/* Task List */}
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}

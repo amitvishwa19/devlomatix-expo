@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
@@ -23,6 +24,8 @@ const SCOPE_FILTERS = [
 export default function CrmContactsTab() {
   const router = useRouter();
   const { colors } = useCrmTheme();
+  const scrollRef = useRef(null);
+  useScrollToTop(scrollRef);
   const { contacts, loading, refreshing, refreshAll, openCreateContact } = useCrm();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,6 +148,7 @@ export default function CrmContactsTab() {
 
       {/* Contacts List */}
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}

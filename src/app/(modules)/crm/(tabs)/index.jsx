@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
@@ -16,6 +17,8 @@ import { useCrmTheme } from '../utils/colors';
 export default function CrmDashboard() {
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
+  const scrollRef = useRef(null);
+  useScrollToTop(scrollRef);
   const {
     deals,
     contacts,
@@ -76,6 +79,7 @@ export default function CrmDashboard() {
       <CreateTaskModal />
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
@@ -13,6 +14,8 @@ import CreateDealModal from '../_components/CreateDealModal';
 export default function CrmPipelineTab() {
   const router = useRouter();
   const { colors } = useCrmTheme();
+  const scrollRef = useRef(null);
+  useScrollToTop(scrollRef);
   const {
     pipelines,
     activePipeline,
@@ -167,6 +170,7 @@ export default function CrmPipelineTab() {
 
       {/* Deals List */}
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
