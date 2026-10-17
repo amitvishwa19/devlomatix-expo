@@ -5,10 +5,12 @@ import { Animated, Easing, Image, Text, TouchableOpacity, View } from 'react-nat
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
+import { useCrmDrawer } from '~/app/(modules)/crm/_components/CrmDrawer';
 
 export default function UserStatusBar({
   scrollY,
   onPressUser,
+  showMenu = true,
   showNotifications = true,
   showAnalytics = true,
   showSettings = true,
@@ -18,6 +20,7 @@ export default function UserStatusBar({
   const { palette } = useAppTheme();
   const { unreadCount } = useNotificationStore();
   const [user, setUser] = useState(null);
+  const { openDrawer } = useCrmDrawer();
 
   useEffect(() => {
     getSession().then((s) => setUser(s?.user ?? null));
@@ -87,6 +90,21 @@ export default function UserStatusBar({
         transform: scrollY ? [{ translateY: offsetAnim }] : undefined,
         opacity: scrollY ? opacityAnim : 1,
       }}>
+      {/* Menu / Drawer Toggle */}
+      {showMenu && (
+        <TouchableOpacity
+          onPress={openDrawer}
+          className="h-8 w-8 items-center justify-center rounded-xl border"
+          style={{
+            backgroundColor: actionBtnBg,
+            borderColor: actionBtnBorder,
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="menu" size={18} color={palette.textColor} />
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         onPress={handleUserPress}
         className="flex-1 flex-row items-center gap-2"

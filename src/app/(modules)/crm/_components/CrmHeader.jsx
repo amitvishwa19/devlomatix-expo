@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useCrmTheme } from '../utils/colors';
+import { useCrmDrawer } from './CrmDrawer';
 
 export default function CrmHeader({
   title = 'DevX CRM',
@@ -14,6 +15,7 @@ export default function CrmHeader({
 }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
+  const { openDrawer } = useCrmDrawer();
 
   return (
     <View
@@ -40,12 +42,13 @@ export default function CrmHeader({
               <Ionicons name="arrow-back" size={18} color={colors.text} />
             </Pressable>
           ) : (
-            <View
-              className="h-9 w-9 items-center justify-center rounded-xl shadow-sm"
+            <Pressable
+              onPress={openDrawer}
+              className="h-9 w-9 items-center justify-center rounded-xl shadow-sm active:opacity-75"
               style={{ backgroundColor: colors.primary }}
             >
-              <Ionicons name="rocket" size={18} color="#ffffff" />
-            </View>
+              <Ionicons name="menu" size={20} color="#ffffff" />
+            </Pressable>
           )}
 
           <View className="flex-1">

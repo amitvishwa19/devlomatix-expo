@@ -1,7 +1,7 @@
-import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../utils/colors';
@@ -13,7 +13,7 @@ const tabConfig = {
   pipeline: { icon: 'funnel-outline', activeIcon: 'funnel', label: 'Pipeline' },
   contacts: { icon: 'people-outline', activeIcon: 'people', label: 'Contacts' },
   chat: { icon: 'chatbubbles-outline', activeIcon: 'chatbubbles', label: 'Chat' },
-  tasks: { icon: 'checkbox-outline', activeIcon: 'checkbox', label: 'Tasks' },
+  tasks: { icon: 'layers-outline', activeIcon: 'checkbox', label: 'Tasks' },
   copilot: { icon: 'sparkles-outline', activeIcon: 'sparkles', label: 'Copilot' },
 };
 
