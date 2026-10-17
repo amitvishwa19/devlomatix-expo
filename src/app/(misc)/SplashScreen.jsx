@@ -50,7 +50,7 @@ export default function AppSplashScreen() {
         }
 
         const session = await getSession();
-        const nextRoute = session?.isLoggedIn ? '/(tabs)/home' : '/(auth)/login';
+        const nextRoute = session?.isLoggedIn ? '/(modules)/crm/(tabs)' : '/(auth)/login';
         router.replace(nextRoute);
       } catch {
         router.replace('/(auth)/login');

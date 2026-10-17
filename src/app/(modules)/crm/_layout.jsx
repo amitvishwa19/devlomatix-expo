@@ -1,8 +1,37 @@
-import React from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
 import { CrmProvider } from '~/providers/CrmProvider';
+import { getSession } from '~/utils/authStorage';
 
 export default function CrmRootLayout() {
+  const router = useRouter();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      const session = await getSession();
+      if (!isMounted) return;
+
+      if (!session?.isLoggedIn) {
+        router.replace('/(auth)/login');
+        return;
+      }
+      setIsReady(true);
+    };
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <CrmProvider>
       <Stack screenOptions={{ headerShown: false }}>

@@ -11,9 +11,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useCrmTheme } from '../../utils/colors';
-import CrmHeader from '../../_components/CrmHeader';
-import ConvertCandidateModal from '../../_components/ConvertCandidateModal';
+import { useCrmTheme } from '../utils/colors';
+import CrmHeader from '../_components/CrmHeader';
+import ConvertCandidateModal from '../_components/ConvertCandidateModal';
 import * as hireflowService from '~/services/hireflow';
 
 export default function CandidateDetailScreen() {

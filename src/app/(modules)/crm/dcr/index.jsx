@@ -166,10 +166,10 @@ export default function DcrScreen() {
           </TouchableOpacity>
           <View>
             <Text className="text-sm font-black" style={{ color: colors.text }}>
-              Activity Center
+              Daily Call Records (DCR)
             </Text>
             <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
-              Calls, Visits & Meetings
+              Daily Calls, Visits & Field Activity
             </Text>
           </View>
         </View>

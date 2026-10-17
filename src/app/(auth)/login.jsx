@@ -53,7 +53,7 @@ export default function LoginScreen() {
             text1: "Success",
             text2: successMessage,
         });
-        router.replace("/(tabs)/home");
+        router.replace("/(modules)/crm/(tabs)");
     };
 
     const handleLogin = async () => {

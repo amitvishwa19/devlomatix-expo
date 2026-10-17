@@ -52,7 +52,7 @@ export default function OnboardingScreen() {
 
     try {
       const session = await getSession();
-      router.replace(session?.isLoggedIn ? '/(tabs)/home' : '/(auth)/login');
+      router.replace(session?.isLoggedIn ? '/(modules)/crm/(tabs)' : '/(auth)/login');
     } catch {
       router.replace('/(auth)/login');
     }

@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, Text, View, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import UserStatusBar from '~/components/UserStatusBar';
 import { useCrm } from '~/providers/CrmProvider';
-import { useCrmTheme } from '../utils/colors';
-import CrmHeader from '../_components/CrmHeader';
+import * as crmService from '~/services/crm';
+import CreateContactModal from '../_components/CreateContactModal';
+import CreateDealModal from '../_components/CreateDealModal';
+import CreateTaskModal from '../_components/CreateTaskModal';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
-import CreateDealModal from '../_components/CreateDealModal';
-import CreateContactModal from '../_components/CreateContactModal';
-import CreateTaskModal from '../_components/CreateTaskModal';
-import * as crmService from '~/services/crm';
+import { useCrmTheme } from '../utils/colors';
 
 export default function CrmDashboard() {
   const router = useRouter();
@@ -66,7 +66,8 @@ export default function CrmDashboard() {
 
   return (
     <AppScreen>
-      <CrmHeader title="DevX CRM" subtitle="Revenue Engine & Copilot" />
+      <UserStatusBar />
+
 
       {/* Global Modals */}
       <QuickWhatsAppModal />
@@ -344,7 +345,7 @@ export default function CrmDashboard() {
               <Ionicons name="call" size={16} color="#ffffff" />
             </View>
             <Text className="mt-1.5 text-[11px] font-bold" style={{ color: colors.text }}>
-              Activity Center
+              DCR (Calls)
             </Text>
           </Pressable>
 

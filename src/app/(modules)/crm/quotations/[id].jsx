@@ -12,9 +12,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
-import { useCrmTheme } from '../../utils/colors';
-import CrmHeader from '../../_components/CrmHeader';
-import SendQuotationModal from '../../_components/SendQuotationModal';
+import { useCrmTheme } from '../utils/colors';
+import CrmHeader from '../_components/CrmHeader';
+import SendQuotationModal from '../_components/SendQuotationModal';
 import * as quotationService from '~/services/quotation';
 
 export default function QuotationDetailScreen() {

@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
 
 export default function CrmHeader({
@@ -15,7 +14,6 @@ export default function CrmHeader({
 }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
-  const { refreshAll, refreshing } = useCrm();
 
   return (
     <View
@@ -88,50 +86,11 @@ export default function CrmHeader({
           </View>
         </View>
 
-        {/* Right Side: Action Shortcuts */}
-        <View className="flex-row items-center gap-x-1.5">
-          {showAnalytics && (
-            <Pressable
-              onPress={() => router.push('/(modules)/crm/analytics')}
-              className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-70"
-              style={{
-                backgroundColor: colors.cardAlt,
-                borderColor: colors.border,
-              }}
-            >
-              <Ionicons name="bar-chart-outline" size={16} color={colors.textSecondary} />
-            </Pressable>
-          )}
-
-          {showSettings && (
-            <Pressable
-              onPress={() => router.push('/(modules)/crm/settings')}
-              className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-70"
-              style={{
-                backgroundColor: colors.cardAlt,
-                borderColor: colors.border,
-              }}
-            >
-              <Ionicons name="settings-outline" size={16} color={colors.textSecondary} />
-            </Pressable>
-          )}
-
-          <Pressable
-            onPress={refreshAll}
-            disabled={refreshing}
-            className={`h-9 w-9 items-center justify-center rounded-xl border active:opacity-70 ${
-              refreshing ? 'opacity-50' : ''
-            }`}
-            style={{
-              backgroundColor: colors.cardAlt,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="refresh-outline" size={16} color={colors.textSecondary} />
-          </Pressable>
-
-          {rightActions}
-        </View>
+        {rightActions ? (
+          <View className="flex-row items-center gap-x-1.5">
+            {rightActions}
+          </View>
+        ) : null}
       </View>
     </View>
   );

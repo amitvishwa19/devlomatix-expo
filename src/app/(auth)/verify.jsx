@@ -38,7 +38,7 @@ export default function VerifyScreen() {
       <CustomButton
         title="Verify and continue"
         variant="primary"
-        onPress={() => router.replace('/(tabs)/home')} />
+        onPress={() => router.replace('/(modules)/crm/(tabs)')} />
 
       <CustomButton
         title="Use another method"
