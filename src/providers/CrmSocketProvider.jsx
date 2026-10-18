@@ -763,7 +763,7 @@ export function CrmSocketProvider({ children }) {
     setCallStatus('idle');
   };
 
-  const endCall = () => {
+  const endCall = (optionalNotes = '') => {
     stopRingtone();
     if (callTimeoutRef.current) {
       clearTimeout(callTimeoutRef.current);
@@ -800,6 +800,7 @@ export function CrmSocketProvider({ children }) {
       setPostCallRecord({
         ...currentSession,
         duration: finalDuration,
+        initialNotes: typeof optionalNotes === 'string' ? optionalNotes : '',
       });
     }
   };
@@ -812,7 +813,31 @@ export function CrmSocketProvider({ children }) {
     }
   };
 
-  const toggleCamera = () => {
+  const enableCamera = async () => {
+    if (webrtcClientRef.current) {
+      const updatedStream = await webrtcClientRef.current.acquireCameraTrack();
+      if (updatedStream) {
+        setIsCameraOff(false);
+        setLocalStream(null);
+        setTimeout(() => {
+          setLocalStream(updatedStream);
+        }, 50);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const toggleCamera = async () => {
+    const videoTracks =
+      localStream && typeof localStream.getVideoTracks === 'function'
+        ? localStream.getVideoTracks()
+        : [];
+    if (videoTracks.length === 0) {
+      // If camera track is missing/denied, ask for permission and acquire track
+      await enableCamera();
+      return;
+    }
     const next = !isCameraOff;
     setIsCameraOff(next);
     if (webrtcClientRef.current) {
@@ -851,6 +876,7 @@ export function CrmSocketProvider({ children }) {
         endCall,
         toggleMute,
         toggleCamera,
+        enableCamera,
         switchCamera,
       }}
     >

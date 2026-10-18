@@ -37,8 +37,14 @@ export default function PostCallSummaryModal() {
   const { postCallRecord, setPostCallRecord } = useCrmSocket();
 
   const [outcome, setOutcome] = useState('FOLLOWUP_SCHEDULED');
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(postCallRecord?.initialNotes || '');
   const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    if (postCallRecord?.initialNotes) {
+      setNotes(postCallRecord.initialNotes);
+    }
+  }, [postCallRecord]);
 
   if (!postCallRecord) return null;
 

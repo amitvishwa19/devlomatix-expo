@@ -1,3 +1,4 @@
+import { Platform, PermissionsAndroid, Alert, Linking } from 'react-native';
 
 // Dynamically handle react-native-webrtc to support web / simulators safely
 let RTCPeerConnectionNative;
@@ -131,6 +132,72 @@ export class SimulatedPeerConnection {
     }
 }
 
+/**
+ * Check and request Android/iOS media permissions.
+ * If permission was denied or set to never ask again, offers to redirect the user to Settings.
+ */
+export async function ensureMediaPermissions({ audio = true, video = true, promptSettings = true } = {}) {
+    if (Platform.OS === 'android') {
+        try {
+            const permsToCheck = [];
+            if (audio) permsToCheck.push(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+            if (video) permsToCheck.push(PermissionsAndroid.PERMISSIONS.CAMERA);
+
+            const toRequest = [];
+            for (const p of permsToCheck) {
+                const granted = await PermissionsAndroid.check(p);
+                if (!granted) toRequest.push(p);
+            }
+
+            if (toRequest.length === 0) {
+                return { audioGranted: true, videoGranted: true };
+            }
+
+            console.log('📱 [WEBRTC_PERMS] Requesting permissions:', toRequest);
+            const results = await PermissionsAndroid.requestMultiple(toRequest);
+            console.log('📱 [WEBRTC_PERMS] Request results:', results);
+
+            const hasAudio = audio
+                ? (toRequest.includes(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)
+                    ? results[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] === PermissionsAndroid.RESULTS.GRANTED
+                    : true)
+                : true;
+
+            const hasVideo = video
+                ? (toRequest.includes(PermissionsAndroid.PERMISSIONS.CAMERA)
+                    ? results[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED
+                    : true)
+                : true;
+
+            if (promptSettings && ((audio && !hasAudio) || (video && !hasVideo))) {
+                const missing = [];
+                if (video && !hasVideo) missing.push('Camera');
+                if (audio && !hasAudio) missing.push('Microphone');
+
+                Alert.alert(
+                    `${missing.join(' & ')} Permission Required`,
+                    `Devlomatix requires access to your ${missing.join(' and ')} for calls. Please enable ${missing.length > 1 ? 'them' : 'it'} in App Settings.`,
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Open Settings',
+                            onPress: () => {
+                                Linking.openSettings().catch(() => {});
+                            },
+                        },
+                    ]
+                );
+            }
+
+            return { audioGranted: hasAudio, videoGranted: hasVideo };
+        } catch (err) {
+            console.warn('[WEBRTC_PERMS_ERR] Permission check error:', err);
+            return { audioGranted: false, videoGranted: false };
+        }
+    }
+    return { audioGranted: true, videoGranted: true };
+}
+
 export class WebRtcClient {
     constructor({ onRemoteStream, onIceCandidate, onConnectionStateChange }) {
         this.peerConnection = null;
@@ -146,7 +213,11 @@ export class WebRtcClient {
     /**
      * Initialize local camera and microphone stream
      */
-    async initLocalMedia({ audio = true, video = true } = {}) {
+    async initLocalMedia({ audio = true, video = true, promptSettings = true } = {}) {
+        const perms = await ensureMediaPermissions({ audio, video, promptSettings });
+        const canUseVideo = video && perms.videoGranted;
+        const canUseAudio = audio && perms.audioGranted;
+
         const media = mediaDevicesNative || (typeof navigator !== 'undefined' ? navigator.mediaDevices : null);
         if (!media || !media.getUserMedia) {
             console.warn(
@@ -157,23 +228,62 @@ export class WebRtcClient {
         }
 
         try {
-            this.localStream = await media.getUserMedia({
-                audio: audio
-                    ? {
+            let stream = null;
+            if (canUseVideo) {
+                try {
+                    stream = await media.getUserMedia({
+                        audio: canUseAudio
+                            ? {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true,
+                            }
+                            : false,
+                        video: {
+                            facingMode: 'user',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            frameRate: { ideal: 30 },
+                        },
+                    });
+                } catch (resErr) {
+                    console.warn('[WEBRTC_MEDIA_WARN] 720p front camera constraint failed, retrying with facingMode user:', resErr?.message);
+                    try {
+                        stream = await media.getUserMedia({
+                            audio: canUseAudio ? true : false,
+                            video: { facingMode: 'user' },
+                        });
+                    } catch (facingErr) {
+                        console.warn('[WEBRTC_MEDIA_WARN] facingMode user failed, retrying with video: true:', facingErr?.message);
+                        stream = await media.getUserMedia({
+                            audio: canUseAudio ? true : false,
+                            video: true,
+                        });
+                    }
+                }
+            } else if (canUseAudio) {
+                stream = await media.getUserMedia({
+                    audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
                         autoGainControl: true,
-                    }
-                    : false,
-                video: video
-                    ? {
-                        facingMode: 'user',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 },
-                    }
-                    : false,
-            });
+                    },
+                    video: false,
+                });
+            } else {
+                console.warn('[WEBRTC_PERM_WARN] Neither audio nor video permission granted.');
+                this.localStream = new SimulatedMediaStream();
+                return this.localStream;
+            }
+
+            this.localStream = stream;
+
+            if (this.localStream && typeof this.localStream.getVideoTracks === 'function') {
+                this.localStream.getVideoTracks().forEach((track) => {
+                    console.log('🎥 [WEBRTC_TRACK_ACTIVATED] Local video track:', track.id, 'enabled:', track.enabled);
+                    track.enabled = true;
+                });
+            }
 
             // Attach tracks if peerConnection is already created
             if (this.peerConnection && this.localStream) {
@@ -194,7 +304,7 @@ export class WebRtcClient {
         } catch (err) {
             console.warn('[WEBRTC_MEDIA_WARN] Failed to get audio/video media:', err);
             // Fallback: If video failed, attempt audio only
-            if (video) {
+            if (video && canUseAudio) {
                 try {
                     this.localStream = await media.getUserMedia({
                         audio: true,
@@ -209,6 +319,80 @@ export class WebRtcClient {
             }
             this.localStream = new SimulatedMediaStream();
             return this.localStream;
+        }
+    }
+
+    /**
+     * Acquire or re-acquire the local camera track (e.g. after user grants permission or taps Enable Camera)
+     */
+    async acquireCameraTrack() {
+        const media = mediaDevicesNative || (typeof navigator !== 'undefined' ? navigator.mediaDevices : null);
+        if (!media || !media.getUserMedia) return null;
+
+        const { videoGranted } = await ensureMediaPermissions({ audio: false, video: true, promptSettings: true });
+        if (!videoGranted) return null;
+
+        try {
+            let videoStream = null;
+            try {
+                videoStream = await media.getUserMedia({
+                    audio: false,
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 },
+                    },
+                });
+            } catch (resErr) {
+                try {
+                    videoStream = await media.getUserMedia({
+                        audio: false,
+                        video: { facingMode: 'user' },
+                    });
+                } catch (facingErr) {
+                    videoStream = await media.getUserMedia({
+                        audio: false,
+                        video: true,
+                    });
+                }
+            }
+
+            if (!videoStream) return null;
+            const newTracks = videoStream.getVideoTracks();
+            if (!newTracks || newTracks.length === 0) return null;
+
+            const videoTrack = newTracks[0];
+            videoTrack.enabled = true;
+
+            // If we have an existing localStream, attach the new track
+            if (this.localStream && typeof this.localStream.addTrack === 'function') {
+                this.localStream.getVideoTracks().forEach((oldT) => {
+                    try { this.localStream.removeTrack(oldT); } catch (_) {}
+                });
+                this.localStream.addTrack(videoTrack);
+            } else {
+                this.localStream = videoStream;
+            }
+
+            // Also attach to active peerConnection so remote caller receives the track
+            if (this.peerConnection) {
+                if (this.peerConnection.addTrack) {
+                    const senders = this.peerConnection.getSenders ? this.peerConnection.getSenders() : [];
+                    const alreadyAdded = senders.some((s) => s.track === videoTrack);
+                    if (!alreadyAdded) {
+                        this.peerConnection.addTrack(videoTrack, this.localStream);
+                    }
+                } else if (this.peerConnection.addStream) {
+                    this.peerConnection.addStream(this.localStream);
+                }
+            }
+
+            console.log('🎥 [WEBRTC_CAMERA_ACQUIRED] Successfully attached camera track:', videoTrack.id);
+            return this.localStream;
+        } catch (err) {
+            console.warn('[WEBRTC_ACQUIRE_CAMERA_ERR] Failed to acquire camera track:', err);
+            return null;
         }
     }
 

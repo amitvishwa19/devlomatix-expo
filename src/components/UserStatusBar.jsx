@@ -131,6 +131,23 @@ export default function UserStatusBar({
 
       {/* Right Side: Action Shortcuts */}
       <View className="flex-row items-center gap-x-1.5">
+
+
+        {/* Analytics */}
+        {showAnalytics && (
+          <TouchableOpacity
+            onPress={() => router.push('/(modules)/crm/analytics')}
+            className="h-8 w-8 items-center justify-center rounded-xl border"
+            style={{
+              backgroundColor: actionBtnBg,
+              borderColor: actionBtnBorder,
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="bar-chart-outline" size={15} color={palette.textSoftColor} />
+          </TouchableOpacity>
+        )}
+
         {/* Notifications */}
         {showNotifications && (
           <TouchableOpacity
@@ -151,35 +168,6 @@ export default function UserStatusBar({
           </TouchableOpacity>
         )}
 
-        {/* Analytics */}
-        {showAnalytics && (
-          <TouchableOpacity
-            onPress={() => router.push('/(modules)/crm/analytics')}
-            className="h-8 w-8 items-center justify-center rounded-xl border"
-            style={{
-              backgroundColor: actionBtnBg,
-              borderColor: actionBtnBorder,
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="bar-chart-outline" size={15} color={palette.textSoftColor} />
-          </TouchableOpacity>
-        )}
-
-        {/* Settings */}
-        {showSettings && (
-          <TouchableOpacity
-            onPress={() => router.push('/(modules)/crm/settings')}
-            className="h-8 w-8 items-center justify-center rounded-xl border"
-            style={{
-              backgroundColor: actionBtnBg,
-              borderColor: actionBtnBorder,
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="settings-outline" size={15} color={palette.textSoftColor} />
-          </TouchableOpacity>
-        )}
 
         {rightActions}
       </View>

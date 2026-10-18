@@ -117,7 +117,7 @@ export default function CallEndedModal() {
           <TouchableOpacity
             activeOpacity={0.75}
             onPress={dismissCallEndNotice}
-            className="w-full mt-6 py-3.5 rounded-2xl bg-white/10 active:bg-white/20 items-center justify-center border border-white/5"
+            className="w-full mt-6 py-3.5 rounded-2xl bg-white/10 items-center justify-center border border-white/5"
           >
             <Text className="text-[15px] font-semibold text-white">
               Dismiss

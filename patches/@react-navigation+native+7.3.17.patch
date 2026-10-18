@@ -1,0 +1,31 @@
+diff --git a/node_modules/@react-navigation/native/lib/module/LinkingContext.js b/node_modules/@react-navigation/native/lib/module/LinkingContext.js
+index 7302784..b93d553 100644
+--- a/node_modules/@react-navigation/native/lib/module/LinkingContext.js
++++ b/node_modules/@react-navigation/native/lib/module/LinkingContext.js
+@@ -3,9 +3,7 @@
+ import * as React from 'react';
+ const MISSING_CONTEXT_ERROR = "Couldn't find a LinkingContext context.";
+ export const LinkingContext = /*#__PURE__*/React.createContext({
+-  get options() {
+-    throw new Error(MISSING_CONTEXT_ERROR);
+-  }
++  options: undefined,
+ });
+ LinkingContext.displayName = 'LinkingContext';
+ //# sourceMappingURL=LinkingContext.js.map
+\ No newline at end of file
+diff --git a/node_modules/@react-navigation/native/src/LinkingContext.tsx b/node_modules/@react-navigation/native/src/LinkingContext.tsx
+index 2866c26..17be10e 100644
+--- a/node_modules/@react-navigation/native/src/LinkingContext.tsx
++++ b/node_modules/@react-navigation/native/src/LinkingContext.tsx
+@@ -8,9 +8,7 @@ const MISSING_CONTEXT_ERROR = "Couldn't find a LinkingContext context.";
+ export const LinkingContext = React.createContext<{
+   options?: LinkingOptions<ParamListBase>;
+ }>({
+-  get options(): any {
+-    throw new Error(MISSING_CONTEXT_ERROR);
+-  },
++  options: undefined,
+ });
+ 
+ LinkingContext.displayName = 'LinkingContext';
