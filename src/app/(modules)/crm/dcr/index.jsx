@@ -3,22 +3,26 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Linking,
   Modal,
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../utils/colors';
 import { getDcrRecords, createDcrRecord } from '~/services/crm';
+import * as Location from 'expo-location';
+import IosAlertModal from '~/components/IosAlertModal';
 
 const CALL_TYPES = [
   { value: 'PHONE_CALL', label: 'Phone Call', icon: 'call', color: '#3b82f6' },
@@ -35,6 +39,17 @@ const OUTCOMES = [
   { value: 'WON', label: '🏆 Deal Won', color: '#10b981' },
   { value: 'GATEKEEPER', label: '⏳ No Answer', color: '#64748b' },
   { value: 'NOT_INTERESTED', label: '❌ Not Interested', color: '#ef4444' },
+];
+
+const QUICK_DCR_TAGS = [
+  'Pricing Quoted',
+  'Decision Maker Met',
+  'Demo Given',
+  'Budget Approved',
+  'Callback Requested',
+  'Follow-up Next Week',
+  'Objection: Price',
+  'Contract Sent',
 ];
 
 export default function DcrScreen() {
@@ -61,6 +76,149 @@ export default function DcrScreen() {
   const [nextAction, setNextAction] = useState('Send WhatsApp quote and follow up');
   const [dealValue, setDealValue] = useState('');
   const [location, setLocation] = useState('');
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+
+  // iOS-style Alert state
+  const [iosAlert, setIosAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    icon: null,
+    iconColor: null,
+    buttons: [],
+  });
+
+  const showAlert = (title, message, buttons = null, options = {}) => {
+    setIosAlert({
+      visible: true,
+      title,
+      message,
+      buttons: buttons || [{ text: 'OK', style: 'default' }],
+      icon: options.icon || null,
+      iconColor: options.iconColor || null,
+    });
+  };
+
+  const closeAlert = () => {
+    setIosAlert((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleAddQuickTag = (tag) => {
+    setConversation((prev) => {
+      const line = `• ${tag}`;
+      return prev ? `${prev}\n${line}` : line;
+    });
+  };
+
+  const handleGetLocation = async () => {
+    try {
+      setIsFetchingLocation(true);
+      // 1. Request foreground permission
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        const req = await Location.requestForegroundPermissionsAsync();
+        status = req.status;
+      }
+
+      if (status !== 'granted') {
+        showAlert(
+          'Location Permission Required',
+          'Please allow location access to tag your field visit / call location with GPS.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              style: 'default',
+              onPress: () => Linking.openSettings().catch(() => {}),
+            },
+          ],
+          { icon: 'location', iconColor: '#3b82f6' }
+        );
+        return;
+      }
+
+      // 2. Check if device location service is enabled
+      const isLocationEnabled = await Location.hasServicesEnabledAsync();
+      if (!isLocationEnabled) {
+        showAlert(
+          'GPS Disabled',
+          'Please turn on Location / GPS on your device to fetch coordinates.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Enable',
+              style: 'default',
+              onPress: () =>
+                Location.enableNetworkProviderAsync?.().catch(() =>
+                  Linking.openSettings()
+                ),
+            },
+          ],
+          { icon: 'navigate-circle', iconColor: '#f59e0b' }
+        );
+        return;
+      }
+
+      // 3. Fetch position with balanced accuracy
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      if (!pos?.coords) {
+        throw new Error('Unable to retrieve GPS coordinates.');
+      }
+
+      const { latitude, longitude, accuracy } = pos.coords;
+      setGpsCoords({ latitude, longitude, accuracy: Math.round(accuracy || 0) });
+
+      // 4. Reverse geocode to street / area / city name
+      let formatted = '';
+      try {
+        const reverseResults = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (reverseResults && reverseResults.length > 0) {
+          const r = reverseResults[0];
+          const parts = [
+            r.name || r.street,
+            r.district || r.subregion,
+            r.city,
+            r.postalCode,
+          ].filter(Boolean);
+
+          const uniqueParts = parts.filter((item, idx) => parts.indexOf(item) === idx);
+          formatted = uniqueParts.join(', ');
+        }
+      } catch (geoErr) {
+        console.warn('Reverse geocode error:', geoErr?.message);
+      }
+
+      if (!formatted) {
+        formatted = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      }
+
+      setLocation(formatted);
+    } catch (err) {
+      console.warn('Failed to get location:', err);
+      showAlert(
+        'GPS Error',
+        err.message || 'Could not fetch current location.',
+        [{ text: 'OK', style: 'default' }],
+        { icon: 'alert-circle', iconColor: '#ef4444' }
+      );
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  };
+
+  const handleOpenMap = () => {
+    if (gpsCoords?.latitude && gpsCoords?.longitude) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${gpsCoords.latitude},${gpsCoords.longitude}`;
+      Linking.openURL(url).catch(() => {});
+    } else if (location.trim()) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.trim())}`;
+      Linking.openURL(url).catch(() => {});
+    }
+  };
 
   const loadRecords = useCallback(async () => {
     try {
@@ -94,11 +252,21 @@ export default function DcrScreen() {
 
   const handleCreateDcr = async () => {
     if (!clientName.trim() && !contactPerson.trim()) {
-      Alert.alert('Required', 'Please enter Client Name or Contact Person');
+      showAlert(
+        'Required Field',
+        'Please enter Client Name or Contact Person before saving.',
+        [{ text: 'OK', style: 'default' }],
+        { icon: 'alert-circle', iconColor: '#f59e0b' }
+      );
       return;
     }
     if (!conversation.trim()) {
-      Alert.alert('Required', 'Please enter conversation notes');
+      showAlert(
+        'Required Field',
+        'Please enter conversation notes summarizing your discussion.',
+        [{ text: 'OK', style: 'default' }],
+        { icon: 'alert-circle', iconColor: '#f59e0b' }
+      );
       return;
     }
 
@@ -115,10 +283,11 @@ export default function DcrScreen() {
         nextFollowUpAction: nextAction.trim(),
         dealValue: dealValue ? parseFloat(dealValue) : 0,
         location: location.trim(),
+        latitude: gpsCoords?.latitude,
+        longitude: gpsCoords?.longitude,
       });
 
       if (res.success) {
-        Alert.alert('Success', 'Daily Call Record logged successfully!');
         setIsModalVisible(false);
         // Reset form
         setClientName('');
@@ -127,12 +296,30 @@ export default function DcrScreen() {
         setConversation('');
         setDealValue('');
         setLocation('');
+        setGpsCoords(null);
         loadRecords();
+
+        showAlert(
+          'Record Logged',
+          'Daily Call Record logged successfully!',
+          [{ text: 'Done', style: 'default' }],
+          { icon: 'checkmark-circle', iconColor: '#10b981' }
+        );
       } else {
-        Alert.alert('Error', res.error || 'Failed to create DCR record');
+        showAlert(
+          'Error',
+          res.error || 'Failed to create DCR record',
+          [{ text: 'OK', style: 'default' }],
+          { icon: 'close-circle', iconColor: '#ef4444' }
+        );
       }
     } catch (err) {
-      Alert.alert('Error', err.message || 'Failed to submit call record');
+      showAlert(
+        'Error',
+        err.message || 'Failed to submit call record',
+        [{ text: 'OK', style: 'default' }],
+        { icon: 'close-circle', iconColor: '#ef4444' }
+      );
     } finally {
       setSubmitting(false);
     }
@@ -360,24 +547,50 @@ export default function DcrScreen() {
 
                 {/* Footer Badges */}
                 <View className="mt-2 flex-row items-center justify-between pt-0.5">
-                  <View
-                    style={{ backgroundColor: `${outcomeConfig.color}15`, borderColor: `${outcomeConfig.color}40` }}
-                    className="rounded-lg border px-2 py-0.5"
-                  >
-                    <Text style={{ color: outcomeConfig.color }} className="text-[10px] font-bold">
-                      {outcomeConfig.label}
-                    </Text>
+                  <View className="flex-row items-center gap-1.5 flex-1 mr-2">
+                    <View
+                      style={{ backgroundColor: `${outcomeConfig.color}15`, borderColor: `${outcomeConfig.color}40` }}
+                      className="rounded-lg border px-2 py-0.5"
+                    >
+                      <Text style={{ color: outcomeConfig.color }} className="text-[10px] font-bold">
+                        {outcomeConfig.label}
+                      </Text>
+                    </View>
+
+                    {item.location ? (
+                      <TouchableOpacity
+                        onPress={() => {
+                          const q = item.latitude && item.longitude
+                            ? `${item.latitude},${item.longitude}`
+                            : encodeURIComponent(item.location);
+                          Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${q}`).catch(() => {});
+                        }}
+                        className="flex-row items-center gap-1 rounded-lg px-2 py-0.5 border"
+                        style={{
+                          backgroundColor: colors.cardAlt,
+                          borderColor: colors.border,
+                          maxWidth: 160,
+                        }}
+                      >
+                        <Ionicons name="location-outline" size={10} color={colors.primary} />
+                        <Text className="text-[10px] font-semibold" style={{ color: colors.textSecondary }} numberOfLines={1}>
+                          {item.location}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
 
-                  {item.dealValue > 0 ? (
-                    <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
-                      ₹ {Number(item.dealValue).toLocaleString('en-IN')}
-                    </Text>
-                  ) : null}
+                  <View className="flex-row items-center gap-2">
+                    {item.dealValue > 0 ? (
+                      <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+                        ₹ {Number(item.dealValue).toLocaleString('en-IN')}
+                      </Text>
+                    ) : null}
 
-                  <Text className="text-[10px]" style={{ color: colors.textMuted }}>
-                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
+                    <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                      {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
                 </View>
               </View>
             );
@@ -386,240 +599,547 @@ export default function DcrScreen() {
       )}
 
       {/* Log Call Modal */}
-      <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={() => setIsModalVisible(false)}>
-        <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
-          <Pressable className="flex-1" onPress={() => setIsModalVisible(false)} />
-          <View
-            className="max-h-[90%] rounded-t-3xl border-t p-4"
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent
+        statusBarTranslucent
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(2, 6, 23, 0.7)' }}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setIsModalVisible(false)}
+          />
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{
+              height: '92%',
+              maxHeight: '94%',
               backgroundColor: colors.card,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderTopWidth: 1,
               borderTopColor: colors.border,
-              paddingBottom: Math.max(insets.bottom, 20),
+              overflow: 'hidden',
             }}
           >
+            {/* Grab Bar Handle */}
+            <View className="items-center pt-2.5 pb-1">
+              <View
+                style={{
+                  width: 44,
+                  height: 4.5,
+                  borderRadius: 999,
+                  backgroundColor: isDark ? '#475569' : '#cbd5e1',
+                }}
+              />
+            </View>
+
+            {/* Header */}
             <View
-              className="flex-row items-center justify-between pb-2.5 border-b"
+              className="flex-row items-center justify-between px-4 py-3 border-b"
               style={{ borderBottomColor: colors.border }}
             >
-              <View className="flex-row items-center gap-2">
-                <Ionicons name="call" size={16} color={colors.primary} />
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
-                  Log Sales Activity
-                </Text>
+              <View className="flex-row items-center gap-2.5">
+                <View
+                  className="w-10 h-10 rounded-2xl items-center justify-center border shadow-xs"
+                  style={{
+                    backgroundColor: colors.primarySoft,
+                    borderColor: colors.primaryBorder,
+                  }}
+                >
+                  <Ionicons name="document-text" size={20} color={colors.primary} />
+                </View>
+                <View>
+                  <Text className="text-base font-black tracking-tight" style={{ color: colors.text }}>
+                    Log Sales Activity
+                  </Text>
+                  <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                    Daily Call Record (DCR) • Visits, Calls & Notes
+                  </Text>
+                </View>
               </View>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)} hitSlop={10}>
-                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+
+              <TouchableOpacity
+                onPress={() => setIsModalVisible(false)}
+                hitSlop={12}
+                className="w-8 h-8 rounded-full items-center justify-center border"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
+              >
+                <Ionicons name="close" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
+            {/* Scrollable Form Body */}
             <ScrollView
-              className="mt-2.5 space-y-2.5"
+              className="flex-1 px-4 pt-3.5"
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={{
-                paddingBottom: Math.max(insets.bottom + 30, 48),
+                paddingBottom: 20,
               }}
             >
-              {/* Client Name */}
-              <View>
-                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                  Client / Company Name *
-                </Text>
-                <TextInput
-                  value={clientName}
-                  onChangeText={setClientName}
-                  placeholder="e.g. Apex Tech Solutions"
-                  placeholderTextColor={colors.inputPlaceholder}
-                  className="rounded-xl border px-3 py-2 text-xs"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </View>
-
-              {/* Contact Person & Phone */}
-              <View className="flex-row gap-2">
-                <View className="flex-1">
-                  <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                    Contact Person
+              {/* Card 1: Client & Contact */}
+              <View
+                className="rounded-2xl border p-3.5 mb-3.5 shadow-xs"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
+              >
+                <View className="flex-row items-center gap-1.5 mb-2.5">
+                  <Ionicons name="business" size={14} color={colors.primary} />
+                  <Text
+                    className="text-[11px] font-bold uppercase tracking-wider"
+                    style={{ color: colors.primary }}
+                  >
+                    Client & Contact Details
                   </Text>
-                  <TextInput
-                    value={contactPerson}
-                    onChangeText={setContactPerson}
-                    placeholder="e.g. Rajesh Kumar"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-xl border px-3 py-2 text-xs"
+                </View>
+
+                {/* Client Name */}
+                <View className="mb-2.5">
+                  <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
+                    Client / Company Name <Text style={{ color: colors.danger }}>*</Text>
+                  </Text>
+                  <View
+                    className="flex-row items-center rounded-xl border px-3"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     }}
-                  />
+                  >
+                    <Ionicons name="briefcase-outline" size={15} color={colors.textMuted} style={{ marginRight: 8 }} />
+                    <TextInput
+                      value={clientName}
+                      onChangeText={setClientName}
+                      placeholder="e.g. Apex Tech Solutions"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="flex-1 py-2.5 text-xs font-medium"
+                      style={{ color: colors.text }}
+                    />
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                    Phone Number
-                  </Text>
-                  <TextInput
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="+91 98765 43210"
-                    keyboardType="phone-pad"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-xl border px-3 py-2 text-xs"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
+
+                {/* Contact Person & Phone */}
+                <View className="flex-row gap-2.5">
+                  <View className="flex-1">
+                    <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
+                      Contact Person
+                    </Text>
+                    <View
+                      className="flex-row items-center rounded-xl border px-3"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                      }}
+                    >
+                      <Ionicons name="person-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                      <TextInput
+                        value={contactPerson}
+                        onChangeText={setContactPerson}
+                        placeholder="Rajesh Kumar"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        className="flex-1 py-2.5 text-xs font-medium"
+                        style={{ color: colors.text }}
+                      />
+                    </View>
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
+                      Phone Number
+                    </Text>
+                    <View
+                      className="flex-row items-center rounded-xl border px-3"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                      }}
+                    >
+                      <Ionicons name="call-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                      <TextInput
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="+91 98765..."
+                        keyboardType="phone-pad"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        className="flex-1 py-2.5 text-xs font-medium"
+                        style={{ color: colors.text }}
+                      />
+                    </View>
+                  </View>
                 </View>
               </View>
 
-              {/* Interaction Type */}
-              <View>
-                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+              {/* Card 2: Activity Type & Outcome */}
+              <View
+                className="rounded-2xl border p-3.5 mb-3.5 shadow-xs"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
+              >
+                <View className="flex-row items-center gap-1.5 mb-2.5">
+                  <Ionicons name="flash" size={14} color={colors.warning} />
+                  <Text
+                    className="text-[11px] font-bold uppercase tracking-wider"
+                    style={{ color: colors.warning }}
+                  >
+                    Interaction Type & Status
+                  </Text>
+                </View>
+
+                {/* Interaction Type Grid */}
+                <Text className="text-[11px] font-bold mb-1.5" style={{ color: colors.text }}>
                   Interaction Type
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                  {CALL_TYPES.map((t) => (
-                    <TouchableOpacity
-                      key={t.value}
-                      onPress={() => setCallType(t.value)}
-                      className="rounded-xl border px-2.5 py-1.5 flex-row items-center gap-1.5"
-                      style={{
-                        backgroundColor: callType === t.value ? colors.primary : colors.cardAlt,
-                        borderColor: callType === t.value ? colors.primary : colors.border,
-                      }}
-                    >
-                      <Ionicons
-                        name={t.icon}
-                        size={13}
-                        color={callType === t.value ? '#ffffff' : t.color}
-                      />
-                      <Text
-                        className="text-xs font-bold"
+                <View className="flex-row flex-wrap gap-2 mb-3">
+                  {CALL_TYPES.map((t) => {
+                    const isSelected = callType === t.value;
+                    return (
+                      <TouchableOpacity
+                        key={t.value}
+                        onPress={() => setCallType(t.value)}
+                        activeOpacity={0.75}
+                        className="flex-row items-center gap-1.5 px-3 py-2 rounded-xl border shadow-xs"
                         style={{
-                          color: callType === t.value ? '#ffffff' : colors.text,
+                          backgroundColor: isSelected ? colors.primary : colors.card,
+                          borderColor: isSelected ? colors.primary : colors.border,
                         }}
                       >
-                        {t.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+                        <Ionicons
+                          name={t.icon}
+                          size={14}
+                          color={isSelected ? '#ffffff' : t.color}
+                        />
+                        <Text
+                          className="text-xs font-bold"
+                          style={{ color: isSelected ? '#ffffff' : colors.text }}
+                        >
+                          {t.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
-              {/* Discussion Notes */}
-              <View>
-                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                  Key Discussion Points *
-                </Text>
-                <TextInput
-                  value={conversation}
-                  onChangeText={setConversation}
-                  multiline
-                  numberOfLines={3}
-                  placeholder="Summary of requirements discussed, pricing quoted, client objections..."
-                  placeholderTextColor={colors.inputPlaceholder}
-                  className="min-h-[70px] rounded-xl border p-2.5 text-xs"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </View>
-
-              {/* Outcome */}
-              <View>
-                <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                  Outcome / Result
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                  {OUTCOMES.map((o) => (
-                    <TouchableOpacity
-                      key={o.value}
-                      onPress={() => setOutcome(o.value)}
-                      className="rounded-xl border px-2.5 py-1.5"
-                      style={{
-                        backgroundColor: outcome === o.value ? colors.primary : colors.cardAlt,
-                        borderColor: outcome === o.value ? colors.primary : colors.border,
-                      }}
-                    >
-                      <Text
-                        className="text-xs font-bold"
-                        style={{
-                          color: outcome === o.value ? '#ffffff' : colors.text,
-                        }}
-                      >
-                        {o.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Potential Value */}
-              <View className="flex-row gap-2">
-                <View className="flex-1">
-                  <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
+                {/* Deal Potential (₹) */}
+                <View className="mb-3">
+                  <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
                     Deal Potential (₹)
                   </Text>
-                  <TextInput
-                    value={dealValue}
-                    onChangeText={setDealValue}
-                    placeholder="e.g. 50000"
-                    keyboardType="numeric"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-xl border px-3 py-2 text-xs"
+                  <View
+                    className="flex-row items-center rounded-xl border px-3"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     }}
-                  />
+                  >
+                    <Text className="text-xs font-black mr-1.5" style={{ color: colors.primary }}>₹</Text>
+                    <TextInput
+                      value={dealValue}
+                      onChangeText={setDealValue}
+                      placeholder="e.g. 50,000"
+                      keyboardType="numeric"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="flex-1 py-2.5 text-xs font-medium"
+                      style={{ color: colors.text }}
+                    />
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
-                    Location / Area
-                  </Text>
-                  <TextInput
-                    value={location}
-                    onChangeText={setLocation}
-                    placeholder="e.g. Noida Sector 62"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-xl border px-3 py-2 text-xs"
+
+                {/* Location / Area with GPS and Map Actions */}
+                <View className="mb-3">
+                  <View className="flex-row items-center justify-between mb-1">
+                    <Text className="text-[11px] font-bold" style={{ color: colors.text }}>
+                      Location / Area
+                    </Text>
+
+                    {/* Instant GPS Fetch Button */}
+                    <TouchableOpacity
+                      onPress={handleGetLocation}
+                      disabled={isFetchingLocation}
+                      activeOpacity={0.75}
+                      className="flex-row items-center gap-1 px-2.5 py-1 rounded-lg border shadow-xs"
+                      style={{
+                        backgroundColor: colors.primarySoft,
+                        borderColor: colors.primaryBorder,
+                        opacity: isFetchingLocation ? 0.7 : 1,
+                      }}
+                    >
+                      {isFetchingLocation ? (
+                        <>
+                          <ActivityIndicator size={11} color={colors.primary} />
+                          <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
+                            Locating...
+                          </Text>
+                        </>
+                      ) : (
+                        <>
+                          <Ionicons name="navigate" size={11} color={colors.primary} />
+                          <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
+                            Fetch GPS
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  <View
+                    className="flex-row items-center rounded-xl border px-3"
                     style={{
                       backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
+                      borderColor: gpsCoords ? colors.primary : colors.inputBorder,
                     }}
-                  />
+                  >
+                    <Ionicons
+                      name="location"
+                      size={15}
+                      color={gpsCoords ? colors.primary : colors.textMuted}
+                      style={{ marginRight: 6 }}
+                    />
+                    <TextInput
+                      value={location}
+                      onChangeText={(val) => {
+                        setLocation(val);
+                        if (!val) setGpsCoords(null);
+                      }}
+                      placeholder="e.g. Sector 62, Noida or tap Fetch GPS..."
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="flex-1 py-2.5 text-xs font-medium"
+                      style={{ color: colors.text }}
+                    />
+
+                    {/* Open in Map Icon button */}
+                    {location.trim() ? (
+                      <TouchableOpacity
+                        onPress={handleOpenMap}
+                        hitSlop={8}
+                        className="p-1 mr-1 rounded-md"
+                        style={{ backgroundColor: colors.cardAlt }}
+                        title="Open in Maps"
+                      >
+                        <Ionicons name="map-outline" size={14} color={colors.primary} />
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {/* Clear Button */}
+                    {location.trim() ? (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setLocation('');
+                          setGpsCoords(null);
+                        }}
+                        hitSlop={8}
+                        className="p-1"
+                      >
+                        <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+
+                  {/* GPS Coordinates & Accuracy Banner */}
+                  {gpsCoords ? (
+                    <View
+                      className="flex-row items-center justify-between mt-1.5 px-2.5 py-1.5 rounded-xl border"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(6, 78, 59, 0.25)' : '#ecfdf5',
+                        borderColor: isDark ? '#065f46' : '#a7f3d0',
+                      }}
+                    >
+                      <View className="flex-row items-center gap-1.5 flex-1 mr-2">
+                        <Ionicons name="checkmark-circle" size={13} color="#10b981" />
+                        <Text className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300" numberOfLines={1}>
+                          GPS Locked • {gpsCoords.latitude.toFixed(4)}°, {gpsCoords.longitude.toFixed(4)}° (±{gpsCoords.accuracy}m)
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={handleOpenMap}
+                        activeOpacity={0.7}
+                        className="flex-row items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-600 shadow-xs"
+                      >
+                        <Ionicons name="map" size={10} color="#ffffff" />
+                        <Text className="text-[9px] font-extrabold text-white">
+                          View Map
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* Outcome Status Chips */}
+                <Text className="text-[11px] font-bold mb-1.5" style={{ color: colors.text }}>
+                  Outcome / Result
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {OUTCOMES.map((o) => {
+                    const isSelected = outcome === o.value;
+                    return (
+                      <TouchableOpacity
+                        key={o.value}
+                        onPress={() => setOutcome(o.value)}
+                        activeOpacity={0.75}
+                        className="px-2.5 py-1.5 rounded-xl border flex-row items-center gap-1"
+                        style={{
+                          backgroundColor: isSelected ? o.color : colors.card,
+                          borderColor: isSelected ? o.color : colors.border,
+                        }}
+                      >
+                        <Text
+                          className="text-xs font-bold"
+                          style={{ color: isSelected ? '#ffffff' : colors.text }}
+                        >
+                          {o.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
 
-              {/* Submit Button */}
+              {/* Card 3: Discussion Notes & Next Steps */}
+              <View
+                className="rounded-2xl border p-3.5 mb-2 shadow-xs"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
+              >
+                <View className="flex-row items-center gap-1.5 mb-2.5">
+                  <Ionicons name="chatbubbles" size={14} color={colors.copilot} />
+                  <Text
+                    className="text-[11px] font-bold uppercase tracking-wider"
+                    style={{ color: colors.copilot }}
+                  >
+                    Discussion Notes & Action Plan
+                  </Text>
+                </View>
+
+                {/* Quick Tags */}
+                <View className="mb-2.5">
+                  <Text className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: colors.textMuted }}>
+                    Quick Tags (Tap to append)
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1.5">
+                    {QUICK_DCR_TAGS.map((tag) => (
+                      <TouchableOpacity
+                        key={tag}
+                        onPress={() => handleAddQuickTag(tag)}
+                        activeOpacity={0.7}
+                        className="rounded-full px-2.5 py-1 border flex-row items-center gap-1"
+                        style={{
+                          backgroundColor: colors.card,
+                          borderColor: colors.border,
+                        }}
+                      >
+                        <Ionicons name="add" size={11} color={colors.primary} />
+                        <Text className="text-[10px] font-semibold" style={{ color: colors.text }}>
+                          {tag}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {/* Key Discussion Points Textarea */}
+                <View className="mb-3">
+                  <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
+                    Key Discussion Points <Text style={{ color: colors.danger }}>*</Text>
+                  </Text>
+                  <TextInput
+                    value={conversation}
+                    onChangeText={setConversation}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    placeholder="Requirements discussed, client queries, pricing quoted, objections handled..."
+                    placeholderTextColor={colors.inputPlaceholder}
+                    className="min-h-[100px] rounded-xl border p-3 text-xs font-medium leading-5"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    }}
+                  />
+                </View>
+
+                {/* Next Action */}
+                <View>
+                  <Text className="text-[11px] font-bold mb-1" style={{ color: colors.text }}>
+                    Next Follow-up Action
+                  </Text>
+                  <View
+                    className="flex-row items-center rounded-xl border px-3"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                    }}
+                  >
+                    <Ionicons name="calendar-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                    <TextInput
+                      value={nextAction}
+                      onChangeText={setNextAction}
+                      placeholder="e.g. Share quote on WhatsApp & follow up on Monday"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="flex-1 py-2.5 text-xs font-medium"
+                      style={{ color: colors.text }}
+                    />
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Sticky Bottom Action Footer */}
+            <View
+              className="px-4 py-3 border-t shadow-lg"
+              style={{
+                backgroundColor: colors.card,
+                borderTopColor: colors.border,
+                paddingBottom: Math.max(insets.bottom, 16),
+              }}
+            >
               <TouchableOpacity
                 onPress={handleCreateDcr}
                 disabled={submitting}
-                className="mt-3 mb-6 items-center justify-center rounded-xl py-3.5 shadow-md"
+                activeOpacity={0.85}
+                className="w-full flex-row items-center justify-center gap-2 rounded-2xl py-3.5 shadow-md shadow-indigo-500/25"
                 style={{
                   backgroundColor: colors.primary,
-                  opacity: submitting ? 0.7 : 1,
+                  opacity: submitting ? 0.75 : 1,
                 }}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color="#ffffff" size="small" />
                 ) : (
-                  <Text className="text-xs font-bold text-white">Save Activity Record</Text>
+                  <>
+                    <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                    <Text className="text-sm font-extrabold text-white tracking-wide">
+                      Save Activity Record
+                    </Text>
+                  </>
                 )}
               </TouchableOpacity>
-            </ScrollView>
-          </View>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* iOS Style Alert Modal */}
+      <IosAlertModal
+        visible={iosAlert.visible}
+        onClose={closeAlert}
+        title={iosAlert.title}
+        message={iosAlert.message}
+        icon={iosAlert.icon}
+        iconColor={iosAlert.iconColor}
+        buttons={iosAlert.buttons}
+      />
     </AppScreen>
   );
 }
