@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../utils/colors';
 import { getDcrRecords, createDcrRecord } from '~/services/crm';
 
@@ -38,6 +39,7 @@ const OUTCOMES = [
 
 export default function DcrScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useCrmTheme();
 
   const [records, setRecords] = useState([]);
@@ -280,7 +282,7 @@ export default function DcrScreen() {
         <FlatList
           data={records}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 12, paddingBottom: 80, gap: 8 }}
+          contentContainerStyle={{ padding: 12, paddingBottom: Math.max(insets.bottom + 80, 100), gap: 8 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -384,11 +386,16 @@ export default function DcrScreen() {
       )}
 
       {/* Log Call Modal */}
-      <Modal visible={isModalVisible} animationType="slide" transparent>
+      <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={() => setIsModalVisible(false)}>
         <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
+          <Pressable className="flex-1" onPress={() => setIsModalVisible(false)} />
           <View
             className="max-h-[90%] rounded-t-3xl border-t p-4"
-            style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
+            style={{
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 20),
+            }}
           >
             <View
               className="flex-row items-center justify-between pb-2.5 border-b"
@@ -405,7 +412,13 @@ export default function DcrScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView className="mt-2.5 space-y-2.5" showsVerticalScrollIndicator={false}>
+            <ScrollView
+              className="mt-2.5 space-y-2.5"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingBottom: Math.max(insets.bottom + 30, 48),
+              }}
+            >
               {/* Client Name */}
               <View>
                 <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
@@ -591,7 +604,7 @@ export default function DcrScreen() {
               <TouchableOpacity
                 onPress={handleCreateDcr}
                 disabled={submitting}
-                className="mt-2 mb-6 items-center justify-center rounded-xl py-3 shadow-md"
+                className="mt-3 mb-6 items-center justify-center rounded-xl py-3.5 shadow-md"
                 style={{
                   backgroundColor: colors.primary,
                   opacity: submitting ? 0.7 : 1,

@@ -124,7 +124,7 @@ const crmNavigationCategories = [
         activeIcon: 'receipt',
       },
       {
-        route: '/(modules)/crm/(tabs)/tasks',
+        route: '/(modules)/crm/tasks',
         label: 'Tasks & Follow-ups',
         icon: 'checkbox-outline',
         activeIcon: 'checkbox',

@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { useCrm } from '~/providers/CrmProvider';
+import { getSession } from '~/utils/authStorage';
 import { useCrmTheme } from '../utils/colors';
 
 export default function ContactCard({ contact, onShare }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    getSession().then((s) => {
+      const uid = s?.user?.id || s?.user?.userId || s?.user?._id;
+      if (uid) setCurrentUserId(uid);
+    });
+  }, []);
 
   if (!contact) return null;
 
@@ -32,7 +41,8 @@ export default function ContactCard({ contact, onShare }) {
   const ma = contact.moduleAccess || {};
   const isAts = Array.isArray(ma.modules) && ma.modules.includes('ats');
   const isKonnectx = Array.isArray(ma.modules) && ma.modules.includes('konnectx');
-  const isShared = Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0;
+  const hasShares = (Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0) || (Array.isArray(contact.sharedWith) && contact.sharedWith.length > 0);
+  const isSharedWithMe = Boolean(currentUserId && contact.userId && contact.userId !== currentUserId);
 
   return (
     <Pressable
@@ -79,11 +89,15 @@ export default function ContactCard({ contact, onShare }) {
                   <Text className="text-[8px] font-bold" style={{ color: colors.whatsapp }}>WA</Text>
                 </View>
               )}
-              {isShared && (
+              {isSharedWithMe ? (
+                <View className="rounded px-1.5 py-0.2 border" style={{ backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder }}>
+                  <Text className="text-[8px] font-bold" style={{ color: colors.primary }}>Shared with you</Text>
+                </View>
+              ) : hasShares ? (
                 <View className="rounded px-1.5 py-0.2 border" style={{ backgroundColor: colors.copilotSoft, borderColor: colors.copilotBorder }}>
                   <Text className="text-[8px] font-bold" style={{ color: colors.copilot }}>Shared</Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <Text

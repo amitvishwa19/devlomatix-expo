@@ -18,6 +18,7 @@ import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
+import ShareContactModal from '../_components/ShareContactModal';
 import * as crmService from '~/services/crm';
 
 export default function ContactDossierScreen() {
@@ -30,6 +31,7 @@ export default function ContactDossierScreen() {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const [quickMsg, setQuickMsg] = useState('');
   const [sendingMsg, setSendingMsg] = useState(false);
   const [msgFeedback, setMsgFeedback] = useState(null);
@@ -78,6 +80,7 @@ export default function ContactDossierScreen() {
       setMsgFeedback({ type: 'error', text: e.message || 'Error sending message' });
     } finally {
       setSendingMsg(false);
+      setSendingMsg(false);
       setTimeout(() => setMsgFeedback(null), 4000);
     }
   };
@@ -123,9 +126,28 @@ export default function ContactDossierScreen() {
         title={contact.name}
         subtitle={`${contact.jobTitle || 'Lead'} • ${contact.account?.name || 'Individual'}`}
         showBack={true}
+        rightActions={
+          <Pressable
+            onPress={() => setShareVisible(true)}
+            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl border active:opacity-75"
+            style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+          >
+            <Ionicons name="share-social-outline" size={15} color={colors.primary} />
+            <Text className="text-xs font-bold" style={{ color: colors.primary }}>Share</Text>
+          </Pressable>
+        }
       />
 
       <QuickWhatsAppModal />
+      <ShareContactModal
+        contact={contact}
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        onUpdated={() => {
+          fetchContact();
+          refreshAll();
+        }}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -138,6 +160,26 @@ export default function ContactDossierScreen() {
           className="rounded-2xl border p-3 shadow-sm mb-2.5"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
+          {Array.isArray(contact.sharedWith) && contact.sharedWith.length > 0 && (
+            <View
+              className="mb-2.5 flex-row items-center justify-between rounded-xl p-2 border"
+              style={{ backgroundColor: colors.copilotSoft, borderColor: colors.copilotBorder }}
+            >
+              <View className="flex-row items-center gap-x-1.5 flex-1 pr-2">
+                <Ionicons name="share-social" size={14} color={colors.copilot} />
+                <Text className="text-[11px] font-bold" style={{ color: colors.copilot }}>
+                  Shared with {contact.sharedWith.length} team {contact.sharedWith.length === 1 ? 'member' : 'members'}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setShareVisible(true)}
+                className="rounded-lg px-2 py-0.5"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Text className="text-[10px] font-bold text-white">Manage</Text>
+              </Pressable>
+            </View>
+          )}
           <View className="flex-row items-center gap-x-3">
             <View
               className="h-12 w-12 items-center justify-center rounded-2xl border"

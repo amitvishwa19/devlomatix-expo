@@ -8,8 +8,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Pressable,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../../utils/colors';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import * as crmService from '~/services/crm';
@@ -30,6 +32,7 @@ const formatDuration = (seconds = 0) => {
 };
 
 export default function PostCallSummaryModal() {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useCrmTheme();
   const { postCallRecord, setPostCallRecord } = useCrmSocket();
 
@@ -76,9 +79,14 @@ export default function PostCallSummaryModal() {
   return (
     <Modal visible={!!postCallRecord} transparent animationType="slide" statusBarTranslucent>
       <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
+        <Pressable className="flex-1" onPress={handleDismiss} />
         <View
-          className="w-full rounded-t-[28px] border-t p-4 pb-7 shadow-2xl max-h-[85%]"
-          style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
+          className="w-full rounded-t-[28px] border-t p-4 shadow-2xl max-h-[85%]"
+          style={{
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 20) + 16,
+          }}
         >
           {/* Header Row */}
           <View
@@ -110,7 +118,7 @@ export default function PostCallSummaryModal() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5">
+          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5" contentContainerStyle={{ paddingBottom: 14 }}>
             {/* Outcome Selection */}
             <Text className="text-xs font-bold mb-1.5" style={{ color: colors.text }}>
               Call Outcome
@@ -154,48 +162,51 @@ export default function PostCallSummaryModal() {
               onChangeText={setNotes}
               placeholder="Enter brief discussion summary, commitments, or follow-up date..."
               placeholderTextColor={colors.inputPlaceholder}
-              className="w-full rounded-2xl border p-2.5 text-xs mb-4 min-h-[75px]"
+              className="w-full rounded-2xl border p-2.5 text-xs mb-2 min-h-[75px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
                 color: colors.text,
               }}
             />
-
-            {/* Action Buttons */}
-            <View className="flex-row items-center gap-2">
-              <TouchableOpacity
-                onPress={handleDismiss}
-                className="flex-1 py-2.5 rounded-xl border items-center justify-center"
-                style={{ borderColor: colors.border }}
-              >
-                <Text className="text-xs font-bold" style={{ color: colors.textMuted }}>
-                  Skip
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleSave}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-xl items-center justify-center shadow-md flex-row gap-1.5"
-                style={{
-                  backgroundColor: colors.primary,
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle-outline" size={15} color="#ffffff" />
-                    <Text className="text-xs font-bold text-white">
-                      Save to CRM DCR
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
           </ScrollView>
+
+          {/* Action Buttons Pinned Above System Buttons */}
+          <View
+            className="flex-row items-center gap-2 pt-2.5 border-t"
+            style={{ borderTopColor: colors.borderLight }}
+          >
+            <TouchableOpacity
+              onPress={handleDismiss}
+              className="flex-1 py-2.5 rounded-xl border items-center justify-center"
+              style={{ borderColor: colors.border }}
+            >
+              <Text className="text-xs font-bold" style={{ color: colors.textMuted }}>
+                Skip
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl items-center justify-center shadow-md flex-row gap-1.5"
+              style={{
+                backgroundColor: colors.primary,
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={15} color="#ffffff" />
+                  <Text className="text-xs font-bold text-white">
+                    Save to CRM DCR
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>

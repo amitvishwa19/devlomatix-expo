@@ -28,57 +28,65 @@ export default function AppSplashScreen() {
     if (themeContext?.isDark !== undefined) {
       isDarkTheme = themeContext.isDark;
     }
-  } catch {}
+  } catch { }
 
   const [screenDim, setScreenDim] = useState(() => Dimensions.get('screen'));
 
   useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ screen }) => {
-      if (screen) {
-        setScreenDim(screen);
-      }
-    });
+    let isMounted = true;
 
-    SplashScreen.hideAsync().catch(() => {});
+    // Immediately dismiss native OS splash layer so the full-screen splash covers the screen edge-to-edge
+    SplashScreen.hideAsync().catch(() => { });
 
-    const timer = setTimeout(async () => {
+    async function initializeAndRoute() {
+      const startTime = Date.now();
       try {
-        const onboarded = await hasCompletedOnboarding();
-        if (!onboarded) {
-          router.replace('/(misc)/onboarding');
-          return;
+        const [onboarded, session] = await Promise.all([
+          hasCompletedOnboarding().catch(() => false),
+          getSession().catch(() => null),
+        ]);
+
+        // Maintain smooth full-screen splash display
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 1200 - elapsed);
+        if (remaining > 0) {
+          await new Promise((res) => setTimeout(res, remaining));
         }
 
-        const session = await getSession();
-        const nextRoute = session?.isLoggedIn ? '/(modules)/crm/(tabs)' : '/(auth)/login';
+        if (!isMounted) return;
+
+        let nextRoute = '/(auth)/login';
+        if (!onboarded) {
+          nextRoute = '/(misc)/onboarding';
+        } else if (session?.isLoggedIn) {
+          nextRoute = '/(modules)/crm/(tabs)';
+        }
+
         router.replace(nextRoute);
-      } catch {
-        router.replace('/(auth)/login');
+      } catch (err) {
+        if (isMounted) {
+          router.replace('/(auth)/login');
+        }
       }
-    }, SPLASH_DURATION_MS);
+    }
+
+    initializeAndRoute();
 
     return () => {
-      clearTimeout(timer);
-      subscription?.remove?.();
+      isMounted = false;
     };
   }, [router]);
 
   const splashSource = isDarkTheme ? darkSplash : lightSplash;
-  const bgColor = isDarkTheme ? '#020714' : '#ffffff';
+  const bgColor = isDarkTheme ? '#020714' : '#f5fbfe';
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <StatusBar hidden translucent backgroundColor="transparent" />
       <Image
         source={splashSource}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: screenDim.width,
-          height: screenDim.height,
-        }}
-        resizeMode="cover"
+        style={styles.image}
+        resizeMode="contain"
       />
     </View>
   );
@@ -87,15 +95,15 @@ export default function AppSplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
 });
 

@@ -293,3 +293,18 @@ export async function createDcrRecord(body, params = {}) {
   return { success: true, data: extractPayload(res.data) };
 }
 
+// ==========================================
+// 👥 SALES TEAM & OPERATORS
+// ==========================================
+
+export async function getTeam(params = {}) {
+  try {
+    const resolvedParams = await prepareParams(params);
+    const res = await api.get(apiUrls.crmTeam, { params: resolvedParams });
+    return { success: true, data: extractArray(res.data) };
+  } catch (err) {
+    return { success: false, data: [], error: err.message };
+  }
+}
+
+

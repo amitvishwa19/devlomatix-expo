@@ -106,6 +106,7 @@ export function CrmSocketProvider({ children }) {
   const callTimeoutRef = useRef(null);
   const hapticIntervalRef = useRef(null);
   const incomingNotificationIdRef = useRef(null);
+  const incomingCallDataRef = useRef(null);
   const activeCallSessionRef = useRef(null);
   const callStatusRef = useRef('idle');
   const callDurationRef = useRef(0);
@@ -198,6 +199,10 @@ export function CrmSocketProvider({ children }) {
   useEffect(() => {
     activeCallSessionRef.current = activeCallSession;
   }, [activeCallSession]);
+
+  useEffect(() => {
+    incomingCallDataRef.current = incomingCallData;
+  }, [incomingCallData]);
 
   useEffect(() => {
     callStatusRef.current = callStatus;
@@ -666,10 +671,15 @@ export function CrmSocketProvider({ children }) {
       callTimeoutRef.current = null;
     }
 
-    if (!incomingCallData || !socket) return;
+    const activeIncoming = incomingCallData || incomingCallDataRef.current;
+    const activeSocket = socketRef.current || socket;
+    if (!activeIncoming || !activeSocket) {
+      console.warn('⚠️ [ACCEPT_CALL] Missing active incoming data or socket:', { hasIncoming: !!activeIncoming, hasSocket: !!activeSocket });
+      return;
+    }
 
     try {
-      const { roomId, callerId, callerName, callerAvatar, callType } = incomingCallData;
+      const { roomId, callerId, callerName, callerAvatar, callType } = activeIncoming;
 
       const rtc = new WebRtcClient({
         onRemoteStream: (stream) => {
@@ -706,8 +716,9 @@ export function CrmSocketProvider({ children }) {
 
       setCallStatus('connected');
       setIncomingCallData(null);
+      if (incomingCallDataRef.current) incomingCallDataRef.current = null;
 
-      socket.emit('call:response', {
+      activeSocket.emit('call:response', {
         roomId,
         accepted: true,
       });
@@ -725,19 +736,21 @@ export function CrmSocketProvider({ children }) {
       callTimeoutRef.current = null;
     }
 
-    const roomId = incomingCallData?.roomId || activeCallSessionRef.current?.roomId;
-    if (roomId && socket) {
-      socket.emit('call:response', {
+    const activeIncoming = incomingCallData || incomingCallDataRef.current;
+    const activeSocket = socketRef.current || socket;
+    const roomId = activeIncoming?.roomId || activeCallSessionRef.current?.roomId;
+    if (roomId && activeSocket) {
+      activeSocket.emit('call:response', {
         roomId,
         accepted: false,
         reason,
       });
-      socket.emit('call:hangup', {
+      activeSocket.emit('call:hangup', {
         roomId,
         duration: 0,
         reason,
       });
-      socket.emit('call:end', {
+      activeSocket.emit('call:end', {
         roomId,
         duration: 0,
         reason,
@@ -746,6 +759,7 @@ export function CrmSocketProvider({ children }) {
 
     cleanupCall();
     setIncomingCallData(null);
+    incomingCallDataRef.current = null;
     setCallStatus('idle');
   };
 

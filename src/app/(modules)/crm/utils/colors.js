@@ -9,88 +9,88 @@ import { useAppTheme } from '~/theme/AppTheme';
 export const crmColors = {
   light: {
     // Brand & Accents
-    primary: '#4f46e5',              // Indigo 600 - Core Brand
-    primaryLight: '#6366f1',         // Indigo 500
-    primaryDark: '#3730a3',          // Indigo 800
-    primarySoft: '#eef2ff',          // Indigo 50 (Soft tint)
-    primaryBorder: '#c7d2fe',        // Indigo 200
-    accent: '#06b6d4',               // Cyan 500
-    accentSoft: '#ecfeff',           // Cyan 50
-    accentBorder: '#a5f3fc',
+    primary: '#2563eb',              // Executive Royal Blue (Cobalt) - Authoritative, crisp, professional
+    primaryLight: '#2563eb',         // Royal Blue - High-contrast metrics & links
+    primaryDark: '#1d4ed8',          // Deep Navy / Royal Blue 700
+    primarySoft: '#eff6ff',          // Blue 50 - Fresh, airy tint
+    primaryBorder: '#bfdbfe',        // Blue 200 - Crisp, clear border
+    accent: '#0284c7',               // Sky 600 - Precision secondary
+    accentSoft: '#f0f9ff',           // Sky 50
+    accentBorder: '#bae6fd',         // Sky 200
 
     // Surfaces & Canvas
-    background: '#f8fafc',           // Slate 50 - Page background
-    card: '#ffffff',                 // Clean White - Primary Card surface
-    cardAlt: '#f1f5f9',              // Slate 100 - Secondary surface / Pill container
-    cardHover: '#f8fafc',
+    background: '#f8fafc',           // Slate 50 - Clean, crisp page canvas
+    card: '#ffffff',                 // Pure White - Elevated card surface
+    cardAlt: '#f8fafc',              // Slate 50 - Fresh subtle contrast (replaces muddy gray)
+    cardHover: '#f1f5f9',
     header: '#ffffff',
     headerBorder: '#e2e8f0',
 
     // Navigation & Tab Bar
     tabBar: '#ffffff',
     tabBarBorder: '#e2e8f0',
-    tabBarActiveBg: '#4f46e5',
+    tabBarActiveBg: '#2563eb',       // Executive Royal Blue active pill (replaces black)
     tabBarActiveText: '#ffffff',
     tabBarInactive: '#64748b',       // Slate 500
 
     // Typography
-    text: '#0f172a',                 // Slate 900 - High-contrast headings & titles
-    textSecondary: '#334155',        // Slate 700 - Body copy
+    text: '#0f172a',                 // Slate 900 - High-contrast obsidian headings & titles
+    textSecondary: '#334155',        // Slate 700 - Deep crisp body copy
     textMuted: '#64748b',            // Slate 500 - Timestamps & captions
     textSoft: '#94a3b8',             // Slate 400 - Subtle badges & placeholders
     textInverted: '#ffffff',
 
     // Borders & Dividers
-    border: '#e2e8f0',               // Slate 200 - Card borders
+    border: '#e2e8f0',               // Slate 200 - Clean crisp micro-borders
     borderLight: '#f1f5f9',          // Slate 100 - Inner divider lines
     divider: '#e2e8f0',
 
     // Input & Search Fields
     inputBg: '#ffffff',
     inputBorder: '#cbd5e1',          // Slate 300
-    inputFocusBorder: '#6366f1',
+    inputFocusBorder: '#2563eb',     // Royal Blue
     inputPlaceholder: '#94a3b8',
 
     // Action Channels
-    whatsapp: '#16a34a',             // Green 600
+    whatsapp: '#16a34a',             // WhatsApp Emerald Green 600
     whatsappSoft: '#f0fdf4',
     whatsappBorder: '#bbf7d0',
-    call: '#4f46e5',                 // Indigo
-    callSoft: '#eef2ff',
-    callBorder: '#c7d2fe',
-    copilot: '#8b5cf6',              // Purple 500
+    call: '#2563eb',                 // Royal Blue
+    callSoft: '#eff6ff',
+    callBorder: '#bfdbfe',
+    copilot: '#7c3aed',              // Violet 600
     copilotSoft: '#f5f3ff',
     copilotBorder: '#ddd6fe',
 
     // Status Badges
-    success: '#10b981',              // Emerald
+    success: '#10b981',              // Emerald 500
     successSoft: '#ecfdf5',
     successBorder: '#a7f3d0',
-    warning: '#f59e0b',              // Amber
+    warning: '#f59e0b',              // Amber 500
     warningSoft: '#fffbeb',
     warningBorder: '#fde68a',
-    danger: '#ef4444',               // Rose / Red
+    danger: '#ef4444',               // Rose 500
     dangerSoft: '#fef2f2',
     dangerBorder: '#fecaca',
-    info: '#0ea5e9',                 // Sky
+    info: '#0ea5e9',                 // Sky 500
     infoSoft: '#f0f9ff',
     infoBorder: '#bae6fd',
 
     // Priorities
     priority: {
       URGENT: { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', dot: '#ef4444' },
-      HIGH: { bg: '#fffbeb', border: '#fde68a', text: '#d97706', dot: '#f59e0b' },
-      MEDIUM: { bg: '#f0f9ff', border: '#bae6fd', text: '#0284c7', dot: '#0ea5e9' },
+      HIGH: { bg: '#fffbeb', border: '#fde68a', text: '#b45309', dot: '#f59e0b' },
+      MEDIUM: { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8', dot: '#2563eb' },
       LOW: { bg: '#f8fafc', border: '#e2e8f0', text: '#64748b', dot: '#94a3b8' },
     },
 
     // Task Types
     taskType: {
-      CALL: { color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd' },
+      CALL: { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
       WHATSAPP: { color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-      MEETING: { color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
+      MEETING: { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
       EMAIL: { color: '#ea580c', bg: '#fff7ed', border: '#fed7aa' },
-      REVIEW: { color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+      REVIEW: { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
     },
 
     // Metrics / KPI Cards
@@ -102,8 +102,8 @@ export const crmColors = {
     },
 
     shadowColor: '#0f172a',
-    shadowOpacity: 0.06,
-    overlay: 'rgba(15, 23, 42, 0.6)',
+    shadowOpacity: 0.05,
+    overlay: 'rgba(15, 23, 42, 0.5)',
   },
 
   dark: {

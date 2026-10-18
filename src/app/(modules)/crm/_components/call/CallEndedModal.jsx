@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Text, View, TouchableOpacity, Image } from 'react-native';
+import { Modal, Text, View, TouchableOpacity, Image, Pressable } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, {
   useSharedValue,
@@ -62,6 +62,7 @@ export default function CallEndedModal() {
   return (
     <Modal visible={isVisible} transparent animationType="none" statusBarTranslucent>
       <View className="flex-1 items-center justify-center bg-black/70 px-6">
+        <Pressable className="absolute inset-0" onPress={dismissCallEndNotice} />
         <Animated.View
           style={animatedCardStyle}
           className="w-full max-w-[320px] rounded-[28px] bg-[#1c1c1e] border border-white/10 px-6 pt-7 pb-6 items-center shadow-2xl shadow-black/90"

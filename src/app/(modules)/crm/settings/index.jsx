@@ -87,7 +87,7 @@ const ECOSYSTEM_MODULES = [
   },
 ];
 
-export default function CrmSettingsScreen() {
+export default function CrmSettingsScreen({ isTab = false }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useCrmTheme();
@@ -228,7 +228,7 @@ export default function CrmSettingsScreen() {
       <CrmHeader
         title="Settings & Workspace"
         subtitle="Account, Appearance & Bridges"
-        showBack={true}
+        showBack={!isTab}
         showSettings={false}
       />
 

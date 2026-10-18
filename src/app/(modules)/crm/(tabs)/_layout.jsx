@@ -22,8 +22,8 @@ const tabConfig = {
   pipeline: { icon: 'funnel-outline', activeIcon: 'funnel', label: 'Pipeline' },
   contacts: { icon: 'people-outline', activeIcon: 'people', label: 'Contacts' },
   chat: { icon: 'chatbubbles-outline', activeIcon: 'chatbubbles', label: 'Chat' },
-  tasks: { icon: 'layers-outline', activeIcon: 'checkbox', label: 'Tasks' },
   copilot: { icon: 'sparkles-outline', activeIcon: 'sparkles', label: 'Copilot' },
+  settings: { icon: 'settings-outline', activeIcon: 'settings', label: 'Settings' },
 };
 
 export default function CrmTabLayout() {
@@ -36,8 +36,8 @@ export default function CrmTabLayout() {
       <Tabs.Screen name="pipeline" options={{ title: 'Pipeline' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
-      <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="copilot" options={{ title: 'AI Copilot' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>
   );
 }
@@ -48,12 +48,6 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
 
   // Dynamic Badges
   const { unreadCount = 0 } = useNotificationStore() || {};
-  const crmContext = useCrm?.();
-  const tasks = crmContext?.tasks || [];
-
-  const pendingTasksCount = Array.isArray(tasks)
-    ? tasks.filter((t) => t && t.status !== 'DONE' && t.status !== 'COMPLETED').length
-    : 0;
 
   // Auto-hide when keyboard opens
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -80,9 +74,6 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
   const getBadgeContent = (routeName) => {
     if (routeName === 'chat' && unreadCount > 0) {
       return unreadCount > 99 ? '99+' : String(unreadCount);
-    }
-    if (routeName === 'tasks' && pendingTasksCount > 0) {
-      return pendingTasksCount > 99 ? '99+' : String(pendingTasksCount);
     }
     return null;
   };
@@ -124,12 +115,12 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
                 // Firmer medium pulse on re-tap (triggers scroll-to-top)
                 HapticsModule.impactAsync(
                   HapticsModule.ImpactFeedbackStyle?.Medium ?? 'medium'
-                ).catch(() => {});
+                ).catch(() => { });
               } else {
                 // Subtle light click for tab change
                 HapticsModule.impactAsync(
                   HapticsModule.ImpactFeedbackStyle?.Light ?? 'light'
-                ).catch(() => {});
+                ).catch(() => { });
               }
             }
 

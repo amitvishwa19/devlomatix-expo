@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, Text, View, ActivityIndicator } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../utils/colors';
 import { fetchAccessData } from '~/services/access-management';
+import { getSession } from '~/utils/authStorage';
 import * as crmService from '~/services/crm';
 
 const AVAILABLE_MODULES = [
@@ -25,25 +26,55 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
 
   useEffect(() => {
     if (contact && visible) {
-      // Parse existing moduleAccess
+      // Parse existing moduleAccess & relational shares
       const ma = contact.moduleAccess || {};
       const mods = Array.isArray(ma.modules) && ma.modules.length > 0 ? ma.modules : ['crm'];
-      const shared = Array.isArray(ma.sharedWith) ? ma.sharedWith : [];
+      const maShared = Array.isArray(ma.sharedWith) ? ma.sharedWith : [];
+      const relShared = Array.isArray(contact.sharedWith)
+        ? contact.sharedWith.map((s) => s.sharedWithUserId || s.sharedWith?.id || s.id).filter(Boolean)
+        : [];
+      const initialShared = Array.from(new Set([...maShared, ...relShared]));
+
       setSelectedModules(mods);
-      setSharedUsers(shared);
+      setSharedUsers(initialShared);
       setStatusMsg(null);
 
-      // Load workspace team members
+      // Load workspace team members using dedicated CRM Team endpoint
       async function loadTeam() {
         try {
           setLoading(true);
-          const res = await fetchAccessData();
-          const users = res?.users || res?.data?.users || res?.data || [];
-          if (Array.isArray(users)) {
-            setTeamMembers(users);
+          let loadedTeam = [];
+          const teamRes = await crmService.getTeam();
+          if (teamRes?.success && Array.isArray(teamRes.data) && teamRes.data.length > 0) {
+            loadedTeam = teamRes.data;
+          } else {
+            const accessRes = await fetchAccessData();
+            const rawUsers = accessRes?.users || accessRes?.data?.users || accessRes?.data || [];
+            if (Array.isArray(rawUsers)) {
+              loadedTeam = rawUsers.map((u) => ({
+                id: u.id,
+                name: u.displayName || u.name || (u.email ? u.email.split('@')[0] : 'Member'),
+                email: u.email || '',
+                role: u.roles?.[0] || u.role || 'Team Member',
+              }));
+            }
           }
+
+          // Exclude the current logged-in user so they don't share with themselves
+          const session = await getSession();
+          const myId = session?.user?.id || session?.user?.userId || session?.user?._id;
+          const myEmail = session?.user?.email;
+
+          const filtered = loadedTeam.filter((m) => {
+            if (m.isCurrent) return false;
+            if (myId && m.id === myId) return false;
+            if (myEmail && m.email && m.email.toLowerCase() === myEmail.toLowerCase()) return false;
+            return true;
+          });
+
+          setTeamMembers(filtered);
         } catch (e) {
-          console.warn('Could not load access team data:', e?.message);
+          console.warn('Could not load team data:', e?.message);
         } finally {
           setLoading(false);
         }
@@ -76,7 +107,10 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
         sharedWith: sharedUsers,
       };
 
-      await crmService.updateContact(contact.id, { moduleAccess });
+      await crmService.updateContact(contact.id, {
+        moduleAccess,
+        sharedWith: sharedUsers,
+      });
 
       setStatusMsg({ type: 'success', text: 'Contact sharing and module permissions updated!' });
       if (onUpdated) onUpdated();

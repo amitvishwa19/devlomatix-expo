@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Text, TouchableOpacity, View } from 'react-native';
+import { useCrmDrawer } from '~/app/(modules)/crm/_components/CrmDrawer';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
-import { useCrmDrawer } from '~/app/(modules)/crm/_components/CrmDrawer';
 
 export default function UserStatusBar({
   scrollY,
@@ -80,11 +80,11 @@ export default function UserStatusBar({
   const avatarUri = user?.avatar || user?.photo;
   const userInitial = (user?.displayName || user?.name || user?.email)?.[0]?.toUpperCase() || 'U';
 
-  const actionBtnBg = palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9';
+  const actionBtnBg = palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#ffffff';
   const actionBtnBorder = palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0';
 
   return (
-    <Animated.View className={`flex-row items-center gap-2 px-3 py-2 border-b ${palette.border}`}
+    <Animated.View className={`flex-row items-center gap-2 px-3 py-2 ${palette.border} border-b`}
       style={{
         backgroundColor: palette.colors.surface,
         transform: scrollY ? [{ translateY: offsetAnim }] : undefined,
@@ -113,7 +113,7 @@ export default function UserStatusBar({
         {avatarUri ? (
           <Image source={{ uri: avatarUri }} className="h-8 w-8 rounded-full" />
         ) : (
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-teal-600">
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-blue-600">
             <Text className="text-xs font-bold text-white">
               {userInitial}
             </Text>
@@ -144,7 +144,7 @@ export default function UserStatusBar({
           >
             <Ionicons name="notifications-outline" size={15} color={palette.textSoftColor} />
             {unreadCount > 0 && (
-              <View className="absolute -right-0.5 -top-0.5 h-3.5 min-w-[14px] items-center justify-center rounded-full bg-teal-600 px-0.5">
+              <View className="absolute -right-0.5 -top-0.5 h-3.5 min-w-[14px] items-center justify-center rounded-full bg-rose-500 px-0.5">
                 <Text className="text-[8px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</Text>
               </View>
             )}

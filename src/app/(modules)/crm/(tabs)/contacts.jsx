@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
+import { getSession } from '~/utils/authStorage';
 import { useCrmTheme } from '../utils/colors';
 import { CRM_TAG_FILTERS } from '../utils/constants';
 import CrmHeader from '../_components/CrmHeader';
@@ -28,9 +29,17 @@ export default function CrmContactsTab() {
   useScrollToTop(scrollRef);
   const { contacts, loading, refreshing, refreshAll, openCreateContact } = useCrm();
 
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('ALL');
   const [shareContact, setShareContact] = useState(null);
+
+  useEffect(() => {
+    getSession().then((s) => {
+      const uid = s?.user?.id || s?.user?.userId || s?.user?._id;
+      if (uid) setCurrentUserId(uid);
+    });
+  }, []);
 
   const filteredContacts = contacts.filter((c) => {
     if (selectedScope !== 'ALL') {
@@ -41,7 +50,10 @@ export default function CrmContactsTab() {
       } else if (selectedScope === 'WA_SYNCED') {
         if (!mods.includes('konnectx')) return false;
       } else if (selectedScope === 'SHARED') {
-        if (!Array.isArray(ma.sharedWith) || ma.sharedWith.length === 0) return false;
+        const hasRelShare = Array.isArray(c.sharedWith) && c.sharedWith.length > 0;
+        const hasJsonShare = Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0;
+        const isSharedWithMe = Boolean(currentUserId && c.userId && c.userId !== currentUserId);
+        if (!hasRelShare && !hasJsonShare && !isSharedWithMe) return false;
       } else {
         if (!c.tags || !c.tags.includes(selectedScope)) return false;
       }

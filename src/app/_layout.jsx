@@ -74,7 +74,7 @@ export const unstable_settings = {
     initialRouteName: "index",
 };
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
     const [loaded, error] = useFonts({
@@ -82,14 +82,11 @@ export default function RootLayout() {
     });
 
     useEffect(() => {
-        if (error) throw error;
-    }, [error]);
-
-    useEffect(() => {
-        if (loaded) {
-            SplashScreen.hideAsync();
+        if (error) {
+            console.error("Font loading error:", error);
+            SplashScreen.hideAsync().catch(() => {});
         }
-    }, [loaded]);
+    }, [error]);
 
     if (!loaded) {
         return null;

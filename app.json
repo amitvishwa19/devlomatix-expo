@@ -11,7 +11,7 @@
     "splash": {
       "image": "./src/assets/images/splashscreen-light.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "#f5fbfe",
       "dark": {
         "image": "./src/assets/images/splashscreen-dark.png",
         "backgroundColor": "#020714",
@@ -24,7 +24,7 @@
       "splash": {
         "image": "./src/assets/images/splashscreen-light.png",
         "resizeMode": "contain",
-        "backgroundColor": "#ffffff",
+        "backgroundColor": "#f5fbfe",
         "dark": {
           "image": "./src/assets/images/splashscreen-dark.png",
           "backgroundColor": "#020714",
@@ -40,7 +40,7 @@
       "splash": {
         "image": "./src/assets/images/splashscreen-light.png",
         "resizeMode": "contain",
-        "backgroundColor": "#ffffff",
+        "backgroundColor": "#f5fbfe",
         "dark": {
           "image": "./src/assets/images/splashscreen-dark.png",
           "backgroundColor": "#020714",
@@ -78,13 +78,11 @@
         {
           "backgroundColor": "#ffffff",
           "image": "./src/assets/images/splashscreen-light.png",
-          "imageWidth": 160,
-          "resizeMode": "contain",
+          "resizeMode": "cover",
           "dark": {
             "image": "./src/assets/images/splashscreen-dark.png",
             "backgroundColor": "#020714",
-            "imageWidth": 160,
-            "resizeMode": "contain"
+            "resizeMode": "cover"
           }
         }
       ],

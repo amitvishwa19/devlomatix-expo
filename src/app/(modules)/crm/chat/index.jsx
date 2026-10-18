@@ -56,21 +56,25 @@ export default function CrmChatDirectoryScreen() {
         setContacts(contactsRes.data);
       }
 
-      // Load Team Members via Access Management
+      // Load Team Members (Dedicated CRM Team API with Access Management fallback)
       try {
-        const accessRes = await fetchAccessData();
-        const rawUsers = accessRes?.users || accessRes?.data?.users || accessRes?.data || [];
-        if (Array.isArray(rawUsers)) {
-          const formatted = rawUsers
-            .filter((u) => (u.id || u._id) !== currentUserId)
-            .map((u) => {
+        let loadedTeam = [];
+        const teamRes = await crmService.getTeam();
+        if (teamRes?.success && Array.isArray(teamRes.data) && teamRes.data.length > 0) {
+          loadedTeam = teamRes.data;
+        } else {
+          const accessRes = await fetchAccessData();
+          const rawUsers = accessRes?.users || accessRes?.data?.users || accessRes?.data || [];
+          if (Array.isArray(rawUsers)) {
+            loadedTeam = rawUsers.map((u) => {
               const roleTitle =
                 (Array.isArray(u.roles) && u.roles.length > 0
                   ? u.roles.map((r) => r.title || r.name || (typeof r === 'string' ? r : '')).filter(Boolean).join(', ')
                   : null) ||
                 (u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase() : null) ||
                 (u.userRole || null) ||
-                (u.roleTitle || null);
+                (u.roleTitle || null) ||
+                'Sales Member';
 
               const name =
                 u.displayName ||
@@ -82,14 +86,23 @@ export default function CrmChatDirectoryScreen() {
                 id: u.id || u._id,
                 name,
                 email: u.email || '',
+                phone: u.phone || '',
                 avatar: u.avatar || null,
                 role: roleTitle,
               };
             });
-          setTeamMembers(formatted);
+          }
         }
+
+        // Filter out current logged in user so the 8 sales teammates are shown
+        const teamTeammates = loadedTeam.filter((u) => {
+          const isSelf = (resolvedUserId && String(u.id) === String(resolvedUserId)) || u.isCurrent;
+          return !isSelf;
+        });
+
+        setTeamMembers(teamTeammates);
       } catch (e) {
-        console.warn('Could not load access team data:', e?.message);
+        console.warn('Could not load team data:', e?.message);
       }
     } catch (err) {
       console.warn('Error loading chat directory:', err);

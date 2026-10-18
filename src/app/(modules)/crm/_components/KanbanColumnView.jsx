@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useCrmTheme } from '../utils/colors';
 
 const KANBAN_COLUMNS = [
-  { id: 'PENDING', title: 'To Do', icon: 'time-outline', color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+  { id: 'PENDING', title: 'To Do', icon: 'time-outline', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
   { id: 'IN_PROGRESS', title: 'In Progress', icon: 'play-outline', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
   { id: 'REVIEW', title: 'Follow-up', icon: 'eye-outline', color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd' },
   { id: 'COMPLETED', title: 'Done', icon: 'checkmark-circle-outline', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
