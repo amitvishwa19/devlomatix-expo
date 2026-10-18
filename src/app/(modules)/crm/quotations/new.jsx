@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -10,43 +11,60 @@ import {
   Text,
   TextInput,
   View,
-  ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppScreen from '~/components/AppScreen';
-import { useCrmTheme } from '../utils/colors';
-import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
 import * as quotationService from '~/services/quotation';
+import CrmHeader from '../_components/CrmHeader';
+import { useCrmTheme } from '../utils/colors';
+
+const TAX_PRESETS = [0, 5, 12, 18, 28];
+const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP'];
+const VALIDITY_OPTIONS = ['15 Days', '30 Days', '45 Days', '60 Days'];
 
 export default function NewQuotationScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors } = useCrmTheme();
+
+  // Active Wizard Tab ('client' | 'items' | 'review')
+  const [activeStep, setActiveStep] = useState('client');
 
   // Client Details
   const [clientName, setClientName] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientCompany, setClientCompany] = useState('');
+  const [selectedContact, setSelectedContact] = useState(null);
 
   // Quotation Metadata
   const [title, setTitle] = useState('Commercial Proposal & Scope');
   const [currency, setCurrency] = useState('INR');
-  const [validUntil, setValidUntil] = useState('30 Days from Issue');
-  const [notes, setNotes] = useState('Payment terms: 50% advance, 50% on deployment.');
-  const [terms, setTerms] = useState('Scope includes design, development, and 30-day post-launch warranty.');
+  const [validUntil, setValidUntil] = useState('30 Days');
+  const [notes, setNotes] = useState(
+    'Payment terms: 50% advance on order confirmation, 50% upon delivery / milestone completion.'
+  );
+  const [terms, setTerms] = useState(
+    '1. Scope includes software architecture, UI/UX, and cloud deployment.\n2. Warranty: 30 days post-launch support.\n3. Taxes charged as applicable.'
+  );
 
   // Line Items
   const [items, setItems] = useState([
     {
       id: 'item-1',
       name: 'Software Implementation',
-      description: 'Design, configuration and system onboarding',
+      description: 'System design, core architecture, and onboarding',
       quantity: 1,
       unitPrice: 50000,
       discountPercent: 0,
       taxPercent: 18,
     },
   ]);
+
+  // Which item is actively expanded in the accordion
+  const [expandedItemId, setExpandedItemId] = useState('item-1');
 
   // Contact Picker Modal
   const [contacts, setContacts] = useState([]);
@@ -60,22 +78,34 @@ export default function NewQuotationScreen() {
       try {
         const res = await crmService.getContacts();
         if (res?.data) setContacts(res.data);
-      } catch {}
+      } catch { }
     }
     loadContacts();
   }, []);
 
   const handleSelectContact = (contact) => {
-    setClientName(contact.name || '');
+    setSelectedContact(contact);
+    setClientName(contact.account?.name || contact.company || contact.name || '');
+    setContactPerson(contact.name || '');
     setClientPhone(contact.phone || '');
     setClientEmail(contact.email || '');
-    setClientCompany(contact.account?.name || '');
+    setClientCompany(contact.account?.name || contact.company || '');
     setShowContactPicker(false);
   };
 
+  const handleClearContact = () => {
+    setSelectedContact(null);
+    setClientName('');
+    setContactPerson('');
+    setClientPhone('');
+    setClientEmail('');
+    setClientCompany('');
+  };
+
   const handleAddItem = () => {
+    const newId = `item-${Date.now()}`;
     const newItem = {
-      id: `item-${Date.now()}`,
+      id: newId,
       name: '',
       description: '',
       quantity: 1,
@@ -84,11 +114,16 @@ export default function NewQuotationScreen() {
       taxPercent: 18,
     };
     setItems((prev) => [...prev, newItem]);
+    setExpandedItemId(newId);
   };
 
   const handleRemoveItem = (id) => {
     if (items.length <= 1) return;
     setItems((prev) => prev.filter((it) => it.id !== id));
+    if (expandedItemId === id) {
+      const remaining = items.filter((it) => it.id !== id);
+      setExpandedItemId(remaining[0]?.id || null);
+    }
   };
 
   const handleUpdateItem = (id, field, value) => {
@@ -100,8 +135,26 @@ export default function NewQuotationScreen() {
     );
   };
 
+  const handleStepQuantity = (id, delta) => {
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.id !== id) return it;
+        const currentQty = Number(it.quantity) || 1;
+        const nextQty = Math.max(1, currentQty + delta);
+        return { ...it, quantity: nextQty };
+      })
+    );
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedItemId((prev) => (prev === id ? null : id));
+  };
+
   // Calculations
-  const subtotal = items.reduce((sum, it) => sum + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0), 0);
+  const subtotal = items.reduce(
+    (sum, it) => sum + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0),
+    0
+  );
   const discountTotal = items.reduce((sum, it) => {
     const itemSub = (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0);
     return sum + itemSub * ((Number(it.discountPercent) || 0) / 100);
@@ -113,11 +166,13 @@ export default function NewQuotationScreen() {
   }, 0);
   const grandTotal = Math.round(subtotal - discountTotal + taxTotal);
 
-  const currencySymbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
+  const currencySymbol =
+    currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
 
   const handleSave = async (status = 'draft') => {
     if (!clientName.trim()) {
       setErrorMsg('Please enter or select a client name.');
+      setActiveStep('client');
       return;
     }
 
@@ -135,6 +190,7 @@ export default function NewQuotationScreen() {
         data: {
           client: {
             name: clientName.trim(),
+            contactPerson: contactPerson.trim(),
             phone: clientPhone.trim(),
             email: clientEmail.trim(),
             company: clientCompany.trim(),
@@ -189,473 +245,991 @@ export default function NewQuotationScreen() {
     <AppScreen>
       <CrmHeader title="Create Quotation" subtitle="Commercial Proposal Builder" showBack={true} />
 
+      {/* Segmented Top Wizard Steps Bar - Perfectly distributed, clean, zero wrapping */}
+      <View
+        className="flex-row border-b"
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+        }}
+      >
+        {[
+          { key: 'client', step: '1', title: 'Client' },
+          { key: 'items', step: '2', title: `Items (${items.length})` },
+          { key: 'review', step: '3', title: 'Terms & Total' },
+        ].map((tab) => {
+          const isSelected = activeStep === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveStep(tab.key)}
+              className="flex-1 py-2.5 items-center justify-center border-b-2 active:opacity-75"
+              style={{
+                borderBottomColor: isSelected ? colors.primary : 'transparent',
+                backgroundColor: isSelected ? colors.primarySoft : 'transparent',
+              }}
+            >
+              <View className="flex-row items-center gap-x-1.5">
+                <View
+                  className="h-4 w-4 rounded-full items-center justify-center"
+                  style={{
+                    backgroundColor: isSelected ? colors.primary : colors.cardAlt,
+                  }}
+                >
+                  <Text
+                    className="text-[9px] font-black"
+                    style={{ color: isSelected ? '#ffffff' : colors.textMuted }}
+                  >
+                    {tab.step}
+                  </Text>
+                </View>
+                <Text
+                  className="text-xs font-bold"
+                  style={{ color: isSelected ? colors.primary : colors.textMuted }}
+                >
+                  {tab.title}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+          contentContainerStyle={{
+            padding: 12,
+            paddingBottom: Math.max(90, insets.bottom + 80),
+          }}
         >
           {/* Error Alert */}
           {errorMsg && (
             <View
-              className="mb-3 rounded-xl p-3 border"
+              className="mb-3 rounded-xl p-3 border flex-row items-center gap-x-2"
               style={{
                 backgroundColor: colors.dangerSoft,
                 borderColor: colors.dangerBorder,
               }}
             >
-              <Text className="text-xs font-bold" style={{ color: colors.danger }}>
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
+              <Text className="text-xs font-bold flex-1" style={{ color: colors.danger }}>
                 {errorMsg}
               </Text>
             </View>
           )}
 
-          {/* Section 1: Client Information */}
-          <View
-            className="mb-3 rounded-[16px] border p-3.5 shadow-sm"
-            style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            }}
-          >
-            <View className="flex-row items-center justify-between border-b pb-2 mb-3" style={{ borderColor: colors.borderLight }}>
-              <View className="flex-row items-center gap-x-2">
+          {/* ================= STEP 1: CLIENT & SCOPE ================= */}
+          {activeStep === 'client' && (
+            <View className="flex flex-col gap-4">
+              {/* Client Info Card */}
+              <View
+                className="rounded-[16px] border p-3.5 shadow-sm flex flex-col gap-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+              >
                 <View
-                  className="h-6 w-6 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: colors.primarySoft }}
+                  className="flex-row items-center justify-between border-b pb-2.5"
+                  style={{ borderColor: colors.borderLight }}
                 >
-                  <Ionicons name="person" size={13} color={colors.primary} />
+                  <View className="flex-row items-center gap-x-2">
+                    <View
+                      className="h-6 w-6 items-center justify-center rounded-lg"
+                      style={{ backgroundColor: colors.primarySoft }}
+                    >
+                      <Ionicons name="person" size={13} color={colors.primary} />
+                    </View>
+                    <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                      Client & Recipient
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    onPress={() => setShowContactPicker(true)}
+                    className="flex-row items-center gap-x-1 px-2.5 py-1 rounded-lg border active:opacity-75"
+                    style={{
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primaryBorder,
+                    }}
+                  >
+                    <Ionicons name="people" size={12} color={colors.primary} />
+                    <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
+                      {selectedContact ? 'Change Contact' : 'Pick Contact'}
+                    </Text>
+                  </Pressable>
                 </View>
-                <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
-                  Client Details
-                </Text>
+
+                {/* If Contact is Picked, Show Summary Pill */}
+                {selectedContact ? (
+                  <View
+                    className="rounded-xl p-2.5 border flex-row items-center justify-between"
+                    style={{
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primaryBorder,
+                    }}
+                  >
+                    <View className="flex-1 mr-2">
+                      <Text className="text-xs font-bold" style={{ color: colors.primaryDark }}>
+                        {selectedContact.name}
+                      </Text>
+                      <Text className="text-[10px]" style={{ color: colors.textSecondary }}>
+                        {selectedContact.account?.name || selectedContact.company || 'Individual Client'}
+                        {selectedContact.phone ? ` • ${selectedContact.phone}` : ''}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={handleClearContact}
+                      className="h-6 w-6 items-center justify-center rounded-full bg-white/70 active:opacity-75"
+                    >
+                      <Ionicons name="close" size={12} color={colors.textMuted} />
+                    </Pressable>
+                  </View>
+                ) : null}
+
+                {/* Full-width Stacked Inputs (No horizontal cramping) */}
+                <View className="flex flex-col gap-4">
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Client / Company Name *
+                    </Text>
+                    <TextInput
+                      value={clientName}
+                      onChangeText={setClientName}
+                      placeholder="e.g. Acme Corp or John Doe"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="rounded-xl px-3 py-2 border text-xs"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                        color: colors.text,
+                      }}
+                    />
+                  </View>
+
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Contact Person (Optional)
+                    </Text>
+                    <TextInput
+                      value={contactPerson}
+                      onChangeText={setContactPerson}
+                      placeholder="e.g. Mr. Johnathan Smith"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="rounded-xl px-3 py-2 border text-xs"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                        color: colors.text,
+                      }}
+                    />
+                  </View>
+
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Phone / WhatsApp
+                    </Text>
+                    <View
+                      className="flex-row items-center rounded-xl border px-3"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                      }}
+                    >
+                      <Ionicons name="call-outline" size={13} color={colors.textMuted} />
+                      <TextInput
+                        value={clientPhone}
+                        onChangeText={setClientPhone}
+                        placeholder="+91 98765 43210"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        keyboardType="phone-pad"
+                        className="flex-1 py-2 px-2 text-xs"
+                        style={{ color: colors.text }}
+                      />
+                    </View>
+                  </View>
+
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Email Address
+                    </Text>
+                    <View
+                      className="flex-row items-center rounded-xl border px-3"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                      }}
+                    >
+                      <Ionicons name="mail-outline" size={13} color={colors.textMuted} />
+                      <TextInput
+                        value={clientEmail}
+                        onChangeText={setClientEmail}
+                        placeholder="billing@acmecorp.com"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        className="flex-1 py-2 px-2 text-xs"
+                        style={{ color: colors.text }}
+                      />
+                    </View>
+                  </View>
+                </View>
               </View>
 
-              <Pressable
-                onPress={() => setShowContactPicker(true)}
-                className="flex-row items-center gap-x-1 px-2.5 py-1 rounded-lg border active:opacity-75"
+              {/* Proposal Metadata Card */}
+              <View
+                className="rounded-[16px] border p-3.5 shadow-sm flex flex-col gap-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+              >
+                <View
+                  className="flex-row items-center gap-x-2 border-b pb-2.5"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <View
+                    className="h-6 w-6 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: colors.infoSoft }}
+                  >
+                    <Ionicons name="document-text" size={13} color={colors.info} />
+                  </View>
+                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                    Proposal Scope & Currency
+                  </Text>
+                </View>
+
+                <View className="flex flex-col gap-4">
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Proposal Title
+                    </Text>
+                    <TextInput
+                      value={title}
+                      onChangeText={setTitle}
+                      placeholder="e.g. Next.js & Mobile App Architecture"
+                      placeholderTextColor={colors.inputPlaceholder}
+                      className="rounded-xl px-3 py-2 border text-xs"
+                      style={{
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.inputBorder,
+                        color: colors.text,
+                      }}
+                    />
+                  </View>
+
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Currency
+                    </Text>
+                    <View className="flex-row gap-x-1.5">
+                      {CURRENCIES.map((curr) => {
+                        const isCurr = currency === curr;
+                        return (
+                          <Pressable
+                            key={curr}
+                            onPress={() => setCurrency(curr)}
+                            className="flex-1 py-1.5 rounded-lg border items-center justify-center active:opacity-75"
+                            style={{
+                              backgroundColor: isCurr ? colors.primary : colors.cardAlt,
+                              borderColor: isCurr ? colors.primary : colors.border,
+                            }}
+                          >
+                            <Text
+                              className="text-[11px] font-black"
+                              style={{ color: isCurr ? '#ffffff' : colors.text }}
+                            >
+                              {curr}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View>
+                    <Text
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: colors.textMuted }}
+                    >
+                      Proposal Validity
+                    </Text>
+                    <View className="flex-row gap-x-1.5">
+                      {VALIDITY_OPTIONS.map((val) => {
+                        const isVal = validUntil === val;
+                        return (
+                          <Pressable
+                            key={val}
+                            onPress={() => setValidUntil(val)}
+                            className="flex-1 py-1.5 rounded-lg border items-center justify-center active:opacity-75"
+                            style={{
+                              backgroundColor: isVal ? colors.primary : colors.cardAlt,
+                              borderColor: isVal ? colors.primary : colors.border,
+                            }}
+                          >
+                            <Text
+                              className="text-[10px] font-bold"
+                              style={{ color: isVal ? '#ffffff' : colors.textSecondary }}
+                            >
+                              {val}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* ================= STEP 2: LINE ITEMS & PRICING ================= */}
+          {activeStep === 'items' && (
+            <View className="flex flex-col gap-4">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                    Deliverables & Items
+                  </Text>
+                  <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                    {items.length} {items.length === 1 ? 'item' : 'items'} in quotation
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={handleAddItem}
+                  className="flex-row items-center gap-x-1 px-3 py-1.5 rounded-lg border active:opacity-75 shadow-xs"
+                  style={{
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                  }}
+                >
+                  <Ionicons name="add" size={13} color="#ffffff" />
+                  <Text className="text-xs font-black text-white">Add Deliverable</Text>
+                </Pressable>
+              </View>
+
+              {/* Items List - Accordion Pattern to eliminate congestion */}
+              {items.map((item, index) => {
+                const isExpanded = expandedItemId === item.id;
+                const itemSub = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
+                const itemDiscount = itemSub * ((Number(item.discountPercent) || 0) / 100);
+                const itemTax = (itemSub - itemDiscount) * ((Number(item.taxPercent) || 0) / 100);
+                const itemTotal = Math.round(itemSub - itemDiscount + itemTax);
+
+                if (!isExpanded) {
+                  // Compact 1-line collapsed summary card
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => toggleExpand(item.id)}
+                      className="rounded-[14px] border p-2.5 flex-row items-center justify-between active:opacity-80"
+                      style={{
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <View className="flex-row items-center gap-x-2.5 flex-1 mr-2">
+                        <View
+                          className="h-6 w-6 rounded-lg items-center justify-center"
+                          style={{ backgroundColor: colors.primarySoft }}
+                        >
+                          <Text className="text-[10px] font-black" style={{ color: colors.primary }}>
+                            {index + 1}
+                          </Text>
+                        </View>
+                        <View className="flex-1">
+                          <Text
+                            className="text-xs font-bold"
+                            style={{ color: colors.text }}
+                            numberOfLines={1}
+                          >
+                            {item.name || `Deliverable #${index + 1}`}
+                          </Text>
+                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                            {item.quantity} × {currencySymbol} {Number(item.unitPrice || 0).toLocaleString('en-IN')}
+                            {Number(item.taxPercent) > 0 ? ` (+${item.taxPercent}% GST)` : ''}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="flex-row items-center gap-x-2">
+                        <Text className="text-xs font-black" style={{ color: colors.primaryDark }}>
+                          {currencySymbol} {itemTotal.toLocaleString('en-IN')}
+                        </Text>
+                        <View
+                          className="h-6 w-6 rounded-lg items-center justify-center border"
+                          style={{
+                            backgroundColor: colors.cardAlt,
+                            borderColor: colors.border,
+                          }}
+                        >
+                          <Ionicons name="create-outline" size={12} color={colors.primary} />
+                        </View>
+                        {items.length > 1 && (
+                          <Pressable
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              handleRemoveItem(item.id);
+                            }}
+                            className="h-6 w-6 items-center justify-center rounded-lg border active:opacity-75"
+                            style={{
+                              backgroundColor: colors.dangerSoft,
+                              borderColor: colors.dangerBorder,
+                            }}
+                          >
+                            <Ionicons name="trash-outline" size={11} color={colors.danger} />
+                          </Pressable>
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                }
+
+                // Expanded Item Editor Card
+                return (
+                  <View
+                    key={item.id}
+                    className="rounded-[16px] border p-3.5 shadow-sm flex flex-col gap-4"
+                    style={{
+                      backgroundColor: colors.card,
+                      borderColor: colors.primary,
+                    }}
+                  >
+                    {/* Item Card Header */}
+                    <View
+                      className="flex-row items-center justify-between border-b pb-2"
+                      style={{ borderColor: colors.borderLight }}
+                    >
+                      <View className="flex-row items-center gap-x-1.5">
+                        <View
+                          className="h-5 w-5 rounded-full items-center justify-center"
+                          style={{ backgroundColor: colors.primary }}
+                        >
+                          <Text className="text-[10px] font-black text-white">
+                            {index + 1}
+                          </Text>
+                        </View>
+                        <Text className="text-xs font-black" style={{ color: colors.primary }}>
+                          Editing Item #{index + 1}
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center gap-x-1.5">
+                        <Pressable
+                          onPress={() => toggleExpand(item.id)}
+                          className="px-2 py-0.5 rounded-md border active:opacity-75"
+                          style={{
+                            backgroundColor: colors.cardAlt,
+                            borderColor: colors.border,
+                          }}
+                        >
+                          <Text className="text-[10px] font-bold" style={{ color: colors.textSecondary }}>
+                            Done
+                          </Text>
+                        </Pressable>
+
+                        {items.length > 1 && (
+                          <Pressable
+                            onPress={() => handleRemoveItem(item.id)}
+                            className="h-6 w-6 items-center justify-center rounded-lg border active:opacity-75"
+                            style={{
+                              backgroundColor: colors.dangerSoft,
+                              borderColor: colors.dangerBorder,
+                            }}
+                          >
+                            <Ionicons name="trash-outline" size={12} color={colors.danger} />
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Item Name */}
+                    <View>
+                      <Text
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                        style={{ color: colors.textMuted }}
+                      >
+                        Deliverable / Service Title *
+                      </Text>
+                      <TextInput
+                        value={item.name}
+                        onChangeText={(val) => handleUpdateItem(item.id, 'name', val)}
+                        placeholder="e.g. Backend API Architecture & Auth"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        className="rounded-xl px-3 py-2 border text-xs"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          borderColor: colors.inputBorder,
+                          color: colors.text,
+                        }}
+                      />
+                    </View>
+
+                    {/* Description */}
+                    <View>
+                      <Text
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                        style={{ color: colors.textMuted }}
+                      >
+                        Scope Description (Optional)
+                      </Text>
+                      <TextInput
+                        value={item.description}
+                        onChangeText={(val) => handleUpdateItem(item.id, 'description', val)}
+                        placeholder="e.g. Setup Supabase, NextAuth, and RBAC tables"
+                        placeholderTextColor={colors.inputPlaceholder}
+                        multiline
+                        numberOfLines={2}
+                        className="rounded-xl px-3 py-1.5 border text-[11px]"
+                        style={{
+                          backgroundColor: colors.inputBg,
+                          borderColor: colors.inputBorder,
+                          color: colors.text,
+                          textAlignVertical: 'top',
+                        }}
+                      />
+                    </View>
+
+                    {/* Quantity & Unit Price */}
+                    <View className="flex-row gap-x-2.5">
+                      {/* Quantity Stepper */}
+                      <View className="flex-1">
+                        <Text
+                          className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                          style={{ color: colors.textMuted }}
+                        >
+                          Quantity
+                        </Text>
+                        <View
+                          className="flex-row items-center rounded-xl border overflow-hidden"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            borderColor: colors.inputBorder,
+                          }}
+                        >
+                          <Pressable
+                            onPress={() => handleStepQuantity(item.id, -1)}
+                            className="h-9 w-9 items-center justify-center border-r active:opacity-70"
+                            style={{ borderColor: colors.borderLight }}
+                          >
+                            <Ionicons name="remove" size={14} color={colors.textSecondary} />
+                          </Pressable>
+                          <TextInput
+                            value={String(item.quantity)}
+                            onChangeText={(val) => handleUpdateItem(item.id, 'quantity', val)}
+                            keyboardType="numeric"
+                            className="flex-1 text-center font-bold text-xs"
+                            style={{ color: colors.text }}
+                          />
+                          <Pressable
+                            onPress={() => handleStepQuantity(item.id, 1)}
+                            className="h-9 w-9 items-center justify-center border-l active:opacity-70"
+                            style={{ borderColor: colors.borderLight }}
+                          >
+                            <Ionicons name="add" size={14} color={colors.textSecondary} />
+                          </Pressable>
+                        </View>
+                      </View>
+
+                      {/* Unit Price */}
+                      <View className="flex-1">
+                        <Text
+                          className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                          style={{ color: colors.textMuted }}
+                        >
+                          Unit Price ({currencySymbol})
+                        </Text>
+                        <TextInput
+                          value={String(item.unitPrice)}
+                          onChangeText={(val) => handleUpdateItem(item.id, 'unitPrice', val)}
+                          keyboardType="numeric"
+                          placeholder="0"
+                          placeholderTextColor={colors.inputPlaceholder}
+                          className="h-9 rounded-xl px-3 border text-xs font-bold"
+                          style={{
+                            backgroundColor: colors.inputBg,
+                            borderColor: colors.inputBorder,
+                            color: colors.text,
+                          }}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Dedicated GST Tax Rate Chips Row */}
+                    <View>
+                      <Text
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                        style={{ color: colors.textMuted }}
+                      >
+                        GST Tax Rate
+                      </Text>
+                      <View className="flex-row gap-x-1.5">
+                        {TAX_PRESETS.map((rate) => {
+                          const isTax = Number(item.taxPercent) === rate;
+                          return (
+                            <Pressable
+                              key={rate}
+                              onPress={() => handleUpdateItem(item.id, 'taxPercent', rate)}
+                              className="flex-1 py-1 rounded-lg border items-center justify-center active:opacity-75"
+                              style={{
+                                backgroundColor: isTax ? colors.primary : colors.cardAlt,
+                                borderColor: isTax ? colors.primary : colors.border,
+                              }}
+                            >
+                              <Text
+                                className="text-[10px] font-black"
+                                style={{ color: isTax ? '#ffffff' : colors.textSecondary }}
+                              >
+                                {rate}%
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    {/* Item Total Footer */}
+                    <View
+                      className="rounded-xl p-2.5 border flex-row items-center justify-between"
+                      style={{
+                        backgroundColor: colors.cardAlt,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <View>
+                        <Text className="text-[9px] font-medium" style={{ color: colors.textMuted }}>
+                          Net: {currencySymbol} {itemSub.toLocaleString('en-IN')}
+                          {itemTax > 0 ? ` + Tax: ${currencySymbol} ${Math.round(itemTax).toLocaleString('en-IN')}` : ''}
+                        </Text>
+                      </View>
+
+                      <View className="flex-row items-center gap-x-1">
+                        <Text className="text-[10px] font-bold" style={{ color: colors.textSecondary }}>
+                          Item Total:
+                        </Text>
+                        <Text className="text-xs font-black" style={{ color: colors.primaryDark }}>
+                          {currencySymbol} {itemTotal.toLocaleString('en-IN')}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+
+              {/* Running Total Card on Step 2 */}
+              <View
+                className="rounded-xl p-3 border flex-row items-center justify-between"
                 style={{
                   backgroundColor: colors.cardAlt,
                   borderColor: colors.border,
                 }}
               >
-                <Ionicons name="people" size={12} color={colors.primary} />
-                <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
-                  Pick Contact
-                </Text>
-              </Pressable>
-            </View>
-
-            <View className="space-y-2">
-              <View>
-                <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                  Client / Company Name *
-                </Text>
-                <TextInput
-                  value={clientName}
-                  onChangeText={setClientName}
-                  placeholder="e.g. Acme Corporation or John Doe"
-                  placeholderTextColor={colors.inputPlaceholder}
-                  className="rounded-xl px-3 py-2 border text-xs"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </View>
-
-              <View className="flex-row gap-x-2 mt-2">
-                <View className="flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                    WhatsApp Phone
+                <View>
+                  <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                    Running Total ({items.length} {items.length === 1 ? 'item' : 'items'})
                   </Text>
-                  <TextInput
-                    value={clientPhone}
-                    onChangeText={setClientPhone}
-                    placeholder="+91 98765 43210"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    keyboardType="phone-pad"
-                    className="rounded-xl px-3 py-2 border text-xs"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
-                </View>
-
-                <View className="flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                    Email
+                  <Text className="text-sm font-black" style={{ color: colors.primary }}>
+                    {currencySymbol} {grandTotal.toLocaleString('en-IN')}
                   </Text>
-                  <TextInput
-                    value={clientEmail}
-                    onChangeText={setClientEmail}
-                    placeholder="client@acme.com"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    className="rounded-xl px-3 py-2 border text-xs"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
                 </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Section 2: Proposal Scope & Currency */}
-          <View
-            className="mb-3 rounded-[16px] border p-3.5 shadow-sm"
-            style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            }}
-          >
-            <View className="flex-row items-center gap-x-2 border-b pb-2 mb-3" style={{ borderColor: colors.borderLight }}>
-              <View
-                className="h-6 w-6 items-center justify-center rounded-lg"
-                style={{ backgroundColor: colors.infoSoft }}
-              >
-                <Ionicons name="document-text" size={13} color={colors.info} />
-              </View>
-              <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
-                Quotation Scope & Terms
-              </Text>
-            </View>
-
-            <View className="space-y-2">
-              <div>
-                <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                  Proposal Title
-                </Text>
-                <TextInput
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="e.g. Next.js Web App & Mobile Architecture"
-                  placeholderTextColor={colors.inputPlaceholder}
-                  className="rounded-xl px-3 py-2 border text-xs"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-
-              <View className="flex-row gap-x-2 mt-2">
-                <View className="flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                    Currency
-                  </Text>
-                  <View className="flex-row gap-x-1">
-                    {['INR', 'USD', 'EUR'].map((curr) => (
-                      <Pressable
-                        key={curr}
-                        onPress={() => setCurrency(curr)}
-                        className="flex-1 py-1.5 rounded-lg border items-center justify-center"
-                        style={{
-                          backgroundColor: currency === curr ? colors.primary : colors.cardAlt,
-                          borderColor: currency === curr ? colors.primary : colors.border,
-                        }}
-                      >
-                        <Text
-                          className="text-[10px] font-black"
-                          style={{ color: currency === curr ? '#ffffff' : colors.text }}
-                        >
-                          {curr}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-
-                <View className="flex-1">
-                  <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-                    Validity
-                  </Text>
-                  <TextInput
-                    value={validUntil}
-                    onChangeText={setValidUntil}
-                    placeholder="30 Days"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-xl px-3 py-2 border text-xs"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Section 3: Line Items Table */}
-          <View
-            className="mb-3 rounded-[16px] border p-3.5 shadow-sm"
-            style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            }}
-          >
-            <View className="flex-row items-center justify-between border-b pb-2 mb-3" style={{ borderColor: colors.borderLight }}>
-              <View className="flex-row items-center gap-x-2">
-                <View
-                  className="h-6 w-6 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: colors.successSoft }}
+                <Pressable
+                  onPress={() => setActiveStep('review')}
+                  className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-xl active:opacity-85 shadow-sm"
+                  style={{ backgroundColor: colors.primary }}
                 >
-                  <Ionicons name="list" size={13} color={colors.success} />
-                </View>
-                <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
-                  Deliverables & Pricing ({items.length})
-                </Text>
+                  <Text className="text-xs font-black text-white">Review Summary</Text>
+                  <Ionicons name="arrow-forward" size={13} color="#ffffff" />
+                </Pressable>
               </View>
+            </View>
+          )}
 
-              <Pressable
-                onPress={handleAddItem}
-                className="flex-row items-center gap-x-1 px-2.5 py-1 rounded-lg border active:opacity-75"
+          {/* ================= STEP 3: REVIEW & TERMS ================= */}
+          {activeStep === 'review' && (
+            <View className="flex flex-col gap-4">
+              {/* Business Issuer Info */}
+              <View
+                className="rounded-[16px] border p-3 shadow-sm flex-row items-center gap-x-3"
                 style={{
-                  backgroundColor: colors.primary,
-                  borderColor: colors.primary,
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
                 }}
               >
-                <Ionicons name="add" size={12} color="#ffffff" />
-                <Text className="text-[10px] font-bold text-white">Add Item</Text>
-              </Pressable>
-            </View>
-
-            {/* Items List */}
-            {items.map((item, index) => {
-              const itemSub = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
-              const itemDiscount = itemSub * ((Number(item.discountPercent) || 0) / 100);
-              const itemTax = (itemSub - itemDiscount) * ((Number(item.taxPercent) || 0) / 100);
-              const itemTotal = Math.round(itemSub - itemDiscount + itemTax);
-
-              return (
                 <View
-                  key={item.id}
-                  className="mb-2.5 rounded-xl border p-2.5"
-                  style={{
-                    backgroundColor: colors.cardAlt,
-                    borderColor: colors.border,
-                  }}
+                  className="h-10 w-10 rounded-xl items-center justify-center"
+                  style={{ backgroundColor: colors.primarySoft }}
                 >
-                  <View className="flex-row items-center justify-between mb-1.5">
-                    <Text className="text-[10px] font-black uppercase tracking-wider" style={{ color: colors.primary }}>
-                      Item #{index + 1}
-                    </Text>
-                    {items.length > 1 && (
-                      <Pressable
-                        onPress={() => handleRemoveItem(item.id)}
-                        className="h-5 w-5 items-center justify-center rounded-md border"
-                        style={{
-                          backgroundColor: colors.dangerSoft,
-                          borderColor: colors.dangerBorder,
-                        }}
-                      >
-                        <Ionicons name="trash" size={11} color={colors.danger} />
-                      </Pressable>
-                    )}
-                  </View>
-
-                  <TextInput
-                    value={item.name}
-                    onChangeText={(val) => handleUpdateItem(item.id, 'name', val)}
-                    placeholder="Item / Service Name *"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-lg px-2.5 py-1.5 border text-xs mb-1.5"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
-
-                  <TextInput
-                    value={item.description}
-                    onChangeText={(val) => handleUpdateItem(item.id, 'description', val)}
-                    placeholder="Description / Specifications (optional)"
-                    placeholderTextColor={colors.inputPlaceholder}
-                    className="rounded-lg px-2.5 py-1.5 border text-[11px] mb-2"
-                    style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    }}
-                  />
-
-                  <View className="flex-row items-center gap-x-2">
-                    <View className="flex-1">
-                      <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Qty</Text>
-                      <TextInput
-                        value={String(item.quantity)}
-                        onChangeText={(val) => handleUpdateItem(item.id, 'quantity', val)}
-                        keyboardType="numeric"
-                        className="rounded-lg px-2 py-1 border text-xs text-center"
-                        style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.text,
-                        }}
-                      />
-                    </View>
-
-                    <View className="flex-2">
-                      <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Unit Price ({currencySymbol})</Text>
-                      <TextInput
-                        value={String(item.unitPrice)}
-                        onChangeText={(val) => handleUpdateItem(item.id, 'unitPrice', val)}
-                        keyboardType="numeric"
-                        className="rounded-lg px-2 py-1 border text-xs text-center font-bold"
-                        style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.text,
-                        }}
-                      />
-                    </View>
-
-                    <View className="flex-1">
-                      <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Tax %</Text>
-                      <TextInput
-                        value={String(item.taxPercent)}
-                        onChangeText={(val) => handleUpdateItem(item.id, 'taxPercent', val)}
-                        keyboardType="numeric"
-                        className="rounded-lg px-2 py-1 border text-xs text-center"
-                        style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.text,
-                        }}
-                      />
-                    </View>
-
-                    <View className="flex-2 items-end justify-end">
-                      <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Line Total</Text>
-                      <Text className="text-xs font-black text-cyan-500 py-1">
-                        {currencySymbol} {itemTotal.toLocaleString('en-IN')}
-                      </Text>
-                    </View>
-                  </View>
+                  <Ionicons name="business" size={20} color={colors.primary} />
                 </View>
-              );
-            })}
-
-            {/* Calculations Summary Card */}
-            <View className="mt-2 rounded-xl p-3 border" style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}>
-              <View className="flex-row justify-between py-0.5">
-                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>Subtotal:</Text>
-                <Text className="text-[11px] font-bold" style={{ color: colors.text }}>
-                  {currencySymbol} {subtotal.toLocaleString('en-IN')}
-                </Text>
-              </View>
-              {discountTotal > 0 && (
-                <View className="flex-row justify-between py-0.5">
-                  <Text className="text-[11px] font-medium" style={{ color: colors.danger }}>Discount:</Text>
-                  <Text className="text-[11px] font-bold" style={{ color: colors.danger }}>
-                    - {currencySymbol} {discountTotal.toLocaleString('en-IN')}
+                <View className="flex-1">
+                  <Text className="text-xs font-black" style={{ color: colors.text }}>
+                    Devlomatix Solutions
+                  </Text>
+                  <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                    Registered Business Details & Bank Coordinates automatically attached
                   </Text>
                 </View>
-              )}
-              <View className="flex-row justify-between py-0.5">
-                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>Estimated GST / Tax:</Text>
-                <Text className="text-[11px] font-bold" style={{ color: colors.text }}>
-                  + {currencySymbol} {taxTotal.toLocaleString('en-IN')}
-                </Text>
               </View>
-              <View className="flex-row justify-between border-t pt-1.5 mt-1" style={{ borderColor: colors.border }}>
-                <Text className="text-xs font-black" style={{ color: colors.text }}>Grand Total:</Text>
-                <Text className="text-sm font-black" style={{ color: colors.primaryLight }}>
-                  {currencySymbol} {grandTotal.toLocaleString('en-IN')}
-                </Text>
+
+              {/* Grand Total Financial Breakdown Card */}
+              <View
+                className="rounded-[16px] border p-3.5 shadow-sm flex flex-col gap-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+              >
+                <View
+                  className="flex-row items-center gap-x-2 border-b pb-2 mb-1"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <Ionicons name="calculator-outline" size={14} color={colors.primary} />
+                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                    Financial Summary
+                  </Text>
+                </View>
+
+                <View className="flex-row justify-between py-1">
+                  <Text className="text-xs font-medium" style={{ color: colors.textMuted }}>
+                    Taxable Subtotal:
+                  </Text>
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                    {currencySymbol} {subtotal.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+
+                {discountTotal > 0 && (
+                  <View className="flex-row justify-between py-1">
+                    <Text className="text-xs font-medium" style={{ color: colors.danger }}>
+                      Total Discount:
+                    </Text>
+                    <Text className="text-xs font-bold" style={{ color: colors.danger }}>
+                      - {currencySymbol} {discountTotal.toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+                )}
+
+                <View className="flex-row justify-between py-1">
+                  <Text className="text-xs font-medium" style={{ color: colors.textMuted }}>
+                    Total Estimated GST / Taxes:
+                  </Text>
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                    + {currencySymbol} {taxTotal.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+
+                <View
+                  className="flex-row justify-between items-center rounded-xl p-3 border mt-1"
+                  style={{
+                    backgroundColor: colors.primarySoft,
+                    borderColor: colors.primaryBorder,
+                  }}
+                >
+                  <Text
+                    className="text-xs font-black uppercase tracking-wider"
+                    style={{ color: colors.primaryDark }}
+                  >
+                    Grand Total ({currency})
+                  </Text>
+                  <Text className="text-base font-black" style={{ color: colors.primaryDark }}>
+                    {currencySymbol} {grandTotal.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Commercial Terms & Notes Card */}
+              <View
+                className="rounded-[16px] border p-3.5 shadow-sm flex flex-col gap-4"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+              >
+                <View
+                  className="flex-row items-center gap-x-2 border-b pb-2"
+                  style={{ borderColor: colors.borderLight }}
+                >
+                  <Ionicons name="document-lock-outline" size={14} color={colors.primary} />
+                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                    Commercial Terms & Disclaimers
+                  </Text>
+                </View>
+
+                <View>
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: colors.textMuted }}
+                  >
+                    Payment Terms
+                  </Text>
+                  <TextInput
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    numberOfLines={3}
+                    className="rounded-xl p-2.5 border text-xs"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                      textAlignVertical: 'top',
+                    }}
+                  />
+                </View>
+
+                <View>
+                  <Text
+                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                    style={{ color: colors.textMuted }}
+                  >
+                    Scope Terms & Warranty
+                  </Text>
+                  <TextInput
+                    value={terms}
+                    onChangeText={setTerms}
+                    multiline
+                    numberOfLines={3}
+                    className="rounded-xl p-2.5 border text-xs"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                      textAlignVertical: 'top',
+                    }}
+                  />
+                </View>
               </View>
             </View>
-          </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-          {/* Section 4: Notes & Terms */}
-          <View
-            className="mb-4 rounded-[16px] border p-3.5 shadow-sm"
-            style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            }}
+      {/* Floating Bottom Navigation Bar (The Single Source of Truth for Navigation & Actions) */}
+      <View
+        className="absolute bottom-0 left-0 right-0 px-4 pt-2.5 border-t flex-row items-center justify-between"
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          paddingBottom: Math.max(12, insets.bottom + 6),
+        }}
+      >
+        <View>
+          <Text
+            className="text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: colors.textMuted }}
           >
-            <Text className="text-xs font-black tracking-tight mb-2" style={{ color: colors.text }}>
-              Payment Terms & Commercial Notes
-            </Text>
+            {activeStep === 'client' ? 'Step 1 of 3' : activeStep === 'items' ? 'Step 2 of 3' : 'Final Step'}
+          </Text>
+          <Text className="text-xs font-black" style={{ color: colors.text }}>
+            Total: {currencySymbol} {grandTotal.toLocaleString('en-IN')}
+          </Text>
+        </View>
 
-            <View className="space-y-2">
-              <div>
-                <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Payment Terms</Text>
-                <TextInput
-                  value={notes}
-                  onChangeText={setNotes}
-                  className="rounded-lg px-2.5 py-1.5 border text-[11px]"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-              <div className="mt-2">
-                <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Commercial Terms & Warranty</Text>
-                <TextInput
-                  value={terms}
-                  onChangeText={setTerms}
-                  className="rounded-lg px-2.5 py-1.5 border text-[11px]"
-                  style={{
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  }}
-                />
-              </div>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View className="flex-row gap-x-2.5 mb-6">
+        <View className="flex-row items-center gap-x-2">
+          {activeStep !== 'client' && (
             <Pressable
-              onPress={() => handleSave('draft')}
-              disabled={saving}
-              className="flex-1 items-center justify-center py-3 rounded-xl border active:opacity-75"
+              onPress={() => {
+                if (activeStep === 'review') setActiveStep('items');
+                else if (activeStep === 'items') setActiveStep('client');
+              }}
+              className="px-3 py-1.5 rounded-lg border active:opacity-70"
               style={{
                 backgroundColor: colors.cardAlt,
                 borderColor: colors.border,
               }}
             >
-              {saving ? (
-                <ActivityIndicator size="small" color={colors.text} />
-              ) : (
-                <Text className="text-xs font-bold" style={{ color: colors.text }}>
-                  Save Draft
-                </Text>
-              )}
+              <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
+                Back
+              </Text>
             </Pressable>
+          )}
 
+          {activeStep === 'client' && (
             <Pressable
-              onPress={() => handleSave('sent')}
-              disabled={saving}
-              className="flex-2 flex-row items-center justify-center gap-x-2 py-3 rounded-xl active:opacity-85 shadow-md"
-              style={{
-                backgroundColor: colors.primary,
-                opacity: saving ? 0.7 : 1,
+              onPress={() => {
+                if (!clientName.trim()) {
+                  setErrorMsg('Please enter a client name to continue.');
+                  return;
+                }
+                setErrorMsg(null);
+                setActiveStep('items');
               }}
+              className="flex-row items-center gap-x-1 px-4 py-1.5 rounded-lg active:opacity-85 shadow-xs"
+              style={{ backgroundColor: colors.primary }}
             >
-              <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-              <Text className="text-xs font-black text-white">Save & View Proposal</Text>
+              <Text className="text-xs font-black text-white">Next</Text>
+              <Ionicons name="chevron-forward" size={13} color="#ffffff" />
             </Pressable>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          )}
+
+          {activeStep === 'items' && (
+            <Pressable
+              onPress={() => setActiveStep('review')}
+              className="flex-row items-center gap-x-1 px-4 py-1.5 rounded-lg active:opacity-85 shadow-xs"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Text className="text-xs font-black text-white">Next</Text>
+              <Ionicons name="chevron-forward" size={13} color="#ffffff" />
+            </Pressable>
+          )}
+
+          {activeStep === 'review' && (
+            <View className="flex-row items-center gap-x-2">
+              <Pressable
+                onPress={() => handleSave('draft')}
+                disabled={saving}
+                className="px-3 py-1.5 rounded-lg border active:opacity-75"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  Draft
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleSave('sent')}
+                disabled={saving}
+                className="flex-row items-center gap-x-1 px-3.5 py-1.5 rounded-lg active:opacity-85 shadow-xs"
+                style={{ backgroundColor: colors.primary }}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={14} color="#ffffff" />
+                    <Text className="text-xs font-black text-white">Create</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </View>
 
       {/* Contact Picker Modal */}
       <Modal
@@ -668,13 +1242,17 @@ export default function NewQuotationScreen() {
           <Pressable className="flex-1" onPress={() => setShowContactPicker(false)} />
 
           <View
-            className="rounded-t-3xl p-4 shadow-2xl border-t max-h-[80%]"
+            className="rounded-t-3xl p-4 shadow-2xl border-t max-h-[80%] flex flex-col gap-4"
             style={{
               backgroundColor: colors.card,
               borderColor: colors.border,
+              paddingBottom: Math.max(16, insets.bottom + 8),
             }}
           >
-            <View className="flex-row items-center justify-between border-b pb-3 mb-2" style={{ borderColor: colors.border }}>
+            <View
+              className="flex-row items-center justify-between border-b pb-3"
+              style={{ borderColor: colors.border }}
+            >
               <Text className="text-sm font-black" style={{ color: colors.text }}>
                 Select Contact to Auto-Fill
               </Text>
@@ -684,7 +1262,7 @@ export default function NewQuotationScreen() {
             </View>
 
             <View
-              className="flex-row items-center gap-x-2 rounded-xl px-3 py-1.5 border mb-3"
+              className="flex-row items-center gap-x-2 rounded-xl px-3 py-1.5 border"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,

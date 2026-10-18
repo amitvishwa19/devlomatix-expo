@@ -69,7 +69,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
         <Pressable className="flex-1" onPress={onClose} />
 
         <View
-          className="rounded-t-3xl p-4 shadow-2xl border-t"
+          className="rounded-t-3xl p-4 shadow-2xl border-t flex flex-col gap-4"
           style={{
             backgroundColor: colors.card,
             borderColor: colors.border,
@@ -110,7 +110,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
           {/* Status Message */}
           {statusMsg && (
             <View
-              className="mt-3 rounded-xl p-2.5 border"
+              className="rounded-xl p-2.5 border"
               style={{
                 backgroundColor: statusMsg.type === 'success' ? colors.successSoft : colors.dangerSoft,
                 borderColor: statusMsg.type === 'success' ? colors.successBorder : colors.dangerBorder,
@@ -126,7 +126,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
           )}
 
           {/* Recipient Phone Field */}
-          <View className="mt-3">
+          <View>
             <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
               Recipient WhatsApp Phone
             </Text>
@@ -151,7 +151,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
           </View>
 
           {/* Message Preview & Editor */}
-          <View className="mt-3">
+          <View>
             <Text className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
               Quotation Message (WhatsApp Formatted)
             </Text>

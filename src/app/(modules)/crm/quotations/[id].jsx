@@ -356,12 +356,12 @@ export default function QuotationDetailScreen() {
               </View>
             ) : null}
             {qData.terms ? (
-              <div>
+              <View>
                 <Text className="text-[9px] font-bold text-slate-400 mb-0.5">Terms & Conditions:</Text>
                 <Text className="text-[11px] leading-relaxed" style={{ color: colors.text }}>
                   {qData.terms}
                 </Text>
-              </div>
+              </View>
             ) : null}
           </View>
         )}

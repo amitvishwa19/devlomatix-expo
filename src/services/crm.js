@@ -293,6 +293,18 @@ export async function createDcrRecord(body, params = {}) {
   return { success: true, data: extractPayload(res.data) };
 }
 
+export async function updateDcrRecord(dcrId, body, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.patch(`${apiUrls.crmDcr}/${dcrId}`, body, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function deleteDcrRecord(dcrId, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.delete(`${apiUrls.crmDcr}/${dcrId}`, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
 // ==========================================
 // 👥 SALES TEAM & OPERATORS
 // ==========================================
