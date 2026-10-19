@@ -266,7 +266,7 @@ export default function QuickWhatsAppModal() {
 
           {/* Message Input */}
           <View
-            className="mt-2 rounded-xl border p-2"
+            className="mt-2 rounded-xl border p-3 min-h-[90px]"
             style={{
               backgroundColor: colors.inputBg,
               borderColor: colors.inputBorder,
@@ -280,7 +280,7 @@ export default function QuickWhatsAppModal() {
               placeholder="Edit WhatsApp message here..."
               placeholderTextColor={colors.inputPlaceholder}
               className="text-xs leading-5"
-              style={{ color: colors.text, maxHeight: 80 }}
+              style={{ color: colors.text, minHeight: 70, maxHeight: 120 }}
               textAlignVertical="top"
             />
           </View>

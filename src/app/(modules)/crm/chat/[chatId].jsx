@@ -465,8 +465,8 @@ export default function CrmConversationScreen() {
           className="flex-row items-center px-3 py-2 border-t gap-2"
           style={{ backgroundColor: colors.card, borderTopColor: colors.border }}
         >
-          <TouchableOpacity onPress={handlePickImage} className="p-1 rounded-full">
-            <Ionicons name="image-outline" size={18} color={colors.textMuted} />
+          <TouchableOpacity onPress={handlePickImage} className="p-2 rounded-full">
+            <Ionicons name="image-outline" size={20} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TextInput
@@ -474,7 +474,7 @@ export default function CrmConversationScreen() {
             onChangeText={handleTextChange}
             placeholder="Type a message..."
             placeholderTextColor={colors.inputPlaceholder}
-            className="flex-1 rounded-xl border px-3 py-1.5 text-xs"
+            className="flex-1 rounded-xl border px-3.5 py-2.5 min-h-[46px] text-xs"
             style={{
               backgroundColor: colors.inputBg,
               borderColor: colors.inputBorder,
@@ -486,7 +486,7 @@ export default function CrmConversationScreen() {
             activeOpacity={0.8}
             onPress={handleSend}
             disabled={!inputText.trim()}
-            className="w-8 h-8 rounded-full items-center justify-center"
+            className="w-10 h-10 rounded-full items-center justify-center"
             style={{
               backgroundColor: inputText.trim() ? colors.primary : colors.cardAlt,
               opacity: inputText.trim() ? 1 : 0.6,
@@ -494,7 +494,7 @@ export default function CrmConversationScreen() {
           >
             <Ionicons
               name="send"
-              size={13}
+              size={15}
               color={inputText.trim() ? '#ffffff' : colors.textMuted}
             />
           </TouchableOpacity>

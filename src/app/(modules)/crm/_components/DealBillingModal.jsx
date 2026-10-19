@@ -202,7 +202,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
               onChangeText={setItemDescription}
               placeholder="e.g. Implementation and enterprise software licensing"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -222,7 +222,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.inputPlaceholder}
-                  className="rounded-xl border px-3 py-2 text-xs font-bold"
+                  className="rounded-xl border px-3.5 py-3 text-xs font-bold min-h-[46px]"
                   style={{
                     backgroundColor: colors.inputBg,
                     borderColor: colors.inputBorder,

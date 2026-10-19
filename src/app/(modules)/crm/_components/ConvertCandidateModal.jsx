@@ -130,7 +130,7 @@ export default function ConvertCandidateModal({ candidate, visible, onClose, onC
               onChangeText={setTitle}
               placeholder="e.g. Staffing Placement: John Doe"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl px-3 py-2 border text-xs"
+              className="rounded-xl px-3.5 py-3 border text-xs min-h-[46px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -145,7 +145,7 @@ export default function ConvertCandidateModal({ candidate, visible, onClose, onC
               Commercial Value (Fee / Margin)
             </Text>
             <View
-              className="flex-row items-center gap-x-2 rounded-xl px-3 py-2 border"
+              className="flex-row items-center gap-x-2 rounded-xl px-3.5 py-2.5 border min-h-[46px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -160,7 +160,7 @@ export default function ConvertCandidateModal({ candidate, visible, onClose, onC
                 keyboardType="numeric"
                 placeholder="150000"
                 placeholderTextColor={colors.inputPlaceholder}
-                className="flex-1 text-xs font-bold"
+                className="flex-1 text-xs font-bold py-1"
                 style={{ color: colors.text }}
               />
             </View>

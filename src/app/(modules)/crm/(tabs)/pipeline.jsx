@@ -79,24 +79,24 @@ export default function CrmPipelineTab() {
       >
         {/* Search Input */}
         <View
-          className="flex-row items-center gap-x-2 rounded-xl px-3 py-2 border"
+          className="flex-row items-center gap-x-2 rounded-xl px-3.5 py-2.5 min-h-[46px] border"
           style={{
             backgroundColor: colors.inputBg,
             borderColor: colors.inputBorder,
           }}
         >
-          <Ionicons name="search" size={15} color={colors.textMuted} />
+          <Ionicons name="search" size={16} color={colors.textMuted} />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search deals, contacts, companies..."
             placeholderTextColor={colors.inputPlaceholder}
-            className="flex-1 text-xs"
+            className="flex-1 text-xs py-1"
             style={{ color: colors.text }}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+              <Ionicons name="close-circle" size={15} color={colors.textMuted} />
             </Pressable>
           )}
         </View>

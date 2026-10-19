@@ -121,7 +121,7 @@ export default function CreateContactModal() {
               onChangeText={setName}
               placeholder="e.g. Rahul Sharma"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -139,7 +139,7 @@ export default function CreateContactModal() {
               keyboardType="phone-pad"
               placeholder="e.g. 919876543210"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs font-mono mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs font-mono min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -158,7 +158,7 @@ export default function CreateContactModal() {
               autoCapitalize="none"
               placeholder="e.g. rahul@example.com"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -175,7 +175,7 @@ export default function CreateContactModal() {
               onChangeText={setJobTitle}
               placeholder="e.g. VP of Operations"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -233,7 +233,7 @@ export default function CreateContactModal() {
               onChangeText={setTags}
               placeholder="e.g. LEAD, ENTERPRISE, DECISION_MAKER"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,

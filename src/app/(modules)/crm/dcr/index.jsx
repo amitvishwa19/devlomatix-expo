@@ -1045,19 +1045,19 @@ export default function DcrScreen() {
                     Client / Company Name <Text style={{ color: colors.danger }}>*</Text>
                   </Text>
                   <View
-                    className="flex-row items-center rounded-xl border px-3"
+                    className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
                     }}
                   >
-                    <Ionicons name="briefcase-outline" size={15} color={colors.textMuted} style={{ marginRight: 8 }} />
+                    <Ionicons name="briefcase-outline" size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
                     <TextInput
                       value={clientName}
                       onChangeText={setClientName}
                       placeholder="e.g. Apex Tech Solutions"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="flex-1 py-2.5 text-xs font-medium"
+                      className="flex-1 py-3 text-xs font-medium"
                       style={{ color: colors.text }}
                     />
                   </View>
@@ -1070,19 +1070,19 @@ export default function DcrScreen() {
                       Contact Person
                     </Text>
                     <View
-                      className="flex-row items-center rounded-xl border px-3"
+                      className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
                       }}
                     >
-                      <Ionicons name="person-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                      <Ionicons name="person-outline" size={15} color={colors.textMuted} style={{ marginRight: 6 }} />
                       <TextInput
                         value={contactPerson}
                         onChangeText={setContactPerson}
                         placeholder="Rajesh Kumar"
                         placeholderTextColor={colors.inputPlaceholder}
-                        className="flex-1 py-2.5 text-xs font-medium"
+                        className="flex-1 py-3 text-xs font-medium"
                         style={{ color: colors.text }}
                       />
                     </View>
@@ -1093,20 +1093,20 @@ export default function DcrScreen() {
                       Phone Number
                     </Text>
                     <View
-                      className="flex-row items-center rounded-xl border px-3"
+                      className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
                       }}
                     >
-                      <Ionicons name="call-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                      <Ionicons name="call-outline" size={15} color={colors.textMuted} style={{ marginRight: 6 }} />
                       <TextInput
                         value={phone}
                         onChangeText={setPhone}
                         placeholder="+91 98765..."
                         keyboardType="phone-pad"
                         placeholderTextColor={colors.inputPlaceholder}
-                        className="flex-1 py-2.5 text-xs font-medium"
+                        className="flex-1 py-3 text-xs font-medium"
                         style={{ color: colors.text }}
                       />
                     </View>
@@ -1172,7 +1172,7 @@ export default function DcrScreen() {
                     Deal Potential (₹)
                   </Text>
                   <View
-                    className="flex-row items-center rounded-xl border px-3"
+                    className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
@@ -1185,7 +1185,7 @@ export default function DcrScreen() {
                       placeholder="e.g. 50,000"
                       keyboardType="numeric"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="flex-1 py-2.5 text-xs font-medium"
+                      className="flex-1 py-3 text-xs font-medium"
                       style={{ color: colors.text }}
                     />
                   </View>
@@ -1229,7 +1229,7 @@ export default function DcrScreen() {
                   </View>
 
                   <View
-                    className="flex-row items-center rounded-xl border px-3"
+                    className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: gpsCoords ? colors.primary : colors.inputBorder,
@@ -1249,7 +1249,7 @@ export default function DcrScreen() {
                       }}
                       placeholder="e.g. Sector 62, Noida or tap Fetch GPS..."
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="flex-1 py-2.5 text-xs font-medium"
+                      className="flex-1 py-3 text-xs font-medium"
                       style={{ color: colors.text }}
                     />
 
@@ -1525,19 +1525,19 @@ export default function DcrScreen() {
                     Next Follow-up Action
                   </Text>
                   <View
-                    className="flex-row items-center rounded-xl border px-3"
+                    className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
                     }}
                   >
-                    <Ionicons name="calendar-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                    <Ionicons name="calendar-outline" size={15} color={colors.textMuted} style={{ marginRight: 6 }} />
                     <TextInput
                       value={nextAction}
                       onChangeText={setNextAction}
                       placeholder="e.g. Share quote on WhatsApp & follow up on Monday"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="flex-1 py-2.5 text-xs font-medium"
+                      className="flex-1 py-3 text-xs font-medium"
                       style={{ color: colors.text }}
                     />
                   </View>

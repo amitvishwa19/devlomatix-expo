@@ -131,7 +131,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
               Recipient WhatsApp Phone
             </Text>
             <View
-              className="flex-row items-center gap-x-2 rounded-xl px-3 py-2 border"
+              className="flex-row items-center gap-x-2 rounded-xl px-3.5 py-2.5 border min-h-[46px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -144,7 +144,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
                 placeholder="e.g. +91 98765 43210"
                 placeholderTextColor={colors.inputPlaceholder}
                 keyboardType="phone-pad"
-                className="flex-1 text-xs"
+                className="flex-1 text-xs py-1"
                 style={{ color: colors.text }}
               />
             </View>
@@ -156,7 +156,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
               Quotation Message (WhatsApp Formatted)
             </Text>
             <View
-              className="rounded-xl p-3 border"
+              className="rounded-xl p-3 border min-h-[110px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -171,7 +171,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
                 placeholder="Type proposal message..."
                 placeholderTextColor={colors.inputPlaceholder}
                 className="text-xs leading-relaxed"
-                style={{ color: colors.text, maxHeight: 150 }}
+                style={{ color: colors.text, minHeight: 90, maxHeight: 150 }}
               />
             </View>
           </View>

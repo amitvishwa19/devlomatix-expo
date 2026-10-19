@@ -11,22 +11,26 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppScreen from '~/components/AppScreen';
 import { useCrmTheme } from '../utils/colors';
 import CrmHeader from '../_components/CrmHeader';
 import SendQuotationModal from '../_components/SendQuotationModal';
 import * as quotationService from '~/services/quotation';
+import { printOrShareQuotationPdf } from '~/services/quotationPdf';
 
 export default function QuotationDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useCrmTheme();
 
+  const insets = useSafeAreaInsets();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const loadQuotation = useCallback(async () => {
     if (!id) return;
@@ -66,6 +70,33 @@ export default function QuotationDetailScreen() {
       Alert.alert('Error', e.message || 'Failed to update status');
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleSharePdf = async () => {
+    if (!quotation) return;
+    try {
+      setGeneratingPdf(true);
+      const res = await printOrShareQuotationPdf(quotation, null, 'share');
+      if (!res.success) {
+        Alert.alert('PDF Export', res.error || 'Failed to generate PDF');
+      }
+    } catch (e) {
+      Alert.alert('PDF Export Error', e.message || 'Could not export PDF');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handlePrintPdf = async () => {
+    if (!quotation) return;
+    try {
+      setGeneratingPdf(true);
+      await printOrShareQuotationPdf(quotation, null, 'print');
+    } catch (e) {
+      Alert.alert('Print Error', e.message || 'Could not connect to printer');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -190,9 +221,38 @@ export default function QuotationDetailScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 12, paddingBottom: 120 }}
+        contentContainerStyle={{
+          padding: 12,
+          paddingBottom: Math.max(120, insets.bottom + 90),
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
+        {/* Accepted Badge & Next Steps */}
+        {status === 'accepted' && (
+          <View
+            className="rounded-[16px] border p-3.5 mb-3 flex-row items-center gap-x-3"
+            style={{
+              backgroundColor: colors.successSoft,
+              borderColor: colors.successBorder,
+            }}
+          >
+            <View
+              className="h-9 w-9 rounded-xl items-center justify-center"
+              style={{ backgroundColor: colors.success }}
+            >
+              <Ionicons name="checkmark-done" size={20} color="#ffffff" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-black" style={{ color: colors.success }}>
+                Quotation Accepted by Client!
+              </Text>
+              <Text className="text-[10px] mt-0.5" style={{ color: colors.textSecondary }}>
+                Scope & pricing are approved. Ready to proceed with onboarding and billing invoice.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Document Header Card */}
         <View
           className="rounded-[16px] border p-4 shadow-sm mb-3"
@@ -401,22 +461,79 @@ export default function QuotationDetailScreen() {
             ))}
           </View>
         </View>
+        {/* Official Document Exports Card */}
+        <View
+          className="rounded-[16px] border p-3.5 shadow-sm mb-3 flex flex-col gap-3"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-x-2">
+              <View className="h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor: colors.primarySoft }}>
+                <Ionicons name="document-text" size={13} color={colors.primary} />
+              </View>
+              <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                Official PDF & Print Hub
+              </Text>
+            </View>
+            {generatingPdf && <ActivityIndicator size="small" color={colors.primary} />}
+          </View>
+
+          <View className="flex-row gap-x-2">
+            <Pressable
+              onPress={handleSharePdf}
+              disabled={generatingPdf}
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 py-2.5 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Ionicons name="download-outline" size={15} color={colors.primary} />
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                Share PDF
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePrintPdf}
+              disabled={generatingPdf}
+              className="flex-1 flex-row items-center justify-center gap-x-1.5 py-2.5 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Ionicons name="print-outline" size={15} color={colors.primary} />
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                AirPrint
+              </Text>
+            </Pressable>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Floating Bottom Primary Actions Bar */}
       <View
-        className="absolute bottom-0 left-0 right-0 p-3 border-t flex-row items-center gap-x-2 shadow-2xl"
+        className="absolute bottom-0 left-0 right-0 px-4 pt-2.5 border-t flex-row items-center gap-x-2 shadow-2xl"
         style={{
           backgroundColor: colors.card,
           borderColor: colors.border,
+          paddingBottom: Math.max(12, insets.bottom + 6),
         }}
       >
+        <Pressable
+          onPress={handleSharePdf}
+          disabled={generatingPdf}
+          className="h-11 w-11 items-center justify-center rounded-xl border active:opacity-75"
+          style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+        >
+          {generatingPdf ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="document-text-outline" size={19} color={colors.primary} />
+          )}
+        </Pressable>
+
         <Pressable
           onPress={handleShareSystem}
           className="h-11 w-11 items-center justify-center rounded-xl border active:opacity-75"
           style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
         >
-          <Ionicons name="share-social" size={18} color={colors.text} />
+          <Ionicons name="share-social-outline" size={18} color={colors.text} />
         </Pressable>
 
         <Pressable

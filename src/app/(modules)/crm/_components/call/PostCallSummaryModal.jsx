@@ -168,7 +168,7 @@ export default function PostCallSummaryModal() {
               onChangeText={setNotes}
               placeholder="Enter brief discussion summary, commitments, or follow-up date..."
               placeholderTextColor={colors.inputPlaceholder}
-              className="w-full rounded-2xl border p-2.5 text-xs mb-2 min-h-[75px]"
+              className="w-full rounded-2xl border p-3.5 text-xs mb-2.5 min-h-[90px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,

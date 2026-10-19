@@ -405,7 +405,7 @@ export default function NewQuotationScreen() {
                       onChangeText={setClientName}
                       placeholder="e.g. Acme Corp or John Doe"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="rounded-xl px-3 py-2 border text-xs"
+                      className="rounded-xl px-3.5 py-3 border text-xs min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
@@ -426,7 +426,7 @@ export default function NewQuotationScreen() {
                       onChangeText={setContactPerson}
                       placeholder="e.g. Mr. Johnathan Smith"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="rounded-xl px-3 py-2 border text-xs"
+                      className="rounded-xl px-3.5 py-3 border text-xs min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
@@ -443,20 +443,20 @@ export default function NewQuotationScreen() {
                       Phone / WhatsApp
                     </Text>
                     <View
-                      className="flex-row items-center rounded-xl border px-3"
+                      className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
                       }}
                     >
-                      <Ionicons name="call-outline" size={13} color={colors.textMuted} />
+                      <Ionicons name="call-outline" size={14} color={colors.textMuted} />
                       <TextInput
                         value={clientPhone}
                         onChangeText={setClientPhone}
                         placeholder="+91 98765 43210"
                         placeholderTextColor={colors.inputPlaceholder}
                         keyboardType="phone-pad"
-                        className="flex-1 py-2 px-2 text-xs"
+                        className="flex-1 py-2.5 px-2 text-xs"
                         style={{ color: colors.text }}
                       />
                     </View>
@@ -470,13 +470,13 @@ export default function NewQuotationScreen() {
                       Email Address
                     </Text>
                     <View
-                      className="flex-row items-center rounded-xl border px-3"
+                      className="flex-row items-center rounded-xl border px-3.5 min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
                       }}
                     >
-                      <Ionicons name="mail-outline" size={13} color={colors.textMuted} />
+                      <Ionicons name="mail-outline" size={14} color={colors.textMuted} />
                       <TextInput
                         value={clientEmail}
                         onChangeText={setClientEmail}
@@ -484,7 +484,7 @@ export default function NewQuotationScreen() {
                         placeholderTextColor={colors.inputPlaceholder}
                         keyboardType="email-address"
                         autoCapitalize="none"
-                        className="flex-1 py-2 px-2 text-xs"
+                        className="flex-1 py-2.5 px-2 text-xs"
                         style={{ color: colors.text }}
                       />
                     </View>
@@ -528,7 +528,7 @@ export default function NewQuotationScreen() {
                       onChangeText={setTitle}
                       placeholder="e.g. Next.js & Mobile App Architecture"
                       placeholderTextColor={colors.inputPlaceholder}
-                      className="rounded-xl px-3 py-2 border text-xs"
+                      className="rounded-xl px-3.5 py-3 border text-xs min-h-[46px]"
                       style={{
                         backgroundColor: colors.inputBg,
                         borderColor: colors.inputBorder,
@@ -778,7 +778,7 @@ export default function NewQuotationScreen() {
                         onChangeText={(val) => handleUpdateItem(item.id, 'name', val)}
                         placeholder="e.g. Backend API Architecture & Auth"
                         placeholderTextColor={colors.inputPlaceholder}
-                        className="rounded-xl px-3 py-2 border text-xs"
+                        className="rounded-xl px-3.5 py-3 border text-xs min-h-[46px]"
                         style={{
                           backgroundColor: colors.inputBg,
                           borderColor: colors.inputBorder,
@@ -802,7 +802,7 @@ export default function NewQuotationScreen() {
                         placeholderTextColor={colors.inputPlaceholder}
                         multiline
                         numberOfLines={2}
-                        className="rounded-xl px-3 py-1.5 border text-[11px]"
+                        className="rounded-xl px-3.5 py-2.5 border text-xs min-h-[60px]"
                         style={{
                           backgroundColor: colors.inputBg,
                           borderColor: colors.inputBorder,
@@ -823,7 +823,7 @@ export default function NewQuotationScreen() {
                           Quantity
                         </Text>
                         <View
-                          className="flex-row items-center rounded-xl border overflow-hidden"
+                          className="flex-row items-center rounded-xl border overflow-hidden h-11"
                           style={{
                             backgroundColor: colors.inputBg,
                             borderColor: colors.inputBorder,
@@ -831,7 +831,7 @@ export default function NewQuotationScreen() {
                         >
                           <Pressable
                             onPress={() => handleStepQuantity(item.id, -1)}
-                            className="h-9 w-9 items-center justify-center border-r active:opacity-70"
+                            className="h-11 w-11 items-center justify-center border-r active:opacity-70"
                             style={{ borderColor: colors.borderLight }}
                           >
                             <Ionicons name="remove" size={14} color={colors.textSecondary} />
@@ -840,12 +840,12 @@ export default function NewQuotationScreen() {
                             value={String(item.quantity)}
                             onChangeText={(val) => handleUpdateItem(item.id, 'quantity', val)}
                             keyboardType="numeric"
-                            className="flex-1 text-center font-bold text-xs"
+                            className="flex-1 text-center font-bold text-xs h-11"
                             style={{ color: colors.text }}
                           />
                           <Pressable
                             onPress={() => handleStepQuantity(item.id, 1)}
-                            className="h-9 w-9 items-center justify-center border-l active:opacity-70"
+                            className="h-11 w-11 items-center justify-center border-l active:opacity-70"
                             style={{ borderColor: colors.borderLight }}
                           >
                             <Ionicons name="add" size={14} color={colors.textSecondary} />
@@ -867,7 +867,7 @@ export default function NewQuotationScreen() {
                           keyboardType="numeric"
                           placeholder="0"
                           placeholderTextColor={colors.inputPlaceholder}
-                          className="h-9 rounded-xl px-3 border text-xs font-bold"
+                          className="h-11 rounded-xl px-3.5 border text-xs font-bold"
                           style={{
                             backgroundColor: colors.inputBg,
                             borderColor: colors.inputBorder,
@@ -1089,7 +1089,7 @@ export default function NewQuotationScreen() {
                     onChangeText={setNotes}
                     multiline
                     numberOfLines={3}
-                    className="rounded-xl p-2.5 border text-xs"
+                    className="rounded-xl p-3 border text-xs min-h-[76px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
@@ -1111,7 +1111,7 @@ export default function NewQuotationScreen() {
                     onChangeText={setTerms}
                     multiline
                     numberOfLines={3}
-                    className="rounded-xl p-2.5 border text-xs"
+                    className="rounded-xl p-3 border text-xs min-h-[76px]"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
@@ -1262,19 +1262,19 @@ export default function NewQuotationScreen() {
             </View>
 
             <View
-              className="flex-row items-center gap-x-2 rounded-xl px-3 py-1.5 border"
+              className="flex-row items-center gap-x-2 rounded-xl px-3.5 py-2.5 border min-h-[46px]"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
               }}
             >
-              <Ionicons name="search" size={14} color={colors.textMuted} />
+              <Ionicons name="search" size={15} color={colors.textMuted} />
               <TextInput
                 value={contactSearch}
                 onChangeText={setContactSearch}
                 placeholder="Search contacts by name, company..."
                 placeholderTextColor={colors.inputPlaceholder}
-                className="flex-1 text-xs"
+                className="flex-1 text-xs py-1"
                 style={{ color: colors.text }}
               />
             </View>

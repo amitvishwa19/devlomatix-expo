@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useCrmTheme } from '../utils/colors';
 
-export default function QuotationCard({ quotation, onSendWhatsApp, onStatusChange }) {
+export default function QuotationCard({ quotation, onSendWhatsApp, onSharePdf, onStatusChange }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
 
@@ -145,6 +145,20 @@ export default function QuotationCard({ quotation, onSendWhatsApp, onStatusChang
 
         {/* Action Buttons */}
         <View className="flex-row items-center gap-x-1.5">
+          {onSharePdf && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onSharePdf(quotation);
+              }}
+              className="h-6 px-2 flex-row items-center gap-x-1 rounded-lg border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Ionicons name="document-text-outline" size={11} color={colors.primary} />
+              <Text className="text-[9px] font-bold" style={{ color: colors.primary }}>PDF</Text>
+            </Pressable>
+          )}
+
           {onSendWhatsApp && (
             <Pressable
               onPress={(e) => {

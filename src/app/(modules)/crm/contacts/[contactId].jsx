@@ -360,7 +360,7 @@ export default function ContactDossierScreen() {
                 onChangeText={setQuickMsg}
                 placeholder="Type quick message..."
                 placeholderTextColor={colors.inputPlaceholder}
-                className="flex-1 rounded-xl border px-3 py-1.5 text-xs"
+                className="flex-1 rounded-xl border px-3.5 py-2.5 min-h-[46px] text-xs"
                 style={{
                   backgroundColor: colors.card,
                   borderColor: colors.whatsappBorder,
@@ -370,7 +370,7 @@ export default function ContactDossierScreen() {
               <Pressable
                 onPress={handleSendInlineWhatsApp}
                 disabled={sendingMsg || !quickMsg.trim()}
-                className="h-8 px-2.5 flex-row items-center justify-center rounded-xl active:opacity-80"
+                className="h-11 px-3 flex-row items-center justify-center rounded-xl active:opacity-80"
                 style={{
                   backgroundColor: colors.whatsapp,
                   opacity: sendingMsg || !quickMsg.trim() ? 0.5 : 1,
@@ -379,7 +379,7 @@ export default function ContactDossierScreen() {
                 {sendingMsg ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Ionicons name="send" size={13} color="#ffffff" />
+                  <Ionicons name="send" size={14} color="#ffffff" />
                 )}
               </Pressable>
             </View>

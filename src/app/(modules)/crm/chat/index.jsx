@@ -407,19 +407,19 @@ export default function CrmChatDirectoryScreen() {
 
         {/* Search Filter Bar */}
         <View
-          className="flex-row items-center px-3 py-2 rounded-xl border mb-2.5"
+          className="flex-row items-center px-3.5 py-2.5 rounded-xl border mb-2.5 min-h-[46px]"
           style={{
             backgroundColor: colors.inputBg,
             borderColor: colors.inputBorder,
           }}
         >
-          <Ionicons name="search" size={15} color={colors.textMuted} />
+          <Ionicons name="search" size={16} color={colors.textMuted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={`Search ${activeTab === 'team' ? 'team members' : 'contacts'}...`}
             placeholderTextColor={colors.inputPlaceholder}
-            className="flex-1 ml-2 text-xs"
+            className="flex-1 ml-2 text-xs py-1"
             style={{ color: colors.text }}
           />
           {search ? (

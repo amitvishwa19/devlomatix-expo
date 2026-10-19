@@ -134,7 +134,7 @@ export default function CreateTaskModal() {
               onChangeText={setTitle}
               placeholder="e.g. Call client to review quotation and payment terms"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,

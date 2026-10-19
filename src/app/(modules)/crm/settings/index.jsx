@@ -234,26 +234,26 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 80, 100) }}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 90, 120) }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
-        className="px-3 pt-2.5"
+        className="px-4 pt-4"
       >
         {/* 1. User Profile Header Card */}
         <View
-          className="rounded-2xl border p-3.5 shadow-sm mb-3 flex-row items-center gap-x-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4 flex-row items-center gap-x-3.5"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           {user?.avatar || user?.photo ? (
             <Image
               source={{ uri: user.avatar || user.photo }}
-              className="h-12 w-12 rounded-full"
+              className="h-14 w-14 rounded-full"
             />
           ) : (
             <View
-              className="h-12 w-12 items-center justify-center rounded-full"
+              className="h-14 w-14 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-lg font-black text-white">
+              <Text className="text-xl font-black text-white">
                 {user?.displayName?.[0]?.toUpperCase() ||
                   user?.email?.[0]?.toUpperCase() ||
                   'U'}
@@ -262,7 +262,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           )}
 
           <View className="flex-1">
-            <View className="flex-row items-center gap-x-1.5">
+            <View className="flex-row items-center gap-x-2">
               <Text
                 className="text-base font-black tracking-tight"
                 style={{ color: colors.text }}
@@ -271,19 +271,19 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 {user?.displayName || 'CRM Operator'}
               </Text>
               <View
-                className="rounded-full px-2 py-0.5 border"
+                className="rounded-full px-2.5 py-0.5 border"
                 style={{
                   backgroundColor: colors.primarySoft,
                   borderColor: colors.primaryBorder,
                 }}
               >
-                <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: colors.primary }}>
+                <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.primary }}>
                   Pro
                 </Text>
               </View>
             </View>
             <Text
-              className="text-xs font-medium mt-0.5"
+              className="text-xs font-medium mt-1"
               style={{ color: colors.textMuted }}
               numberOfLines={1}
             >
@@ -294,21 +294,21 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
         {/* 2. Appearance Card */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-1"
+            className="text-xs font-black uppercase tracking-wider mb-1.5"
             style={{ color: colors.textMuted }}
           >
             Appearance
           </Text>
-          <Text className="text-xs leading-4 mb-2.5" style={{ color: colors.textSecondary }}>
+          <Text className="text-xs leading-5 mb-3.5" style={{ color: colors.textSecondary }}>
             Choose between dark mode and clean light theme for CRM.
           </Text>
 
           <View
-            className="flex-row rounded-xl p-1 border"
+            className="flex-row rounded-xl p-1.5 border"
             style={{
               backgroundColor: colors.cardAlt,
               borderColor: colors.borderLight,
@@ -319,16 +319,16 @@ export default function CrmSettingsScreen({ isTab = false }) {
               return (
                 <Pressable
                   key={mode}
-                  className="flex-1 items-center justify-center py-2 rounded-lg"
+                  className="flex-1 items-center justify-center py-2.5 rounded-lg"
                   style={{
                     backgroundColor: selected ? colors.primary : 'transparent',
                   }}
                   onPress={() => setThemeMode(mode)}
                 >
-                  <View className="flex-row items-center gap-x-1.5">
+                  <View className="flex-row items-center gap-x-2">
                     <Ionicons
                       name={mode === 'dark' ? 'moon' : 'sunny'}
-                      size={14}
+                      size={15}
                       color={selected ? '#ffffff' : colors.textMuted}
                     />
                     <Text
@@ -346,11 +346,11 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
         {/* 3. Account Details */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-2"
+            className="text-xs font-black uppercase tracking-wider mb-2.5"
             style={{ color: colors.textMuted }}
           >
             Account Details
@@ -358,16 +358,16 @@ export default function CrmSettingsScreen({ isTab = false }) {
           {accountDetails.map((item, index) => (
             <View
               key={item.title}
-              className={`py-2 ${index < accountDetails.length - 1 ? 'border-b' : ''}`}
+              className={`py-3 ${index < accountDetails.length - 1 ? 'border-b' : ''}`}
               style={{ borderColor: colors.borderLight }}
             >
               <Text
-                className="text-[10px] font-bold uppercase tracking-wider"
+                className="text-[11px] font-bold uppercase tracking-wider"
                 style={{ color: colors.textMuted }}
               >
                 {item.title}
               </Text>
-              <Text className="mt-0.5 text-xs font-semibold" style={{ color: colors.text }}>
+              <Text className="mt-1 text-xs font-semibold" style={{ color: colors.text }}>
                 {item.value}
               </Text>
             </View>
@@ -376,10 +376,10 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
         {/* 4. Active Deal Pipeline & Stage Config */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-row items-center justify-between mb-3">
             <View>
               <Text
                 className="text-xs font-black uppercase tracking-wider"
@@ -387,18 +387,18 @@ export default function CrmSettingsScreen({ isTab = false }) {
               >
                 Active Deal Pipeline
               </Text>
-              <Text className="text-sm font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-sm font-black mt-1" style={{ color: colors.text }}>
                 {activePipeline?.name || 'Default Sales Pipeline'}
               </Text>
             </View>
             <View
-              className="rounded-full px-2 py-0.5 border"
+              className="rounded-full px-2.5 py-1 border"
               style={{
                 backgroundColor: colors.primarySoft,
                 borderColor: colors.primaryBorder,
               }}
             >
-              <Text className="text-[9px] font-bold" style={{ color: colors.primary }}>
+              <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
                 {stages.length} Stages
               </Text>
             </View>
@@ -408,22 +408,22 @@ export default function CrmSettingsScreen({ isTab = false }) {
           {stages.map((stage, idx) => (
             <View
               key={stage.id}
-              className="flex-row items-center justify-between py-1.5"
+              className="flex-row items-center justify-between py-2.5"
               style={{
                 borderTopWidth: idx !== 0 ? 1 : 0,
                 borderTopColor: colors.borderLight,
               }}
             >
-              <View className="flex-row items-center gap-x-2">
+              <View className="flex-row items-center gap-x-2.5">
                 <View
-                  className="h-2.5 w-2.5 rounded-full"
+                  className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: stage.color || colors.primary }}
                 />
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   {idx + 1}. {stage.name}
                 </Text>
               </View>
-              <Text className="text-[11px] font-semibold" style={{ color: colors.textMuted }}>
+              <Text className="text-xs font-semibold" style={{ color: colors.textMuted }}>
                 {stage.probability}% win probability
               </Text>
             </View>
@@ -432,43 +432,43 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
         {/* 5. 1-Click WhatsApp Chat Sync Card */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{
             backgroundColor: colors.whatsappSoft,
             borderColor: colors.whatsappBorder,
           }}
         >
-          <View className="flex-row items-center gap-x-2 mb-1.5">
+          <View className="flex-row items-center gap-x-2.5 mb-2">
             <View
-              className="h-7 w-7 items-center justify-center rounded-xl"
+              className="h-8 w-8 items-center justify-center rounded-xl"
               style={{ backgroundColor: colors.whatsapp }}
             >
-              <Ionicons name="logo-whatsapp" size={15} color="#ffffff" />
+              <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
             </View>
             <View>
-              <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+              <Text className="text-sm font-black" style={{ color: colors.whatsapp }}>
                 KonnectX WhatsApp Bridge
               </Text>
-              <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+              <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                 Auto-scan conversations & sync contacts
               </Text>
             </View>
           </View>
 
-          <Text className="text-xs mt-1 leading-4" style={{ color: colors.textSecondary }}>
+          <Text className="text-xs mt-1.5 leading-5" style={{ color: colors.textSecondary }}>
             Scans your KonnectX WhatsApp Cloud inbox, auto-registers new client profiles into CRM, and links full chat history to contact dossiers.
           </Text>
 
           {syncResult && (
             <View
-              className="mt-2.5 rounded-xl p-2 border"
+              className="mt-3 rounded-xl p-3 border"
               style={{
                 backgroundColor: syncResult.type === 'success' ? colors.successSoft : colors.dangerSoft,
                 borderColor: syncResult.type === 'success' ? colors.successBorder : colors.dangerBorder,
               }}
             >
               <Text
-                className="text-xs font-bold"
+                className="text-xs font-bold leading-relaxed"
                 style={{
                   color: syncResult.type === 'success' ? colors.success : colors.danger,
                 }}
@@ -481,7 +481,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           <Pressable
             onPress={handleSyncWhatsApp}
             disabled={syncingWa}
-            className="mt-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 shadow-sm active:opacity-80"
+            className="mt-3.5 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-xs active:opacity-80 min-h-[46px]"
             style={{
               backgroundColor: colors.whatsapp,
               opacity: syncingWa ? 0.5 : 1,
@@ -491,7 +491,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <>
-                <Ionicons name="sync" size={14} color="#ffffff" />
+                <Ionicons name="sync" size={16} color="#ffffff" />
                 <Text className="text-xs font-black text-white">Sync WhatsApp Chats Now</Text>
               </>
             )}
@@ -500,30 +500,30 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
         {/* 6. DCR (Daily Call Records) Card */}
         <Pressable
-          className="rounded-2xl border p-3 shadow-sm mb-3 active:opacity-75"
+          className="rounded-2xl border p-4 shadow-xs mb-4 active:opacity-75"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
           onPress={() => router.push('/(modules)/crm/dcr')}
         >
-          <View className="flex-row items-center justify-between mb-1.5">
-            <View className="flex-row items-center gap-x-2">
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-x-2.5">
               <View
-                className="h-7 w-7 items-center justify-center rounded-xl"
+                className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.info || '#0ea5e9' }}
               >
-                <Ionicons name="call" size={15} color="#ffffff" />
+                <Ionicons name="call" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-xs font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
                   Daily Call Records (DCR)
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                   Field visits, meetings & client call logs
                 </Text>
               </View>
             </View>
             <View className="flex-row items-center gap-x-1">
               <View
-                className="rounded-lg px-2 py-0.5 border"
+                className="rounded-lg px-2.5 py-1 border"
                 style={{
                   backgroundColor: colors.cardAlt,
                   borderColor: colors.borderLight,
@@ -533,21 +533,21 @@ export default function CrmSettingsScreen({ isTab = false }) {
                   Open DCR
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
             </View>
           </View>
-          <Text className="text-xs leading-4 mt-1" style={{ color: colors.textSecondary }}>
+          <Text className="text-xs leading-5 mt-1.5" style={{ color: colors.textSecondary }}>
             Track sales activity, field visits, demos, and follow-ups with team call metrics and instant call logging.
           </Text>
         </Pressable>
 
         {/* 7. Cross-Module Bridges Overview */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-2"
+            className="text-xs font-black uppercase tracking-wider mb-2.5"
             style={{ color: colors.textMuted }}
           >
             Active Ecosystem Bridges
@@ -555,28 +555,33 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
           {/* PayFlow Bridge */}
           <View
-            className="flex-row items-center justify-between py-2 border-b"
+            className="flex-row items-center justify-between py-3 border-b"
             style={{ borderBottomColor: colors.borderLight }}
           >
-            <View className="flex-row items-center gap-x-2">
-              <Ionicons name="card-outline" size={16} color={colors.copilot} />
+            <View className="flex-row items-center gap-x-2.5">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.cardAlt }}
+              >
+                <Ionicons name="card-outline" size={17} color={colors.copilot} />
+              </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   PayFlow Billing Bridge
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px] mt-0.5" style={{ color: colors.textMuted }}>
                   1-Click Invoice & Quotations
                 </Text>
               </View>
             </View>
             <View
-              className="rounded-full px-2 py-0.5 border"
+              className="rounded-full px-2.5 py-1 border"
               style={{
                 backgroundColor: colors.successSoft,
                 borderColor: colors.successBorder,
               }}
             >
-              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
                 Connected
               </Text>
             </View>
@@ -584,67 +589,77 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
           {/* FlowGenix Bridge */}
           <View
-            className="flex-row items-center justify-between py-2 border-b"
+            className="flex-row items-center justify-between py-3 border-b"
             style={{ borderBottomColor: colors.borderLight }}
           >
-            <View className="flex-row items-center gap-x-2">
-              <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+            <View className="flex-row items-center gap-x-2.5">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.primarySoft }}
+              >
+                <Ionicons name="sparkles-outline" size={17} color={colors.primary} />
+              </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   FlowGenix AI Agent
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px] mt-0.5" style={{ color: colors.textMuted }}>
                   Sales Intelligence & Health Scoring
                 </Text>
               </View>
             </View>
             <View
-              className="rounded-full px-2 py-0.5 border"
+              className="rounded-full px-2.5 py-1 border"
               style={{
                 backgroundColor: colors.successSoft,
                 borderColor: colors.successBorder,
               }}
             >
-              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
                 Active
               </Text>
             </View>
           </View>
 
           {/* Hireflow Bridge */}
-          <View className="flex-row items-center justify-between py-2">
-            <View className="flex-row items-center gap-x-2">
-              <Ionicons name="briefcase-outline" size={16} color={colors.info} />
+          <View className="flex-row items-center justify-between py-3">
+            <View className="flex-row items-center gap-x-2.5">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.infoSoft || colors.cardAlt }}
+              >
+                <Ionicons name="briefcase-outline" size={17} color={colors.info} />
+              </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   Hireflow ATS Bridge
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px] mt-0.5" style={{ color: colors.textMuted }}>
                   Candidate ⇄ Lead Conversion
                 </Text>
               </View>
             </View>
             <View
-              className="rounded-full px-2 py-0.5 border"
+              className="rounded-full px-2.5 py-1 border"
               style={{
                 backgroundColor: colors.successSoft,
                 borderColor: colors.successBorder,
               }}
             >
-              <Text className="text-[9px] font-bold" style={{ color: colors.success }}>
+              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
                 Connected
               </Text>
             </View>
           </View>
         </View>
 
-        {/* 7. Experience & Notifications Preferences */}
+        {/* 8. Experience & Notifications Preferences */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-1"
+            className="text-xs font-black uppercase tracking-wider mb-2"
             style={{ color: colors.textMuted }}
           >
             Experience Preferences
@@ -658,14 +673,14 @@ export default function CrmSettingsScreen({ isTab = false }) {
           ].map((item, index) => (
             <View
               key={item.key}
-              className={`flex-row items-center justify-between py-2.5 ${index > 0 ? 'border-t' : ''}`}
+              className={`flex-row items-center justify-between py-3.5 ${index > 0 ? 'border-t' : ''}`}
               style={{ borderTopColor: colors.borderLight }}
             >
               <View className="flex-1 mr-3">
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   {item.label}
                 </Text>
-                <Text className="text-[11px] mt-0.5" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px] mt-1 leading-4" style={{ color: colors.textMuted }}>
                   {item.desc}
                 </Text>
               </View>
@@ -682,25 +697,25 @@ export default function CrmSettingsScreen({ isTab = false }) {
           ))}
         </View>
 
-        {/* 8. Access Management & RBAC Permissions */}
+        {/* 9. Access Management & RBAC Permissions */}
         <Pressable
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
           onPress={() => router.push('/(modules)/access-management')}
         >
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center gap-x-2">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center gap-x-2.5">
               <View
-                className="h-7 w-7 items-center justify-center rounded-xl"
+                className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.primarySoft }}
               >
-                <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
+                <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-xs font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
                   Access Management
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                   Role-based permissions & security policies
                 </Text>
               </View>
@@ -710,14 +725,14 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
           {/* User Roles */}
           {user?.roles?.length > 0 && (
-            <View className="pt-2 border-t" style={{ borderColor: colors.borderLight }}>
+            <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
               <Text
-                className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
+                className="text-[10px] font-bold uppercase tracking-wider mb-2"
                 style={{ color: colors.textMuted }}
               >
                 Assigned Roles
               </Text>
-              <View className="flex-row flex-wrap gap-1.5">
+              <View className="flex-row flex-wrap gap-2">
                 {user.roles.map((role) => {
                   const label =
                     typeof role === 'string'
@@ -726,13 +741,13 @@ export default function CrmSettingsScreen({ isTab = false }) {
                   return (
                     <View
                       key={label}
-                      className="rounded-full px-2.5 py-1 border"
+                      className="rounded-full px-3 py-1.5 border"
                       style={{
                         backgroundColor: colors.primarySoft,
                         borderColor: colors.primaryBorder,
                       }}
                     >
-                      <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
+                      <Text className="text-xs font-bold" style={{ color: colors.primary }}>
                         {label}
                       </Text>
                     </View>
@@ -744,24 +759,24 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
           {/* User Permissions Preview */}
           {permModules.length > 0 && (
-            <View className="pt-2 mt-2 border-t" style={{ borderColor: colors.borderLight }}>
+            <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
               <Text
-                className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
+                className="text-[10px] font-bold uppercase tracking-wider mb-2"
                 style={{ color: colors.textMuted }}
               >
                 Module Authorizations
               </Text>
-              <View className="flex-row flex-wrap gap-1.5">
+              <View className="flex-row flex-wrap gap-2">
                 {permModules.map((mod) => (
                   <View
                     key={mod.module}
-                    className="rounded-lg px-2 py-0.5 border"
+                    className="rounded-lg px-2.5 py-1 border"
                     style={{
                       backgroundColor: colors.cardAlt,
                       borderColor: colors.borderLight,
                     }}
                   >
-                    <Text className="text-[10px] font-semibold" style={{ color: colors.textSecondary }}>
+                    <Text className="text-[11px] font-semibold" style={{ color: colors.textSecondary }}>
                       {mod.module}
                     </Text>
                   </View>
@@ -771,24 +786,24 @@ export default function CrmSettingsScreen({ isTab = false }) {
           )}
         </Pressable>
 
-        {/* 9. Shared Preferences */}
+        {/* 10. Shared Preferences */}
         <Pressable
-          className="rounded-2xl border p-3 shadow-sm mb-3 flex-row items-center justify-between"
+          className="rounded-2xl border p-4 shadow-xs mb-4 flex-row items-center justify-between active:opacity-75"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
           onPress={() => router.push('/(misc)/sharedpref')}
         >
-          <View className="flex-row items-center gap-x-2">
+          <View className="flex-row items-center gap-x-2.5">
             <View
-              className="h-7 w-7 items-center justify-center rounded-xl"
+              className="h-8 w-8 items-center justify-center rounded-xl"
               style={{ backgroundColor: colors.cardAlt }}
             >
-              <Ionicons name="file-tray-full-outline" size={16} color={colors.textSecondary} />
+              <Ionicons name="file-tray-full-outline" size={17} color={colors.textSecondary} />
             </View>
             <View>
-              <Text className="text-xs font-black" style={{ color: colors.text }}>
+              <Text className="text-sm font-black" style={{ color: colors.text }}>
                 Shared Preferences
               </Text>
-              <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+              <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                 Inspect local cache, tokens and device keys
               </Text>
             </View>
@@ -796,40 +811,40 @@ export default function CrmSettingsScreen({ isTab = false }) {
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </Pressable>
 
-        {/* 10. Devlomatix Modules & Suite Navigation */}
+        {/* 11. Devlomatix Modules & Suite Navigation */}
         <View
-          className="rounded-2xl border p-3 shadow-sm mb-3"
+          className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{
             backgroundColor: colors.card,
             borderColor: colors.border,
           }}
         >
           {/* Header */}
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center gap-x-2">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center gap-x-2.5">
               <View
-                className="h-7 w-7 items-center justify-center rounded-xl"
+                className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.primarySoft }}
               >
-                <Ionicons name="grid-outline" size={15} color={colors.primary} />
+                <Ionicons name="grid-outline" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-xs font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-black" style={{ color: colors.text }}>
                   Devlomatix Suite Modules
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                   Tap to launch any workspace application
                 </Text>
               </View>
             </View>
             <View
-              className="rounded-full px-2 py-0.5 border"
+              className="rounded-full px-2.5 py-1 border"
               style={{
                 backgroundColor: colors.primarySoft,
                 borderColor: colors.primaryBorder,
               }}
             >
-              <Text className="text-[9px] font-bold" style={{ color: colors.primary }}>
+              <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
                 {ECOSYSTEM_MODULES.length} Modules
               </Text>
             </View>
@@ -839,21 +854,21 @@ export default function CrmSettingsScreen({ isTab = false }) {
           {ECOSYSTEM_MODULES.map((mod, idx) => (
             <Pressable
               key={mod.id}
-              className={`flex-row items-center justify-between py-2.5 active:opacity-70 ${
+              className={`flex-row items-center justify-between py-3.5 active:opacity-70 ${
                 idx > 0 ? 'border-t' : ''
               }`}
               style={{ borderTopColor: colors.borderLight }}
               onPress={() => router.push(mod.route)}
             >
-              <View className="flex-row items-center gap-x-2.5 flex-1 mr-2">
+              <View className="flex-row items-center gap-x-3 flex-1 mr-2">
                 <View
-                  className="h-8 w-8 items-center justify-center rounded-xl"
+                  className="h-9 w-9 items-center justify-center rounded-xl"
                   style={{ backgroundColor: mod.bg }}
                 >
-                  <Ionicons name={mod.icon} size={16} color={mod.color} />
+                  <Ionicons name={mod.icon} size={18} color={mod.color} />
                 </View>
                 <View className="flex-1">
-                  <View className="flex-row items-center gap-x-1.5">
+                  <View className="flex-row items-center gap-x-2">
                     <Text
                       className="text-xs font-black tracking-tight"
                       style={{ color: colors.text }}
@@ -862,14 +877,14 @@ export default function CrmSettingsScreen({ isTab = false }) {
                       {mod.name}
                     </Text>
                     <View
-                      className="rounded-full px-1.5 py-0.2 border"
+                      className="rounded-full px-2 py-0.5 border"
                       style={{
                         backgroundColor: colors.cardAlt,
                         borderColor: colors.borderLight,
                       }}
                     >
                       <Text
-                        className="text-[8px] font-bold uppercase tracking-wider"
+                        className="text-[9px] font-bold uppercase tracking-wider"
                         style={{ color: mod.color }}
                       >
                         {mod.badge}
@@ -877,7 +892,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                     </View>
                   </View>
                   <Text
-                    className="text-[10px] mt-0.5"
+                    className="text-[11px] mt-1 leading-4"
                     style={{ color: colors.textMuted }}
                     numberOfLines={1}
                   >
@@ -888,44 +903,44 @@ export default function CrmSettingsScreen({ isTab = false }) {
 
               <View className="flex-row items-center gap-x-1">
                 <View
-                  className="rounded-lg px-2 py-1 border"
+                  className="rounded-lg px-2.5 py-1.5 border"
                   style={{
                     backgroundColor: colors.cardAlt,
                     borderColor: colors.borderLight,
                   }}
                 >
-                  <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
+                  <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
                     Open
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
               </View>
             </Pressable>
           ))}
 
           {/* Productivity Tools Shortcut */}
           <Pressable
-            className="mt-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 border active:opacity-70"
+            className="mt-3.5 flex-row items-center justify-center gap-x-2 rounded-xl py-3 border active:opacity-70 min-h-[46px]"
             style={{
               backgroundColor: colors.cardAlt,
               borderColor: colors.borderLight,
             }}
             onPress={() => router.push('/(tabs)/apps')}
           >
-            <Ionicons name="apps-outline" size={14} color={colors.textSecondary} />
+            <Ionicons name="apps-outline" size={16} color={colors.textSecondary} />
             <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
               View All Productivity Tools
             </Text>
           </Pressable>
         </View>
 
-        {/* 11. Sign Out Button */}
+        {/* 12. Sign Out Button */}
         <Pressable
-          className="h-11 flex-row items-center justify-center rounded-xl shadow-sm mb-6 active:opacity-80"
+          className="h-12 flex-row items-center justify-center rounded-xl shadow-xs mb-10 active:opacity-80"
           style={{ backgroundColor: colors.danger || '#ef4444' }}
           onPress={() => setShowLogoutModal(true)}
         >
-          <Ionicons name="log-out-outline" size={16} color="#ffffff" style={{ marginRight: 6 }} />
+          <Ionicons name="log-out-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
           <Text className="text-xs font-black text-white">Log Out of Workspace</Text>
         </Pressable>
       </ScrollView>

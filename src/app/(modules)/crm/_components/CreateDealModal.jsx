@@ -146,7 +146,7 @@ export default function CreateDealModal() {
               onChangeText={setTitle}
               placeholder="e.g. Enterprise Cloud Migration"
               placeholderTextColor={colors.inputPlaceholder}
-              className="rounded-xl border px-3 py-2 text-xs mb-2.5"
+              className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px] mb-2.5"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -166,7 +166,7 @@ export default function CreateDealModal() {
                   keyboardType="numeric"
                   placeholder="e.g. 250000"
                   placeholderTextColor={colors.inputPlaceholder}
-                  className="rounded-xl border px-3 py-2 text-xs"
+                  className="rounded-xl border px-3.5 py-3 text-xs min-h-[46px]"
                   style={{
                     backgroundColor: colors.inputBg,
                     borderColor: colors.inputBorder,

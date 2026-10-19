@@ -241,7 +241,7 @@ export default function CrmCopilotTab() {
               placeholderTextColor={colors.inputPlaceholder}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
-              className="flex-1 rounded-2xl border px-3.5 py-2 text-xs"
+              className="flex-1 rounded-2xl border px-3.5 py-2.5 min-h-[46px] text-xs"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -252,13 +252,13 @@ export default function CrmCopilotTab() {
             <Pressable
               onPress={() => handleSend()}
               disabled={loading || !inputText.trim()}
-              className="h-9 w-9 items-center justify-center rounded-2xl active:opacity-80"
+              className="h-11 w-11 items-center justify-center rounded-2xl active:opacity-80"
               style={{
                 backgroundColor: colors.primary,
                 opacity: loading || !inputText.trim() ? 0.5 : 1,
               }}
             >
-              <Ionicons name="arrow-up" size={17} color="#ffffff" />
+              <Ionicons name="arrow-up" size={18} color="#ffffff" />
             </Pressable>
           </View>
         </View>
