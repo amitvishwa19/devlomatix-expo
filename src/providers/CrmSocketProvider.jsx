@@ -333,50 +333,68 @@ export function CrmSocketProvider({ children }) {
       return;
     }
 
-    const socketUrl = getSocketUrl();
-    console.log(`[CRM_SOCKET] Connecting user ${currentUserId} to socket server at ${socketUrl}...`);
+    let isCancelled = false;
+    let s = null;
 
-    const s = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 20,
-      reconnectionDelay: 2000,
-      timeout: 10000,
-    });
+    async function initMobileSocket() {
+      const session = await getSession();
+      const authToken = session?.accessToken || null;
 
-    s.on('connect', () => {
-      setIsConnected(true);
-      console.log(`[CRM_SOCKET] Mobile client successfully connected to ${socketUrl} (Socket ID: ${s.id})`);
+      if (isCancelled) return;
 
-      s.emit('user:join', {
-        userId: currentUserId,
-        workspaceId: workspaceId || 'default',
-        userName: currentUserName,
-        avatar: currentUserAvatar,
-        platform: Platform.OS,
-        expoPushToken: pushToken,
-        deviceToken: deviceToken,
+      const socketUrl = getSocketUrl();
+      console.log(`[CRM_SOCKET] Connecting authenticated user ${currentUserId} to socket server at ${socketUrl}...`);
+
+      s = io(socketUrl, {
+        auth: {
+          token: authToken
+        },
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 20,
+        reconnectionDelay: 2000,
+        timeout: 10000,
       });
-    });
 
-    s.on('connect_error', (err) => {
-      setIsConnected(false);
-      console.warn(`[CRM_SOCKET] Connection failed to ${socketUrl}:`, err?.message || err);
-    });
+      s.on('connect', () => {
+        setIsConnected(true);
+        console.log(`[CRM_SOCKET] Mobile client successfully connected and authenticated to ${socketUrl} (Socket ID: ${s.id})`);
 
-    s.on('disconnect', (reason) => {
-      setIsConnected(false);
-      console.log(`[CRM_SOCKET] Mobile client disconnected (${reason})`);
-    });
+        s.emit('user:join', {
+          userId: currentUserId,
+          workspaceId: workspaceId || 'default',
+          userName: currentUserName,
+          avatar: currentUserAvatar,
+          platform: Platform.OS,
+          expoPushToken: pushToken,
+          deviceToken: deviceToken,
+        });
+      });
 
-    s.on('presence:sync', (users) => {
-      setOnlineUsers(users.filter((u) => u.userId !== currentUserId));
-    });
+      s.on('connect_error', (err) => {
+        setIsConnected(false);
+        console.warn(`[CRM_SOCKET] Connection failed to ${socketUrl}:`, err?.message || err);
+      });
 
-    socketRef.current = s;
-    setSocket(s);
+      s.on('disconnect', (reason) => {
+        setIsConnected(false);
+        console.log(`[CRM_SOCKET] Mobile client disconnected (${reason})`);
+      });
+
+      s.on('presence:sync', (users) => {
+        setOnlineUsers(users.filter((u) => u.userId !== currentUserId));
+      });
+
+      socketRef.current = s;
+      setSocket(s);
+    }
+
+    initMobileSocket();
 
     return () => {
-      s.disconnect();
+      isCancelled = true;
+      if (s) {
+        s.disconnect();
+      }
     };
   }, [currentUserId, workspaceId, currentUserName, currentUserAvatar]);
 
