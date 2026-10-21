@@ -258,14 +258,22 @@ export default function ContactDossierScreen() {
 
             {contact.email && (
               <Pressable
-                onPress={() => Linking.openURL(`mailto:${contact.email}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(modules)/crm/mailbox/compose',
+                    params: {
+                      contactId: contact.id,
+                      to: contact.email,
+                    },
+                  })
+                }
                 className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 border active:opacity-75"
                 style={{
                   backgroundColor: colors.cardAlt,
                   borderColor: colors.border,
                 }}
               >
-                <Ionicons name="mail-outline" size={15} color={colors.textMuted} />
+                <Ionicons name="mail-outline" size={15} color={colors.primary} />
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
                   Email
                 </Text>

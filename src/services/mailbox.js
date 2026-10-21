@@ -20,6 +20,7 @@ export async function getMailboxThreads(params = {}) {
       data: payload?.data || [],
       counts: payload?.counts || { unread: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 },
       pagination: payload?.pagination || { page: 1, limit: 30, total: 0, totalPages: 1 },
+      mailboxes: payload?.mailboxes || [],
     };
   } catch (error) {
     console.warn('[MAILBOX_FETCH_WARN]', error?.response?.data || error?.message);
@@ -28,6 +29,7 @@ export async function getMailboxThreads(params = {}) {
       error: error?.response?.data?.error || error?.message || 'Failed to fetch mailbox threads',
       data: [],
       counts: { unread: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 },
+      mailboxes: [],
     };
   }
 }

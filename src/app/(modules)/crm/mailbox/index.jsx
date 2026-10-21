@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Animated,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -51,7 +52,7 @@ function formatTime(dateString) {
   }
 }
 
-export default function CrmMailboxScreen() {
+export default function CrmMailboxScreen({ isTab = false }) {
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
   const { socket } = useCrmSocket() || {};
@@ -64,28 +65,39 @@ export default function CrmMailboxScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load threads
-  const loadThreads = useCallback(async (folder = currentFolder, search = searchQuery, isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+  // Multi-Mailbox Identity state from Org Builder
+  const [mailboxes, setMailboxes] = useState([]);
+  const [activeMailboxEmail, setActiveMailboxEmail] = useState('ALL');
+  const [isMailboxModalVisible, setIsMailboxModalVisible] = useState(false);
 
-    try {
-      const res = await getMailboxThreads({ folder, search, limit: 50 });
-      if (res.success) {
-        setThreads(res.data);
-        if (res.counts) setCounts(res.counts);
+  // Load threads
+  const loadThreads = useCallback(
+    async (folder = currentFolder, search = searchQuery, mailboxEmail = activeMailboxEmail, isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+
+      try {
+        const res = await getMailboxThreads({ folder, search, mailboxEmail, limit: 50 });
+        if (res.success) {
+          setThreads(res.data);
+          if (res.counts) setCounts(res.counts);
+          if (res.mailboxes && Array.isArray(res.mailboxes) && res.mailboxes.length > 0) {
+            setMailboxes(res.mailboxes);
+          }
+        }
+      } catch (err) {
+        console.warn('[MAILBOX_LOAD_ERR]', err);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (err) {
-      console.warn('[MAILBOX_LOAD_ERR]', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [currentFolder, searchQuery]);
+    },
+    [currentFolder, searchQuery, activeMailboxEmail]
+  );
 
   useEffect(() => {
-    loadThreads(currentFolder, searchQuery);
-  }, [currentFolder]);
+    loadThreads(currentFolder, searchQuery, activeMailboxEmail);
+  }, [currentFolder, activeMailboxEmail]);
 
   // Real-time socket updates for incoming and sent emails
   useEffect(() => {
@@ -307,7 +319,7 @@ export default function CrmMailboxScreen() {
             ? `${counts.unread} unread emails`
             : `${counts.inbox} emails in inbox`
         }
-        showBack={true}
+        showBack={!isTab}
         rightActions={
           <View className="flex-row items-center gap-1.5">
             <Pressable
@@ -322,7 +334,14 @@ export default function CrmMailboxScreen() {
               />
             </Pressable>
             <Pressable
-              onPress={() => router.push('/(modules)/crm/mailbox/compose')}
+              onPress={() =>
+                router.push({
+                  pathname: '/(modules)/crm/mailbox/compose',
+                  params: {
+                    fromEmail: activeMailboxEmail !== 'ALL' ? activeMailboxEmail : '',
+                  },
+                })
+              }
               className="h-8 px-3 flex-row items-center gap-1.5 rounded-xl shadow-xs active:opacity-75"
               style={{ backgroundColor: colors.primary }}
             >
@@ -332,6 +351,45 @@ export default function CrmMailboxScreen() {
           </View>
         }
       />
+
+      {/* Multi-Mailbox Switcher Bar (Org Builder Identities) */}
+      {mailboxes.length > 1 && (
+        <View
+          className="px-3 py-1.5 border-b flex-row items-center justify-between"
+          style={{ backgroundColor: colors.header, borderColor: colors.headerBorder }}
+        >
+          <Pressable
+            onPress={() => {
+              try {
+                HapticsModule?.selectionAsync?.();
+              } catch (_) {}
+              setIsMailboxModalVisible(true);
+            }}
+            className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-xl border active:opacity-70 flex-1 max-w-[85%]"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <Ionicons
+              name={
+                activeMailboxEmail === 'ALL'
+                  ? 'layers-outline'
+                  : mailboxes.find((m) => m.email === activeMailboxEmail)?.type === 'PERSONAL'
+                  ? 'person-outline'
+                  : 'briefcase-outline'
+              }
+              size={13}
+              color={colors.primary}
+            />
+            <Text className="text-[11px] font-bold flex-1" style={{ color: colors.text }} numberOfLines={1}>
+              {mailboxes.find((m) => m.email === activeMailboxEmail)?.label || 'All Inboxes'}
+            </Text>
+            <Ionicons name="chevron-down" size={12} color={colors.textMuted} />
+          </Pressable>
+
+          <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+            {activeMailboxEmail === 'ALL' ? 'Unified' : activeMailboxEmail.split('@')[0]}
+          </Text>
+        </View>
+      )}
 
       {/* Collapsible Search Input */}
       {isSearchVisible && (
@@ -449,7 +507,7 @@ export default function CrmMailboxScreen() {
           data={threads}
           keyExtractor={(item) => item.id}
           renderItem={renderThreadCard}
-          contentContainerStyle={{ paddingTop: 10, paddingBottom: 90 }}
+          contentContainerStyle={{ paddingTop: 10, paddingBottom: isTab ? 115 : 90 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -485,6 +543,103 @@ export default function CrmMailboxScreen() {
           }
         />
       )}
+
+      {/* Mailbox Identity Switcher Modal */}
+      <Modal
+        visible={isMailboxModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsMailboxModalVisible(false)}
+      >
+        <Pressable
+          onPress={() => setIsMailboxModalVisible(false)}
+          className="flex-1 bg-black/60 items-center justify-center p-4"
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl border p-4 shadow-xl"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <View
+              className="flex-row items-center justify-between pb-2 mb-2 border-b"
+              style={{ borderColor: colors.borderLight }}
+            >
+              <View>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                  Switch CRM Mailbox
+                </Text>
+                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                  Assigned roles and personal email
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsMailboxModalVisible(false)}
+                hitSlop={8}
+                className="p-1"
+              >
+                <Ionicons name="close" size={18} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <View className="gap-1.5">
+              {mailboxes.map((mb) => {
+                const isSelected = (activeMailboxEmail || 'ALL') === mb.email;
+                return (
+                  <Pressable
+                    key={mb.id}
+                    onPress={() => {
+                      try {
+                        HapticsModule?.selectionAsync?.();
+                      } catch (_) {}
+                      setActiveMailboxEmail(mb.email);
+                      setIsMailboxModalVisible(false);
+                      loadThreads(currentFolder, searchQuery, mb.email);
+                    }}
+                    className="flex-row items-center justify-between p-2.5 rounded-xl border active:opacity-75"
+                    style={{
+                      backgroundColor: isSelected
+                        ? isDark ? '#1e3a8a' : '#eff6ff'
+                        : colors.cardAlt,
+                      borderColor: isSelected ? colors.primaryBorder : colors.borderLight,
+                    }}
+                  >
+                    <View className="flex-row items-center gap-2 flex-1 pr-2">
+                      <Ionicons
+                        name={
+                          mb.type === 'ALL'
+                            ? 'layers'
+                            : mb.type === 'PERSONAL'
+                            ? 'person'
+                            : 'briefcase'
+                        }
+                        size={16}
+                        color={isSelected ? colors.primary : colors.textSecondary}
+                      />
+                      <View className="flex-1">
+                        <Text
+                          className={`text-xs ${isSelected ? 'font-bold' : 'font-medium'}`}
+                          style={{ color: isSelected ? colors.primary : colors.text }}
+                          numberOfLines={1}
+                        >
+                          {mb.label}
+                        </Text>
+                        {mb.email !== 'ALL' && (
+                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                            {mb.email}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </AppScreen>
   );
 }

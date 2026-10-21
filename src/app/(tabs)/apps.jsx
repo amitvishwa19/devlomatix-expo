@@ -74,6 +74,15 @@ const tools = [
     description: 'Find and generate business leads from Google Maps.',
     route: '/(misc)/leadgen',
   },
+  {
+    id: 'mailbox',
+    name: 'CRM Mailbox',
+    icon: 'mail-outline',
+    color: '#3b82f6',
+    bg: 'bg-blue-500/15',
+    description: 'Enterprise email with Resend & Org mailbox identities.',
+    route: '/(modules)/crm/mailbox',
+  },
 ];
 
 export default function ProductivityScreen() {

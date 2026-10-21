@@ -2039,7 +2039,14 @@ export default function DcrScreen() {
 
                   {detailRecord.email ? (
                     <TouchableOpacity
-                      onPress={() => Linking.openURL(`mailto:${detailRecord.email}`).catch(() => { })}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/(modules)/crm/mailbox/compose',
+                          params: {
+                            to: detailRecord.email,
+                          },
+                        })
+                      }
                       className="mt-2 flex-row items-center gap-1.5"
                     >
                       <Ionicons name="mail" size={12} color={colors.textMuted} />

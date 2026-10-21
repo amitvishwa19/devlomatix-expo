@@ -16,10 +16,12 @@ import CreateTaskModal from '../_components/CreateTaskModal';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import { useCrmTheme } from '../utils/colors';
+import { useCrmDrawer } from '../_components/CrmDrawer';
 
 export default function CrmDashboard() {
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
+  const { openDrawer } = useCrmDrawer();
   const scrollRef = useRef(null);
   useScrollToTop(scrollRef);
 
@@ -179,17 +181,17 @@ export default function CrmDashboard() {
           }}
         >
           <View className="flex-row items-center gap-x-2.5 flex-1">
-            <View
-              className="h-10 w-10 items-center justify-center rounded-xl border"
+            <Pressable
+              onPress={openDrawer}
+              hitSlop={8}
+              className="h-10 w-10 items-center justify-center rounded-xl border active:opacity-75"
               style={{
                 backgroundColor: colors.primarySoft,
                 borderColor: colors.primaryBorder,
               }}
             >
-              <Text className="text-xs font-bold" style={{ color: colors.primary }}>
-                {userInitials}
-              </Text>
-            </View>
+              <Ionicons name="menu" size={20} color={colors.primary} />
+            </Pressable>
             <View className="flex-1">
               <View className="flex-row items-center gap-x-2">
                 <Text className="text-sm font-bold" style={{ color: colors.text }} numberOfLines={1}>
@@ -220,24 +222,41 @@ export default function CrmDashboard() {
             </View>
           </View>
 
-          <Pressable
-            onPress={handleSyncWhatsApp}
-            disabled={syncingWa}
-            className="h-8 px-2.5 flex-row items-center gap-x-1.5 rounded-xl border active:opacity-75"
-            style={{
-              backgroundColor: colors.cardAlt,
-              borderColor: colors.border,
-            }}
-          >
-            {syncingWa ? (
-              <ActivityIndicator size="small" color={colors.whatsapp} />
-            ) : (
-              <Ionicons name="logo-whatsapp" size={14} color={colors.whatsapp} />
-            )}
-            <Text className="text-[11px] font-semibold" style={{ color: colors.textSecondary }}>
-              Sync
-            </Text>
-          </Pressable>
+          {/* Quick Header Action Buttons: Mailbox & WhatsApp Sync */}
+          <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={() => router.push('/(modules)/crm/mailbox')}
+              className="h-8 px-2.5 flex-row items-center gap-x-1.5 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: colors.primarySoft,
+                borderColor: colors.primaryBorder,
+              }}
+            >
+              <Ionicons name="mail" size={14} color={colors.primary} />
+              <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
+                Mailbox
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSyncWhatsApp}
+              disabled={syncingWa}
+              className="h-8 px-2 flex-row items-center gap-x-1 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
+            >
+              {syncingWa ? (
+                <ActivityIndicator size="small" color={colors.whatsapp} />
+              ) : (
+                <Ionicons name="logo-whatsapp" size={13} color={colors.whatsapp} />
+              )}
+              <Text className="text-[10px] font-semibold" style={{ color: colors.textSecondary }}>
+                Sync
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Sync WhatsApp Banner */}
@@ -650,6 +669,31 @@ export default function CrmDashboard() {
             </View>
           </Pressable>
 
+          {/* CRM Mailbox */}
+          <Pressable
+            onPress={() => router.push('/(modules)/crm/mailbox')}
+            className="w-[48%] rounded-[14px] border p-2.5 flex-row items-center gap-x-2.5 active:opacity-80"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: colors.primarySoft }}
+            >
+              <Ionicons name="mail" size={16} color={colors.primary} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                CRM Mailbox
+              </Text>
+              <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+                Multi-Inboxes & Resend
+              </Text>
+            </View>
+          </Pressable>
+
           {/* Analytics & Velocity */}
           <Pressable
             onPress={() => router.push('/(modules)/crm/analytics')}
@@ -671,6 +715,31 @@ export default function CrmDashboard() {
               </Text>
               <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
                 Velocity & Quotas
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Chat & VoIP Calls */}
+          <Pressable
+            onPress={() => router.push('/(modules)/crm/chat')}
+            className="w-[48%] rounded-[14px] border p-2.5 flex-row items-center gap-x-2.5 active:opacity-80"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: colors.whatsappSoft || colors.successSoft }}
+            >
+              <Ionicons name="chatbubbles-outline" size={16} color={colors.whatsapp || colors.success} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                Chat & Calls
+              </Text>
+              <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+                WhatsApp & VoIP
               </Text>
             </View>
           </Pressable>

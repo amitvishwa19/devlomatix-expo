@@ -389,6 +389,35 @@ export default function HomeScreen() {
                                     </View>
 
                                     <Text className={`text-[13px] leading-5 ${palette.textSoft}`}>{app.description}</Text>
+
+                                    {key === 'crm' && (
+                                        <View className="mt-3 flex-row items-center gap-2 pt-2.5 border-t border-slate-200/60 dark:border-slate-800">
+                                            <Pressable
+                                                onPress={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push('/(modules)/crm/mailbox');
+                                                }}
+                                                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-2 px-3 bg-blue-500/15 active:opacity-75"
+                                            >
+                                                <Ionicons name="mail-outline" size={14} color="#3b82f6" />
+                                                <Text className="text-[12px] font-bold text-blue-600 dark:text-blue-400">
+                                                    CRM Mailbox
+                                                </Text>
+                                            </Pressable>
+                                            <Pressable
+                                                onPress={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push('/(modules)/crm/(tabs)/pipeline');
+                                                }}
+                                                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-2 px-3 bg-indigo-500/15 active:opacity-75"
+                                            >
+                                                <Ionicons name="funnel-outline" size={14} color="#6366f1" />
+                                                <Text className="text-[12px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                    Pipeline
+                                                </Text>
+                                            </Pressable>
+                                        </View>
+                                    )}
                                 </Pressable>
                             );
                         })}

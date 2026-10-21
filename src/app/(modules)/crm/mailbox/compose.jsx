@@ -14,7 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import AppScreen from '~/components/AppScreen';
 import { useCrmTheme } from '../utils/colors';
-import { sendMailboxEmail } from '~/services/mailbox';
+import { sendMailboxEmail, getMailboxThreads } from '~/services/mailbox';
 import { getContacts, getDeals } from '~/services/crm';
 
 let HapticsModule = null;
@@ -32,6 +32,10 @@ export default function MailboxComposeScreen() {
   const [contactId, setContactId] = useState(params.contactId || null);
   const [dealId, setDealId] = useState(params.dealId || null);
 
+  // Sender Identity
+  const [selectedFromEmail, setSelectedFromEmail] = useState(params.fromEmail || '');
+  const [mailboxes, setMailboxes] = useState([]);
+
   // Form Fields
   const [toInput, setToInput] = useState(params.to || '');
   const [toRecipients, setToRecipients] = useState(params.to ? [params.to] : []);
@@ -47,14 +51,15 @@ export default function MailboxComposeScreen() {
   const [deals, setDeals] = useState([]);
   const [isSearchingContact, setIsSearchingContact] = useState(false);
 
-  // Load CRM contacts and deals for autocomplete linking
+  // Load CRM contacts, deals, and authorized mailboxes
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       try {
-        const [contactsRes, dealsRes] = await Promise.all([
+        const [contactsRes, dealsRes, threadsRes] = await Promise.all([
           getContacts({ limit: 100 }),
           getDeals({ limit: 50 }),
+          getMailboxThreads({ limit: 1 }),
         ]);
         if (!isMounted) return;
         if (contactsRes.success && Array.isArray(contactsRes.data)) {
@@ -62,6 +67,13 @@ export default function MailboxComposeScreen() {
         }
         if (dealsRes.success && Array.isArray(dealsRes.data)) {
           setDeals(dealsRes.data);
+        }
+        if (threadsRes.success && Array.isArray(threadsRes.mailboxes)) {
+          const validBoxes = threadsRes.mailboxes.filter((m) => m.id !== 'ALL' && m.email);
+          setMailboxes(validBoxes);
+          if (!params.fromEmail && validBoxes.length > 0) {
+            setSelectedFromEmail(validBoxes[0].email);
+          }
         }
       } catch (err) {
         console.warn('[COMPOSE_DATA_LOAD_WARN]', err);
@@ -172,6 +184,7 @@ export default function MailboxComposeScreen() {
         threadId: threadId || undefined,
         contactId: contactId || undefined,
         dealId: dealId || undefined,
+        fromEmail: selectedFromEmail || undefined,
         to: allRecipients,
         cc: ccList.length > 0 ? ccList : undefined,
         bcc: bccList.length > 0 ? bccList : undefined,
@@ -269,6 +282,70 @@ export default function MailboxComposeScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Send As / From Field (Org Mailboxes Selector) */}
+          {mailboxes.length > 1 && (
+            <View
+              className="mb-2.5 rounded-2xl border p-2.5"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            >
+              <View className="flex-row items-center justify-between mb-1.5">
+                <View className="flex-row items-center gap-1.5">
+                  <Ionicons name="mail-outline" size={13} color={colors.primary} />
+                  <Text className="text-[11px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                    Send As (From)
+                  </Text>
+                </View>
+                <Text className="text-[10px] font-medium" style={{ color: colors.primary }}>
+                  {mailboxes.find((m) => m.email === selectedFromEmail)?.roleTitle || 'Org Mailbox'}
+                </Text>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1.5">
+                {mailboxes.map((mb) => {
+                  const isSelected = selectedFromEmail === mb.email;
+                  return (
+                    <Pressable
+                      key={mb.email}
+                      onPress={() => setSelectedFromEmail(mb.email)}
+                      className="px-2.5 py-1.5 rounded-xl border flex-row items-center gap-1.5 active:opacity-75"
+                      style={{
+                        backgroundColor: isSelected
+                          ? isDark ? '#1e3a8a' : '#eff6ff'
+                          : isDark ? '#1e293b' : '#f8fafc',
+                        borderColor: isSelected ? colors.primary : colors.border,
+                      }}
+                    >
+                      <View
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor: isSelected ? colors.primary : colors.textMuted,
+                        }}
+                      />
+                      <View>
+                        <Text
+                          className="text-[11px] font-bold"
+                          style={{ color: isSelected ? colors.primary : colors.text }}
+                        >
+                          {mb.name || mb.roleTitle || mb.email}
+                        </Text>
+                        <Text
+                          className="text-[9px]"
+                          style={{
+                            color: isSelected
+                              ? isDark ? '#93c5fd' : '#2563eb'
+                              : colors.textMuted,
+                          }}
+                        >
+                          {mb.email}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
           {/* TO Field */}
           <View
             className="mb-2.5 rounded-2xl border p-2.5"

@@ -201,9 +201,11 @@ export default function MailboxThreadDetailScreen() {
 
     try {
       HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Medium);
+      const inboundRecipient = lastInbound?.to && Array.isArray(lastInbound.to) ? lastInbound.to[0] : undefined;
       const res = await sendMailboxEmail({
         threadId: thread.id,
         to: [toRecipient],
+        fromEmail: inboundRecipient,
         subject: replySubject,
         bodyText: cleanReply,
         bodyHtml: `<p>${cleanReply.replace(/\n/g, '<br/>')}</p>`,
@@ -583,6 +585,8 @@ export default function MailboxThreadDetailScreen() {
           {/* Expand to full composer */}
           <Pressable
             onPress={() => {
+              const lastInbound = thread.messages?.slice().reverse().find((m) => m.direction === 'INBOUND');
+              const threadInboundTo = (lastInbound?.to && Array.isArray(lastInbound.to) && lastInbound.to[0]) || '';
               router.push({
                 pathname: '/(modules)/crm/mailbox/compose',
                 params: {
@@ -590,6 +594,7 @@ export default function MailboxThreadDetailScreen() {
                   contactId: thread.contact?.id || '',
                   dealId: thread.deal?.id || '',
                   subject: thread.subject?.startsWith('Re:') ? thread.subject : `Re: ${thread.subject || ''}`,
+                  fromEmail: threadInboundTo,
                 },
               });
             }}
