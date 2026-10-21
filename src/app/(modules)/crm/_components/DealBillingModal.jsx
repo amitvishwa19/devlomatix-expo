@@ -114,7 +114,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
                 <Ionicons name="card" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   PayFlow Billing Engine
                 </Text>
                 <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -185,7 +185,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
               <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
                 Opportunity
               </Text>
-              <Text className="text-xs font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-xs font-bold mt-0.5" style={{ color: colors.text }}>
                 {deal.title}
               </Text>
               <Text className="text-[11px] font-medium mt-0.5" style={{ color: colors.textMuted }}>
@@ -287,8 +287,8 @@ export default function DealBillingModal({ visible, onClose, deal }) {
                 className="flex-row justify-between border-t pt-1.5"
                 style={{ borderColor: colors.copilotBorder }}
               >
-                <Text className="text-xs font-black" style={{ color: colors.copilot }}>Grand Total:</Text>
-                <Text className="text-sm font-black" style={{ color: colors.copilot }}>
+                <Text className="text-xs font-bold" style={{ color: colors.copilot }}>Grand Total:</Text>
+                <Text className="text-sm font-bold" style={{ color: colors.copilot }}>
                   {deal.currency} {grandTotal.toLocaleString('en-IN')}
                 </Text>
               </View>
@@ -320,7 +320,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
                     style={{ backgroundColor: colors.whatsapp }}
                   >
                     <Ionicons name="logo-whatsapp" size={14} color="#ffffff" />
-                    <Text className="text-xs font-black text-white">Share via WhatsApp</Text>
+                    <Text className="text-xs font-bold text-white">Share via WhatsApp</Text>
                   </Pressable>
                 )}
               </View>
@@ -358,7 +358,7 @@ export default function DealBillingModal({ visible, onClose, deal }) {
               ) : (
                 <>
                   <Ionicons name="flash" size={15} color="#ffffff" />
-                  <Text className="text-xs font-black text-white">
+                  <Text className="text-xs font-bold text-white">
                     {mode === 'INVOICE' ? 'Issue PayFlow Invoice' : 'Generate Quotation'}
                   </Text>
                 </>

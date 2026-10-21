@@ -78,7 +78,7 @@ export default function CrmAnalyticsScreen() {
       >
         {/* 4-Tier Scenario Forecast */}
         <Text
-          className="text-xs font-black uppercase tracking-wider mb-2"
+          className="text-xs font-bold uppercase tracking-wider mb-2"
           style={{ color: colors.textMuted }}
         >
           4-Tier Probabilistic Scenario Forecast
@@ -100,7 +100,7 @@ export default function CrmAnalyticsScreen() {
               </Text>
             </View>
             <Text
-              className="mt-1.5 text-base font-black"
+              className="mt-1.5 text-base font-bold"
               style={{ color: colors.kpi.purple.text }}
               numberOfLines={1}
             >
@@ -126,7 +126,7 @@ export default function CrmAnalyticsScreen() {
               </Text>
             </View>
             <Text
-              className="mt-1.5 text-base font-black"
+              className="mt-1.5 text-base font-bold"
               style={{ color: colors.kpi.green.text }}
               numberOfLines={1}
             >
@@ -152,7 +152,7 @@ export default function CrmAnalyticsScreen() {
               </Text>
             </View>
             <Text
-              className="mt-1.5 text-base font-black"
+              className="mt-1.5 text-base font-bold"
               style={{ color: colors.kpi.blue.text }}
               numberOfLines={1}
             >
@@ -178,7 +178,7 @@ export default function CrmAnalyticsScreen() {
               </Text>
             </View>
             <Text
-              className="mt-1.5 text-base font-black"
+              className="mt-1.5 text-base font-bold"
               style={{ color: colors.kpi.amber.text }}
               numberOfLines={1}
             >
@@ -197,7 +197,7 @@ export default function CrmAnalyticsScreen() {
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
             <Text
-              className="text-xs font-black uppercase tracking-wider mb-2.5"
+              className="text-xs font-bold uppercase tracking-wider mb-2.5"
               style={{ color: colors.textMuted }}
             >
               Stage Conversion Funnel
@@ -220,7 +220,7 @@ export default function CrmAnalyticsScreen() {
                         ({stage.count} deals)
                       </Text>
                     </View>
-                    <Text className="text-xs font-black" style={{ color: colors.text }}>
+                    <Text className="text-xs font-bold" style={{ color: colors.text }}>
                       ₹ {valFormatted}
                     </Text>
                   </View>
@@ -250,7 +250,7 @@ export default function CrmAnalyticsScreen() {
         >
           <View className="flex-row items-center justify-between mb-2.5">
             <Text
-              className="text-xs font-black uppercase tracking-wider"
+              className="text-xs font-bold uppercase tracking-wider"
               style={{ color: colors.textMuted }}
             >
               Sales Rep Leaderboard
@@ -292,7 +292,7 @@ export default function CrmAnalyticsScreen() {
                       }}
                     >
                       <Text
-                        className="text-[11px] font-black"
+                        className="text-[11px] font-bold"
                         style={{
                           color: idx === 0 ? colors.warning : colors.textMuted,
                         }}
@@ -303,7 +303,7 @@ export default function CrmAnalyticsScreen() {
 
                     <View className="flex-1">
                       <Text
-                        className="text-xs font-black"
+                        className="text-xs font-bold"
                         style={{ color: colors.text }}
                         numberOfLines={1}
                       >
@@ -316,7 +316,7 @@ export default function CrmAnalyticsScreen() {
                   </View>
 
                   <View className="items-end ml-2">
-                    <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+                    <Text className="text-xs font-bold" style={{ color: colors.whatsapp }}>
                       ₹ {wonTotal}
                     </Text>
                     <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>

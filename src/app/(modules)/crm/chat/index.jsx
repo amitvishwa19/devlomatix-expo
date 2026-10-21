@@ -196,7 +196,7 @@ export default function CrmChatDirectoryScreen() {
               {item.avatar ? (
                 <Image source={{ uri: item.avatar }} className="w-full h-full" resizeMode="cover" />
               ) : (
-                <Text className="text-[13px] font-black" style={{ color: colors.primary }}>
+                <Text className="text-[13px] font-bold" style={{ color: colors.primary }}>
                   {initial}
                 </Text>
               )}
@@ -218,7 +218,7 @@ export default function CrmChatDirectoryScreen() {
           <View className="flex-1">
             <View className="flex-row items-center gap-1.5">
               <Text
-                className="text-[13px] font-black tracking-tight"
+                className="text-[13px] font-bold tracking-tight"
                 style={{ color: colors.text }}
                 numberOfLines={1}
               >

@@ -322,7 +322,7 @@ export default function ActiveCallModal() {
                 {targetAvatar ? (
                   <Image source={{ uri: targetAvatar }} className="w-full h-full" resizeMode="cover" />
                 ) : (
-                  <Text className="text-xs font-black text-indigo-400">{initial}</Text>
+                  <Text className="text-xs font-bold text-indigo-400">{initial}</Text>
                 )}
               </View>
               <View
@@ -417,7 +417,7 @@ export default function ActiveCallModal() {
                   {targetAvatar ? (
                     <Image source={{ uri: targetAvatar }} className="w-full h-full" resizeMode="cover" />
                   ) : (
-                    <Text className="text-4xl font-black text-indigo-400">{initial}</Text>
+                    <Text className="text-4xl font-bold text-indigo-400">{initial}</Text>
                   )}
                 </View>
                 <Text className="text-xl font-bold text-white mb-1" numberOfLines={1}>{targetName}</Text>
@@ -715,7 +715,7 @@ export default function ActiveCallModal() {
 
                 {/* Contact Name */}
                 <Text
-                  className="text-[24px] font-black text-white text-center tracking-tight max-w-[280px]"
+                  className="text-[24px] font-bold text-white text-center tracking-tight max-w-[280px]"
                   numberOfLines={1}
                 >
                   {targetName || 'Team Member'}
@@ -757,7 +757,7 @@ export default function ActiveCallModal() {
                       onPress={() => handleDialpadPress(k.num)}
                       className="w-[29%] h-12 rounded-2xl bg-slate-800/90 border border-slate-700/60 items-center justify-center"
                     >
-                      <Text className="text-base font-black text-white leading-none">{k.num}</Text>
+                      <Text className="text-base font-bold text-white leading-none">{k.num}</Text>
                       {k.sub ? (
                         <Text className="text-[8px] font-bold text-slate-400 tracking-tighter uppercase mt-0.5">
                           {k.sub}
@@ -812,7 +812,7 @@ export default function ActiveCallModal() {
                     {targetAvatar ? (
                       <Image source={{ uri: targetAvatar }} className="w-full h-full" resizeMode="cover" />
                     ) : (
-                      <Text className="text-5xl font-black text-indigo-400">{initial}</Text>
+                      <Text className="text-5xl font-bold text-indigo-400">{initial}</Text>
                     )}
                   </View>
 
@@ -998,7 +998,7 @@ export default function ActiveCallModal() {
                     color="#ffffff"
                     style={{ transform: [{ rotate: '135deg' }] }}
                   />
-                  <Text className="text-sm font-black text-white tracking-wide uppercase">
+                  <Text className="text-sm font-bold text-white tracking-wide uppercase">
                     End Call
                   </Text>
                 </TouchableOpacity>

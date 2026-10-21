@@ -49,11 +49,16 @@ export default function TaskCard({ task, onStatusChange }) {
 
   return (
     <View
-      className="mb-2 rounded-[16px] border p-3 shadow-sm"
+      className="mb-2 rounded-[16px] border p-3 active:opacity-90"
       style={{
         backgroundColor: colors.card,
         borderColor: isOverdue ? colors.danger : colors.border,
         opacity: isCompleted ? 0.65 : 1,
+        shadowColor: colors.shadowColor,
+        shadowOpacity: colors.shadowOpacity,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 2,
       }}
     >
       <View className="flex-row items-start justify-between gap-x-2">

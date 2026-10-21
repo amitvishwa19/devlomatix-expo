@@ -253,7 +253,7 @@ export default function QuotationDetailScreen() {
               <Ionicons name="checkmark-done" size={20} color="#ffffff" />
             </View>
             <View className="flex-1">
-              <Text className="text-xs font-black" style={{ color: colors.success }}>
+              <Text className="text-xs font-bold" style={{ color: colors.success }}>
                 Quotation Accepted by Client!
               </Text>
               <Text className="text-[10px] mt-0.5" style={{ color: colors.textSecondary }}>
@@ -270,10 +270,10 @@ export default function QuotationDetailScreen() {
         >
           <View className="flex-row items-center justify-between border-b pb-3 mb-3" style={{ borderColor: colors.borderLight }}>
             <View>
-              <Text className="text-[10px] font-mono font-black uppercase tracking-wider" style={{ color: colors.primary }}>
+              <Text className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: colors.primary }}>
                 Official Proposal
               </Text>
-              <Text className="text-base font-black tracking-tight" style={{ color: colors.text }}>
+              <Text className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
                 {quotation.quotationNumber}
               </Text>
             </View>
@@ -282,7 +282,7 @@ export default function QuotationDetailScreen() {
               className="flex-row items-center gap-x-1 rounded-full border px-2.5 py-1"
               style={{ backgroundColor: badge.bg, borderColor: badge.border }}
             >
-              <Text className="text-[10px] font-black uppercase tracking-wider" style={{ color: badge.text }}>
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: badge.text }}>
                 {badge.label}
               </Text>
             </View>
@@ -297,8 +297,8 @@ export default function QuotationDetailScreen() {
 
           {/* Client Info Grid */}
           <View className="rounded-xl p-2.5 border" style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}>
-            <Text className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Prepared For:</Text>
-            <Text className="text-xs font-black" style={{ color: colors.text }}>
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">Prepared For:</Text>
+            <Text className="text-xs font-bold" style={{ color: colors.text }}>
               {quotation.clientName || client.name || 'Client'}
             </Text>
             {client.phone ? (
@@ -422,7 +422,7 @@ export default function QuotationDetailScreen() {
           className="rounded-[16px] border p-4 shadow-sm mb-3"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <Text className="text-xs font-black tracking-tight mb-2.5" style={{ color: colors.text }}>
+          <Text className="text-xs font-bold tracking-tight mb-2.5" style={{ color: colors.text }}>
             Deliverables & Line Items ({items.length})
           </Text>
 
@@ -449,7 +449,7 @@ export default function QuotationDetailScreen() {
                       </Text>
                     ) : null}
                   </View>
-                  <Text className="text-xs font-black" style={{ color: colors.primaryLight }}>
+                  <Text className="text-xs font-bold" style={{ color: colors.primaryLight }}>
                     {currencySymbol} {itemTotal.toLocaleString('en-IN')}
                   </Text>
                 </View>
@@ -493,8 +493,8 @@ export default function QuotationDetailScreen() {
               </View>
             )}
             <View className="flex-row justify-between border-t pt-2 mt-1.5" style={{ borderColor: colors.border }}>
-              <Text className="text-xs font-black" style={{ color: colors.text }}>Grand Total:</Text>
-              <Text className="text-base font-black" style={{ color: colors.primaryLight }}>
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>Grand Total:</Text>
+              <Text className="text-base font-bold" style={{ color: colors.primaryLight }}>
                 {currencySymbol} {(summary.grandTotal || quotation.total || 0).toLocaleString('en-IN')}
               </Text>
             </View>
@@ -507,7 +507,7 @@ export default function QuotationDetailScreen() {
             className="rounded-[16px] border p-4 shadow-sm mb-3"
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
-            <Text className="text-xs font-black tracking-tight mb-2" style={{ color: colors.text }}>
+            <Text className="text-xs font-bold tracking-tight mb-2" style={{ color: colors.text }}>
               Commercial Terms
             </Text>
             {qData.notes ? (
@@ -534,7 +534,7 @@ export default function QuotationDetailScreen() {
           className="rounded-[16px] border p-3.5 shadow-sm mb-3"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <Text className="text-xs font-black tracking-tight mb-2" style={{ color: colors.text }}>
+          <Text className="text-xs font-bold tracking-tight mb-2" style={{ color: colors.text }}>
             Update Client Status
           </Text>
           <View className="flex-row gap-x-1.5">
@@ -574,7 +574,7 @@ export default function QuotationDetailScreen() {
               <View className="h-6 w-6 items-center justify-center rounded-lg" style={{ backgroundColor: colors.primarySoft }}>
                 <Ionicons name="document-text" size={13} color={colors.primary} />
               </View>
-              <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+              <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                 Official PDF & Print Hub
               </Text>
             </View>
@@ -645,7 +645,7 @@ export default function QuotationDetailScreen() {
           style={{ backgroundColor: colors.whatsapp }}
         >
           <Ionicons name="logo-whatsapp" size={18} color="#ffffff" />
-          <Text className="text-xs font-black text-white">Send on WhatsApp</Text>
+          <Text className="text-xs font-bold text-white">Send on WhatsApp</Text>
         </Pressable>
       </View>
     </AppScreen>

@@ -94,7 +94,7 @@ export default function ConvertCandidateModal({ candidate, visible, onClose, onC
                 <Ionicons name="funnel" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Convert to CRM Deal
                 </Text>
                 <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -187,7 +187,7 @@ export default function ConvertCandidateModal({ candidate, visible, onClose, onC
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-                  <Text className="text-xs font-black text-white">Create Pipeline Deal</Text>
+                  <Text className="text-xs font-bold text-white">Create Pipeline Deal</Text>
                 </>
               )}
             </Pressable>

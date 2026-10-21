@@ -1,24 +1,24 @@
-import React, { useRef, useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import { getSession } from '~/utils/authStorage';
+import ContactCard from '../_components/ContactCard';
+import CreateContactModal from '../_components/CreateContactModal';
+import CrmHeader from '../_components/CrmHeader';
+import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
+import ShareContactModal from '../_components/ShareContactModal';
 import { useCrmTheme } from '../utils/colors';
 import { CRM_TAG_FILTERS } from '../utils/constants';
-import CrmHeader from '../_components/CrmHeader';
-import ContactCard from '../_components/ContactCard';
-import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
-import CreateContactModal from '../_components/CreateContactModal';
-import ShareContactModal from '../_components/ShareContactModal';
 
 const SCOPE_FILTERS = [
-  { id: 'ALL', label: 'All Contacts' },
-  { id: 'ATS_LINKED', label: 'ATS Linked' },
-  { id: 'WA_SYNCED', label: 'WhatsApp Synced' },
-  { id: 'SHARED', label: 'Shared' },
+  { id: 'ALL', label: 'All People' },
+  { id: 'WA_SYNCED', label: 'WhatsApp Linked' },
+  { id: 'ATS_LINKED', label: 'ATS Candidates' },
+  { id: 'SHARED', label: 'Shared with Team' },
   ...CRM_TAG_FILTERS.filter((t) => t !== 'ALL').map((t) => ({ id: t, label: t.replace('_', ' ') })),
 ];
 
@@ -41,43 +41,45 @@ export default function CrmContactsTab() {
     });
   }, []);
 
-  const filteredContacts = contacts.filter((c) => {
-    if (selectedScope !== 'ALL') {
-      const ma = c.moduleAccess || {};
-      const mods = Array.isArray(ma.modules) ? ma.modules : [];
-      if (selectedScope === 'ATS_LINKED') {
-        if (!mods.includes('ats')) return false;
-      } else if (selectedScope === 'WA_SYNCED') {
-        if (!mods.includes('konnectx')) return false;
-      } else if (selectedScope === 'SHARED') {
-        const hasRelShare = Array.isArray(c.sharedWith) && c.sharedWith.length > 0;
-        const hasJsonShare = Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0;
-        const isSharedWithMe = Boolean(currentUserId && c.userId && c.userId !== currentUserId);
-        if (!hasRelShare && !hasJsonShare && !isSharedWithMe) return false;
-      } else {
-        if (!c.tags || !c.tags.includes(selectedScope)) return false;
+  const filteredContacts = useMemo(() => {
+    return contacts.filter((c) => {
+      if (selectedScope !== 'ALL') {
+        const ma = c.moduleAccess || {};
+        const mods = Array.isArray(ma.modules) ? ma.modules : [];
+        if (selectedScope === 'ATS_LINKED') {
+          if (!mods.includes('ats')) return false;
+        } else if (selectedScope === 'WA_SYNCED') {
+          if (!mods.includes('konnectx') && !c.phone) return false;
+        } else if (selectedScope === 'SHARED') {
+          const hasRelShare = Array.isArray(c.sharedWith) && c.sharedWith.length > 0;
+          const hasJsonShare = Array.isArray(ma.sharedWith) && ma.sharedWith.length > 0;
+          const isSharedWithMe = Boolean(currentUserId && c.userId && c.userId !== currentUserId);
+          if (!hasRelShare && !hasJsonShare && !isSharedWithMe) return false;
+        } else {
+          if (!c.tags || !c.tags.includes(selectedScope)) return false;
+        }
       }
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = (c.name || '').toLowerCase().includes(q);
-      const matchPhone = (c.phone || '').toLowerCase().includes(q);
-      const matchEmail = (c.email || '').toLowerCase().includes(q);
-      const matchAccount = (c.account?.name || '').toLowerCase().includes(q);
-      if (!matchName && !matchPhone && !matchEmail && !matchAccount) return false;
-    }
-    return true;
-  });
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = (c.name || '').toLowerCase().includes(q);
+        const matchPhone = (c.phone || '').toLowerCase().includes(q);
+        const matchEmail = (c.email || '').toLowerCase().includes(q);
+        const matchAccount = (c.account?.name || '').toLowerCase().includes(q);
+        if (!matchName && !matchPhone && !matchEmail && !matchAccount) return false;
+      }
+      return true;
+    });
+  }, [contacts, selectedScope, searchQuery, currentUserId]);
 
   return (
     <AppScreen>
       <CrmHeader
-        title="Contacts (People)"
-        subtitle={`${contacts.length} Total • 360° Dossiers`}
+        title="CRM Rolodex"
+        subtitle={`${contacts.length} Total Contacts • 360° Profiles`}
         rightActions={
           <Pressable
             onPress={openCreateContact}
-            className="h-9 px-3 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1.5 rounded-xl active:opacity-85 shadow-sm"
             style={{ backgroundColor: colors.primary }}
           >
             <Ionicons name="person-add" size={15} color="#ffffff" />
@@ -90,21 +92,21 @@ export default function CrmContactsTab() {
       <CreateContactModal />
       <ShareContactModal
         contact={shareContact}
-        visible={!!shareContact}
+        visible={Boolean(shareContact)}
         onClose={() => setShareContact(null)}
         onUpdated={refreshAll}
       />
 
       {/* Search & Tag Filter Bar */}
       <View
-        className="px-3 py-2 border-b"
+        className="px-3 pt-2.5 pb-2 border-b"
         style={{
           backgroundColor: colors.header,
           borderColor: colors.border,
         }}
       >
         <View
-          className="flex-row items-center gap-x-2 rounded-xl px-3.5 py-2.5 min-h-[46px] border"
+          className="flex-row items-center gap-x-2 rounded-xl px-3 py-2 border"
           style={{
             backgroundColor: colors.inputBg,
             borderColor: colors.inputBorder,
@@ -116,21 +118,22 @@ export default function CrmContactsTab() {
             onChangeText={setSearchQuery}
             placeholder="Search by name, phone, email, company..."
             placeholderTextColor={colors.inputPlaceholder}
-            className="flex-1 text-xs py-1"
+            className="flex-1 text-xs py-0.5"
             style={{ color: colors.text }}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={15} color={colors.textMuted} />
+              <Ionicons name="close-circle" size={16} color={colors.textMuted} />
             </Pressable>
           )}
         </View>
 
+        {/* Filter Pills Carousel */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingRight: 20 }}
-          className="mt-2 flex-row py-0.5"
+          className="mt-2.5 flex-row py-0.5"
         >
           {SCOPE_FILTERS.map((f) => {
             const isSelected = selectedScope === f.id;
@@ -138,7 +141,7 @@ export default function CrmContactsTab() {
               <Pressable
                 key={f.id}
                 onPress={() => setSelectedScope(f.id)}
-                className="mr-2 rounded-xl px-3 py-1.5 border"
+                className="mr-1.5 rounded-xl px-3 py-1.5 border active:opacity-80"
                 style={{
                   backgroundColor: isSelected ? colors.primary : colors.cardAlt,
                   borderColor: isSelected ? colors.primary : colors.border,
@@ -156,6 +159,12 @@ export default function CrmContactsTab() {
             );
           })}
         </ScrollView>
+
+        <View className="mt-2 flex-row items-center justify-between">
+          <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+            {filteredContacts.length} people matching criteria
+          </Text>
+        </View>
       </View>
 
       {/* Contacts List */}
@@ -170,7 +179,7 @@ export default function CrmContactsTab() {
           <View className="py-14 items-center justify-center">
             <ActivityIndicator size="large" color={colors.primary} />
             <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
-              Loading contacts...
+              Loading CRM Rolodex...
             </Text>
           </View>
         ) : filteredContacts.length > 0 ? (
@@ -211,4 +220,3 @@ export default function CrmContactsTab() {
     </AppScreen>
   );
 }
-

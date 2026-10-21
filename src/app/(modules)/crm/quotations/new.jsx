@@ -277,7 +277,7 @@ export default function NewQuotationScreen() {
                   }}
                 >
                   <Text
-                    className="text-[9px] font-black"
+                    className="text-[9px] font-bold"
                     style={{ color: isSelected ? '#ffffff' : colors.textMuted }}
                   >
                     {tab.step}
@@ -344,7 +344,7 @@ export default function NewQuotationScreen() {
                     >
                       <Ionicons name="person" size={13} color={colors.primary} />
                     </View>
-                    <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                    <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                       Client & Recipient
                     </Text>
                   </View>
@@ -510,7 +510,7 @@ export default function NewQuotationScreen() {
                   >
                     <Ionicons name="document-text" size={13} color={colors.info} />
                   </View>
-                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                  <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                     Proposal Scope & Currency
                   </Text>
                 </View>
@@ -558,7 +558,7 @@ export default function NewQuotationScreen() {
                             }}
                           >
                             <Text
-                              className="text-[11px] font-black"
+                              className="text-[11px] font-bold"
                               style={{ color: isCurr ? '#ffffff' : colors.text }}
                             >
                               {curr}
@@ -626,7 +626,7 @@ export default function NewQuotationScreen() {
                   }}
                 >
                   <Ionicons name="add" size={13} color="#ffffff" />
-                  <Text className="text-xs font-black text-white">Add Deliverable</Text>
+                  <Text className="text-xs font-bold text-white">Add Deliverable</Text>
                 </Pressable>
               </View>
 
@@ -655,7 +655,7 @@ export default function NewQuotationScreen() {
                           className="h-6 w-6 rounded-lg items-center justify-center"
                           style={{ backgroundColor: colors.primarySoft }}
                         >
-                          <Text className="text-[10px] font-black" style={{ color: colors.primary }}>
+                          <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
                             {index + 1}
                           </Text>
                         </View>
@@ -675,7 +675,7 @@ export default function NewQuotationScreen() {
                       </View>
 
                       <View className="flex-row items-center gap-x-2">
-                        <Text className="text-xs font-black" style={{ color: colors.primaryDark }}>
+                        <Text className="text-xs font-bold" style={{ color: colors.primaryDark }}>
                           {currencySymbol} {itemTotal.toLocaleString('en-IN')}
                         </Text>
                         <View
@@ -727,11 +727,11 @@ export default function NewQuotationScreen() {
                           className="h-5 w-5 rounded-full items-center justify-center"
                           style={{ backgroundColor: colors.primary }}
                         >
-                          <Text className="text-[10px] font-black text-white">
+                          <Text className="text-[10px] font-bold text-white">
                             {index + 1}
                           </Text>
                         </View>
-                        <Text className="text-xs font-black" style={{ color: colors.primary }}>
+                        <Text className="text-xs font-bold" style={{ color: colors.primary }}>
                           Editing Item #{index + 1}
                         </Text>
                       </View>
@@ -899,7 +899,7 @@ export default function NewQuotationScreen() {
                               }}
                             >
                               <Text
-                                className="text-[10px] font-black"
+                                className="text-[10px] font-bold"
                                 style={{ color: isTax ? '#ffffff' : colors.textSecondary }}
                               >
                                 {rate}%
@@ -929,7 +929,7 @@ export default function NewQuotationScreen() {
                         <Text className="text-[10px] font-bold" style={{ color: colors.textSecondary }}>
                           Item Total:
                         </Text>
-                        <Text className="text-xs font-black" style={{ color: colors.primaryDark }}>
+                        <Text className="text-xs font-bold" style={{ color: colors.primaryDark }}>
                           {currencySymbol} {itemTotal.toLocaleString('en-IN')}
                         </Text>
                       </View>
@@ -950,7 +950,7 @@ export default function NewQuotationScreen() {
                   <Text className="text-[10px]" style={{ color: colors.textMuted }}>
                     Running Total ({items.length} {items.length === 1 ? 'item' : 'items'})
                   </Text>
-                  <Text className="text-sm font-black" style={{ color: colors.primary }}>
+                  <Text className="text-sm font-bold" style={{ color: colors.primary }}>
                     {currencySymbol} {grandTotal.toLocaleString('en-IN')}
                   </Text>
                 </View>
@@ -959,7 +959,7 @@ export default function NewQuotationScreen() {
                   className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-xl active:opacity-85 shadow-sm"
                   style={{ backgroundColor: colors.primary }}
                 >
-                  <Text className="text-xs font-black text-white">Review Summary</Text>
+                  <Text className="text-xs font-bold text-white">Review Summary</Text>
                   <Ionicons name="arrow-forward" size={13} color="#ffffff" />
                 </Pressable>
               </View>
@@ -984,7 +984,7 @@ export default function NewQuotationScreen() {
                   <Ionicons name="business" size={20} color={colors.primary} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs font-black" style={{ color: colors.text }}>
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
                     Devlomatix Solutions
                   </Text>
                   <Text className="text-[10px]" style={{ color: colors.textMuted }}>
@@ -1006,7 +1006,7 @@ export default function NewQuotationScreen() {
                   style={{ borderColor: colors.borderLight }}
                 >
                   <Ionicons name="calculator-outline" size={14} color={colors.primary} />
-                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                  <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                     Financial Summary
                   </Text>
                 </View>
@@ -1048,12 +1048,12 @@ export default function NewQuotationScreen() {
                   }}
                 >
                   <Text
-                    className="text-xs font-black uppercase tracking-wider"
+                    className="text-xs font-bold uppercase tracking-wider"
                     style={{ color: colors.primaryDark }}
                   >
                     Grand Total ({currency})
                   </Text>
-                  <Text className="text-base font-black" style={{ color: colors.primaryDark }}>
+                  <Text className="text-base font-bold" style={{ color: colors.primaryDark }}>
                     {currencySymbol} {grandTotal.toLocaleString('en-IN')}
                   </Text>
                 </View>
@@ -1072,7 +1072,7 @@ export default function NewQuotationScreen() {
                   style={{ borderColor: colors.borderLight }}
                 >
                   <Ionicons name="document-lock-outline" size={14} color={colors.primary} />
-                  <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                  <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                     Commercial Terms & Disclaimers
                   </Text>
                 </View>
@@ -1142,7 +1142,7 @@ export default function NewQuotationScreen() {
           >
             {activeStep === 'client' ? 'Step 1 of 3' : activeStep === 'items' ? 'Step 2 of 3' : 'Final Step'}
           </Text>
-          <Text className="text-xs font-black" style={{ color: colors.text }}>
+          <Text className="text-xs font-bold" style={{ color: colors.text }}>
             Total: {currencySymbol} {grandTotal.toLocaleString('en-IN')}
           </Text>
         </View>
@@ -1179,7 +1179,7 @@ export default function NewQuotationScreen() {
               className="flex-row items-center gap-x-1 px-4 py-1.5 rounded-lg active:opacity-85 shadow-xs"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-xs font-black text-white">Next</Text>
+              <Text className="text-xs font-bold text-white">Next</Text>
               <Ionicons name="chevron-forward" size={13} color="#ffffff" />
             </Pressable>
           )}
@@ -1190,7 +1190,7 @@ export default function NewQuotationScreen() {
               className="flex-row items-center gap-x-1 px-4 py-1.5 rounded-lg active:opacity-85 shadow-xs"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-xs font-black text-white">Next</Text>
+              <Text className="text-xs font-bold text-white">Next</Text>
               <Ionicons name="chevron-forward" size={13} color="#ffffff" />
             </Pressable>
           )}
@@ -1222,7 +1222,7 @@ export default function NewQuotationScreen() {
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={14} color="#ffffff" />
-                    <Text className="text-xs font-black text-white">Create</Text>
+                    <Text className="text-xs font-bold text-white">Create</Text>
                   </>
                 )}
               </Pressable>
@@ -1253,7 +1253,7 @@ export default function NewQuotationScreen() {
               className="flex-row items-center justify-between border-b pb-3"
               style={{ borderColor: colors.border }}
             >
-              <Text className="text-sm font-black" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold" style={{ color: colors.text }}>
                 Select Contact to Auto-Fill
               </Text>
               <Pressable onPress={() => setShowContactPicker(false)}>

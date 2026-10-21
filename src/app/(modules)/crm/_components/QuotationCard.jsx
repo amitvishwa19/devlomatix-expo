@@ -71,10 +71,15 @@ export default function QuotationCard({ quotation, onSendWhatsApp, onSharePdf, o
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/quotations/${quotation.id}`)}
-      className="mb-2.5 rounded-[16px] border p-3 shadow-sm active:opacity-80"
+      className="mb-2.5 rounded-[16px] border p-3 active:opacity-85"
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
+        shadowColor: colors.shadowColor,
+        shadowOpacity: colors.shadowOpacity,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 2,
       }}
     >
       {/* Top Meta: Quotation Number & Status Badge */}
@@ -114,7 +119,7 @@ export default function QuotationCard({ quotation, onSendWhatsApp, onSharePdf, o
 
       {/* Client Name */}
       <Text
-        className="mt-1.5 text-sm font-black tracking-tight"
+        className="mt-1.5 text-sm font-bold tracking-tight"
         style={{ color: colors.text }}
         numberOfLines={1}
       >
@@ -135,7 +140,7 @@ export default function QuotationCard({ quotation, onSendWhatsApp, onSharePdf, o
       {/* Commercial Value & Items */}
       <View className="mt-2 flex-row items-baseline justify-between border-t pt-2" style={{ borderColor: colors.borderLight }}>
         <View className="flex-row items-baseline gap-x-1.5">
-          <Text className="text-base font-black" style={{ color: colors.primaryLight }}>
+          <Text className="text-base font-bold" style={{ color: colors.primaryLight }}>
             {currencySymbol} {formattedVal}
           </Text>
           <Text className="text-[10px] font-semibold" style={{ color: colors.textMuted }}>

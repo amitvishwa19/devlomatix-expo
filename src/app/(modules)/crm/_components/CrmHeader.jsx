@@ -54,7 +54,7 @@ export default function CrmHeader({
           <View className="flex-1">
             <View className="flex-row items-center gap-x-1.5">
               <Text
-                className="text-base font-black tracking-tight"
+                className="text-base font-bold tracking-tight"
                 style={{ color: colors.text }}
                 numberOfLines={1}
               >

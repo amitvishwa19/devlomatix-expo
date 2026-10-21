@@ -103,7 +103,7 @@ export default function CreateTaskModal() {
                 <Ionicons name="checkbox" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Schedule Task & Follow-up
                 </Text>
                 <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -339,7 +339,7 @@ export default function CreateTaskModal() {
             ) : (
               <>
                 <Ionicons name="calendar" size={17} color="#ffffff" />
-                <Text className="text-xs font-black text-white">Save Task</Text>
+                <Text className="text-xs font-bold text-white">Save Task</Text>
               </>
             )}
           </Pressable>

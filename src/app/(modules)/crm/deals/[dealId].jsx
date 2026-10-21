@@ -164,7 +164,7 @@ export default function DealDossierScreen() {
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-[10px] font-black uppercase tracking-wider mb-2"
+            className="text-[10px] font-bold uppercase tracking-wider mb-2"
             style={{ color: colors.textMuted }}
           >
             Pipeline Stage Progression
@@ -210,7 +210,7 @@ export default function DealDossierScreen() {
               >
                 Commercial Value
               </Text>
-              <Text className="text-xl font-black mt-0.5" style={{ color: colors.primary }}>
+              <Text className="text-xl font-bold mt-0.5" style={{ color: colors.primary }}>
                 {currencySymbol} {formattedVal}
               </Text>
             </View>
@@ -250,7 +250,7 @@ export default function DealDossierScreen() {
               >
                 <Ionicons name="sparkles" size={13} color="#ffffff" />
               </View>
-              <Text className="text-xs font-black" style={{ color: colors.copilot }}>
+              <Text className="text-xs font-bold" style={{ color: colors.copilot }}>
                 AI Health & Win Score
               </Text>
             </View>
@@ -260,7 +260,7 @@ export default function DealDossierScreen() {
                 className="rounded-full px-2 py-0.5"
                 style={{ backgroundColor: colors.copilot }}
               >
-                <Text className="text-[10px] font-black text-white">
+                <Text className="text-[10px] font-bold text-white">
                   {healthAi.healthScore}/100 Score
                 </Text>
               </View>
@@ -341,7 +341,7 @@ export default function DealDossierScreen() {
           >
             <View className="flex-row items-center justify-between mb-2">
               <Text
-                className="text-[10px] font-black uppercase tracking-wider"
+                className="text-[10px] font-bold uppercase tracking-wider"
                 style={{ color: colors.textMuted }}
               >
                 Primary Contact
@@ -355,7 +355,7 @@ export default function DealDossierScreen() {
 
             <View className="flex-row items-center justify-between">
               <View className="flex-1 mr-2">
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   {deal.contact.name}
                 </Text>
                 <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
@@ -404,7 +404,7 @@ export default function DealDossierScreen() {
           >
             <View className="flex-row items-center justify-between mb-1">
               <Text
-                className="text-[10px] font-black uppercase tracking-wider"
+                className="text-[10px] font-bold uppercase tracking-wider"
                 style={{ color: colors.textMuted }}
               >
                 Company Account
@@ -415,7 +415,7 @@ export default function DealDossierScreen() {
                 </Text>
               </Pressable>
             </View>
-            <Text className="text-sm font-black" style={{ color: colors.text }}>
+            <Text className="text-sm font-bold" style={{ color: colors.text }}>
               {deal.account.name}
             </Text>
             <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
@@ -431,7 +431,7 @@ export default function DealDossierScreen() {
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
             <Text
-              className="text-[10px] font-black uppercase tracking-wider mb-1"
+              className="text-[10px] font-bold uppercase tracking-wider mb-1"
               style={{ color: colors.textMuted }}
             >
               Internal Deal Notes

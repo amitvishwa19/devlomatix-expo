@@ -300,7 +300,7 @@ function CrmDrawerModal({ visible, onClose }) {
             {crmNavigationCategories.map((cat) => (
               <View key={cat.title} className="mb-3.5">
                 <Text
-                  className="mb-1.5 px-2 text-[10px] font-black uppercase tracking-[1.2px]"
+                  className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[1.2px]"
                   style={{ color: colors.primary }}
                 >
                   {cat.title}
@@ -364,7 +364,7 @@ function CrmDrawerModal({ visible, onClose }) {
             {/* Quick Ecosystem Apps */}
             <View className="mb-4 pt-2 border-t" style={{ borderTopColor: colors.borderLight }}>
               <Text
-                className="mb-2 px-2 text-[10px] font-black uppercase tracking-[1.2px]"
+                className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[1.2px]"
                 style={{ color: colors.textMuted }}
               >
                 Devlomatix Apps

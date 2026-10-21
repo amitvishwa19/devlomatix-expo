@@ -127,7 +127,7 @@ export default function QuotationsDirectoryScreen() {
             <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: colors.kpi.blue.text }}>
               Total Quoted
             </Text>
-            <Text className="text-sm font-black mt-0.5" style={{ color: colors.kpi.blue.text }} numberOfLines={1}>
+            <Text className="text-sm font-bold mt-0.5" style={{ color: colors.kpi.blue.text }} numberOfLines={1}>
               ₹ {metrics.totalValue.toLocaleString('en-IN')}
             </Text>
           </View>
@@ -143,7 +143,7 @@ export default function QuotationsDirectoryScreen() {
             <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: colors.kpi.green.text }}>
               Won ({metrics.acceptedCount})
             </Text>
-            <Text className="text-sm font-black mt-0.5" style={{ color: colors.kpi.green.text }} numberOfLines={1}>
+            <Text className="text-sm font-bold mt-0.5" style={{ color: colors.kpi.green.text }} numberOfLines={1}>
               ₹ {metrics.acceptedValue.toLocaleString('en-IN')}
             </Text>
           </View>
@@ -159,7 +159,7 @@ export default function QuotationsDirectoryScreen() {
             <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: colors.kpi.amber.text }}>
               Pending ({metrics.sentValue > 0 ? quotations.filter((q) => q.status === 'sent').length : 0})
             </Text>
-            <Text className="text-sm font-black mt-0.5" style={{ color: colors.kpi.amber.text }} numberOfLines={1}>
+            <Text className="text-sm font-bold mt-0.5" style={{ color: colors.kpi.amber.text }} numberOfLines={1}>
               ₹ {metrics.sentValue.toLocaleString('en-IN')}
             </Text>
           </View>
@@ -254,7 +254,7 @@ export default function QuotationsDirectoryScreen() {
               >
                 <Ionicons name="document-text-outline" size={28} color={colors.textMuted} />
               </View>
-              <Text className="text-sm font-black text-center" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold text-center" style={{ color: colors.text }}>
                 {searchQuery || selectedStatus !== 'ALL' ? 'No Matching Quotations' : 'No Quotations Yet'}
               </Text>
               <Text className="mt-1 text-xs text-center leading-relaxed" style={{ color: colors.textMuted }}>

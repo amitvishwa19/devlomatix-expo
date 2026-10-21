@@ -356,7 +356,7 @@ export default function CrmConversationScreen() {
                 {avatar ? (
                   <Image source={{ uri: avatar }} className="w-full h-full" resizeMode="cover" />
                 ) : (
-                  <Text className="text-xs font-black" style={{ color: colors.primary }}>
+                  <Text className="text-xs font-bold" style={{ color: colors.primary }}>
                     {(name || 'U').charAt(0).toUpperCase()}
                   </Text>
                 )}
@@ -373,7 +373,7 @@ export default function CrmConversationScreen() {
             </View>
 
             <View className="flex-1">
-              <Text className="text-xs font-black truncate" style={{ color: colors.text }}>
+              <Text className="text-xs font-bold truncate" style={{ color: colors.text }}>
                 {name}
               </Text>
               <View className="flex-row items-center gap-1 flex-wrap">

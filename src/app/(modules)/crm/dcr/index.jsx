@@ -701,7 +701,7 @@ export default function DcrScreen() {
             <Ionicons name="arrow-back" size={16} color={colors.text} />
           </TouchableOpacity>
           <View>
-            <Text className="text-sm font-black" style={{ color: colors.text }}>
+            <Text className="text-sm font-bold" style={{ color: colors.text }}>
               Daily Call Records (DCR)
             </Text>
             <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
@@ -753,28 +753,28 @@ export default function DcrScreen() {
           style={{ backgroundColor: colors.cardAlt, borderBottomColor: colors.border }}
         >
           <View className="items-center">
-            <Text className="text-xs font-black" style={{ color: colors.primary }}>
+            <Text className="text-xs font-bold" style={{ color: colors.primary }}>
               {metrics.totalCalls}
             </Text>
             <Text className="text-[9px]" style={{ color: colors.textMuted }}>Total Calls</Text>
           </View>
           <View className="h-5 w-[1px]" style={{ backgroundColor: colors.border }} />
           <View className="items-center">
-            <Text className="text-xs font-black" style={{ color: colors.warning }}>
+            <Text className="text-xs font-bold" style={{ color: colors.warning }}>
               {metrics.fieldVisitsCount}
             </Text>
             <Text className="text-[9px]" style={{ color: colors.textMuted }}>Field Visits</Text>
           </View>
           <View className="h-5 w-[1px]" style={{ backgroundColor: colors.border }} />
           <View className="items-center">
-            <Text className="text-xs font-black" style={{ color: colors.success }}>
+            <Text className="text-xs font-bold" style={{ color: colors.success }}>
               {metrics.positiveOutcomesCount}
             </Text>
             <Text className="text-[9px]" style={{ color: colors.textMuted }}>Hot / Won</Text>
           </View>
           <View className="h-5 w-[1px]" style={{ backgroundColor: colors.border }} />
           <View className="items-center">
-            <Text className="text-xs font-black" style={{ color: colors.copilot }}>
+            <Text className="text-xs font-bold" style={{ color: colors.copilot }}>
               ₹ {(metrics.totalDealPotential / 1000).toFixed(0)}k
             </Text>
             <Text className="text-[9px]" style={{ color: colors.textMuted }}>Potential</Text>
@@ -985,7 +985,7 @@ export default function DcrScreen() {
 
                   <View className="flex-row items-center gap-2">
                     {item.dealValue > 0 ? (
-                      <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+                      <Text className="text-xs font-bold" style={{ color: colors.whatsapp }}>
                         ₹ {Number(item.dealValue).toLocaleString('en-IN')}
                       </Text>
                     ) : null}
@@ -1056,7 +1056,7 @@ export default function DcrScreen() {
                   <Ionicons name={editingRecord ? 'create-outline' : 'document-text'} size={20} color={colors.primary} />
                 </View>
                 <View>
-                  <Text className="text-base font-black tracking-tight" style={{ color: colors.text }}>
+                  <Text className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
                     {editingRecord ? 'Edit Activity Record' : 'Log Sales Activity'}
                   </Text>
                   <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -1322,7 +1322,7 @@ export default function DcrScreen() {
                       borderColor: colors.inputBorder,
                     }}
                   >
-                    <Text className="text-xs font-black mr-1.5" style={{ color: colors.primary }}>₹</Text>
+                    <Text className="text-xs font-bold mr-1.5" style={{ color: colors.primary }}>₹</Text>
                     <TextInput
                       value={dealValue}
                       onChangeText={setDealValue}
@@ -1834,7 +1834,7 @@ export default function DcrScreen() {
                   <Ionicons name="clipboard" size={20} color={colors.primary} />
                 </View>
                 <View>
-                  <Text className="text-base font-black tracking-tight" style={{ color: colors.text }}>
+                  <Text className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
                     Activity Record Details
                   </Text>
                   <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -1925,7 +1925,7 @@ export default function DcrScreen() {
                           <Ionicons name={typeCfg.icon} size={18} color={typeCfg.color} />
                         </View>
                         <View>
-                          <Text className="text-xs font-black" style={{ color: colors.text }}>
+                          <Text className="text-xs font-bold" style={{ color: colors.text }}>
                             {typeCfg.label}
                           </Text>
                           <Text className="text-[10px]" style={{ color: colors.textMuted }}>
@@ -2305,7 +2305,7 @@ export default function DcrScreen() {
                 style={{ backgroundColor: colors.primary }}
               >
                 <Ionicons name="pencil" size={16} color="#ffffff" />
-                <Text className="text-xs font-black text-white tracking-wide">
+                <Text className="text-xs font-bold text-white tracking-wide">
                   Edit Activity Record
                 </Text>
               </TouchableOpacity>

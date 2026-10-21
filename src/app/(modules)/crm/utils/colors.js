@@ -95,14 +95,28 @@ export const crmColors = {
 
     // Metrics / KPI Cards
     kpi: {
-      blue: { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8' },
-      green: { bg: '#ecfdf5', border: '#a7f3d0', text: '#047857' },
-      amber: { bg: '#fffbeb', border: '#fde68a', text: '#b45309' },
-      purple: { bg: '#f5f3ff', border: '#ddd6fe', text: '#6d28d9' },
+      blue: { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8', gradient: ['#eff6ff', '#dbeafe'] },
+      green: { bg: '#ecfdf5', border: '#a7f3d0', text: '#047857', gradient: ['#ecfdf5', '#d1fae5'] },
+      amber: { bg: '#fffbeb', border: '#fde68a', text: '#b45309', gradient: ['#fffbeb', '#fef3c7'] },
+      purple: { bg: '#f5f3ff', border: '#ddd6fe', text: '#6d28d9', gradient: ['#f5f3ff', '#ede9fe'] },
     },
 
+    // Sales Funnel Stage Accents
+    funnel: [
+      { id: 'lead', name: 'Lead', color: '#3b82f6', bg: '#eff6ff' },
+      { id: 'meeting', name: 'Meeting', color: '#8b5cf6', bg: '#f5f3ff' },
+      { id: 'proposal', name: 'Proposal', color: '#f59e0b', bg: '#fffbeb' },
+      { id: 'negotiation', name: 'Negotiation', color: '#0284c7', bg: '#f0f9ff' },
+      { id: 'won', name: 'Won', color: '#10b981', bg: '#ecfdf5' },
+    ],
+
+    // Card Elevation & Depth
+    cardElevated: '#ffffff',
+    cardBorderGlow: 'rgba(37, 99, 235, 0.12)',
     shadowColor: '#0f172a',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
     overlay: 'rgba(15, 23, 42, 0.5)',
   },
 
@@ -194,14 +208,28 @@ export const crmColors = {
 
     // Metrics / KPI Cards
     kpi: {
-      blue: { bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.25)', text: '#93c5fd' },
-      green: { bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.25)', text: '#6ee7b7' },
-      amber: { bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.25)', text: '#fde68a' },
-      purple: { bg: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.25)', text: '#c4b5fd' },
+      blue: { bg: 'rgba(59, 130, 246, 0.14)', border: 'rgba(59, 130, 246, 0.3)', text: '#93c5fd', gradient: ['rgba(59, 130, 246, 0.18)', 'rgba(59, 130, 246, 0.06)'] },
+      green: { bg: 'rgba(16, 185, 129, 0.14)', border: 'rgba(16, 185, 129, 0.3)', text: '#6ee7b7', gradient: ['rgba(16, 185, 129, 0.18)', 'rgba(16, 185, 129, 0.06)'] },
+      amber: { bg: 'rgba(245, 158, 11, 0.14)', border: 'rgba(245, 158, 11, 0.3)', text: '#fde68a', gradient: ['rgba(245, 158, 11, 0.18)', 'rgba(245, 158, 11, 0.06)'] },
+      purple: { bg: 'rgba(139, 92, 246, 0.14)', border: 'rgba(139, 92, 246, 0.3)', text: '#c4b5fd', gradient: ['rgba(139, 92, 246, 0.18)', 'rgba(139, 92, 246, 0.06)'] },
     },
 
+    // Sales Funnel Stage Accents
+    funnel: [
+      { id: 'lead', name: 'Lead', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' },
+      { id: 'meeting', name: 'Meeting', color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' },
+      { id: 'proposal', name: 'Proposal', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' },
+      { id: 'negotiation', name: 'Negotiation', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' },
+      { id: 'won', name: 'Won', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' },
+    ],
+
+    // Card Elevation & Depth
+    cardElevated: '#111827',
+    cardBorderGlow: 'rgba(99, 102, 241, 0.25)',
     shadowColor: '#000000',
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 4,
     overlay: 'rgba(0, 0, 0, 0.75)',
   },
 };

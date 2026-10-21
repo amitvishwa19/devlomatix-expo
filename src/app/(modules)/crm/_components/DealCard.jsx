@@ -1,6 +1,6 @@
-import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import React, { useMemo } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
@@ -17,6 +17,28 @@ export default function DealCard({ deal, onStageChange }) {
   const formattedVal = (parseFloat(deal.value) || 0).toLocaleString('en-IN');
   const currencySymbol = deal.currency === 'USD' ? '$' : deal.currency === 'EUR' ? '€' : '₹';
 
+  // Calculate Deal Age & Stalled Status
+  const dealMomentum = useMemo(() => {
+    const updatedTime = new Date(deal.updatedAt || deal.createdAt || Date.now()).getTime();
+    const diffHours = Math.round((Date.now() - updatedTime) / (1000 * 60 * 60));
+    const diffDays = Math.round(diffHours / 24);
+
+    if (diffDays >= 7 && deal.status !== 'WON' && deal.status !== 'LOST') {
+      return { label: `Stalled ${diffDays}d`, isStalled: true };
+    }
+    if (diffDays > 0) {
+      return { label: `${diffDays}d ago`, isStalled: false };
+    }
+    if (diffHours > 0) {
+      return { label: `${diffHours}h ago`, isStalled: false };
+    }
+    return { label: 'Active today', isStalled: false };
+  }, [deal]);
+
+  // Stage Progress: Order 1 to 5
+  const stageOrder = deal.stage?.order || 2;
+  const totalStages = 5;
+
   const handleCall = () => {
     if (deal.contact?.phone) {
       Linking.openURL(`tel:${deal.contact.phone}`);
@@ -32,19 +54,21 @@ export default function DealCard({ deal, onStageChange }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/deals/${deal.id}`)}
-      className="mb-2.5 rounded-[16px] border p-3 shadow-sm active:opacity-80"
+      className="mb-2.5 rounded-[16px] border p-3 active:opacity-85"
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
+        shadowColor: colors.shadowColor,
+        shadowOpacity: colors.shadowOpacity,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 6,
+        elevation: 2,
       }}
     >
-      {/* Top Meta: Stage Pill & Priority */}
+      {/* Top Meta: Stage Pill, Momentum, & Priority */}
       <View className="flex-row items-center justify-between gap-x-2">
         <View className="flex-row items-center gap-x-1.5 flex-1">
-          <View
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: stageColor }}
-          />
+          <View className="h-2 w-2 rounded-full" style={{ backgroundColor: stageColor }} />
           <Text
             className="text-[11px] font-bold tracking-tight"
             style={{ color: stageColor }}
@@ -52,6 +76,24 @@ export default function DealCard({ deal, onStageChange }) {
           >
             {deal.stage?.name || 'In Pipeline'}
           </Text>
+
+          {dealMomentum.isStalled ? (
+            <View
+              className="rounded-full px-1.5 py-0.5 border"
+              style={{
+                backgroundColor: colors.warningSoft,
+                borderColor: colors.warningBorder,
+              }}
+            >
+              <Text className="text-[9px] font-bold" style={{ color: colors.warning }}>
+                ⚠️ {dealMomentum.label}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+              • {dealMomentum.label}
+            </Text>
+          )}
         </View>
 
         <View
@@ -62,10 +104,7 @@ export default function DealCard({ deal, onStageChange }) {
           }}
         >
           <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: priorityStyle.dot }} />
-          <Text
-            className="text-[9px] font-bold tracking-wider"
-            style={{ color: priorityStyle.text }}
-          >
+          <Text className="text-[9px] font-bold" style={{ color: priorityStyle.text }}>
             {deal.priority || 'MEDIUM'}
           </Text>
         </View>
@@ -73,7 +112,7 @@ export default function DealCard({ deal, onStageChange }) {
 
       {/* Deal Title */}
       <Text
-        className="mt-1.5 text-sm font-black tracking-tight"
+        className="mt-1.5 text-sm font-bold tracking-tight"
         style={{ color: colors.text }}
         numberOfLines={2}
       >
@@ -81,21 +120,53 @@ export default function DealCard({ deal, onStageChange }) {
       </Text>
 
       {/* Value & Win Probability */}
-      <View className="mt-1.5 flex-row items-baseline gap-x-1.5">
-        <Text className="text-base font-black" style={{ color: colors.primaryLight }}>
-          {currencySymbol} {formattedVal}
-        </Text>
-        {deal.stage?.probability !== undefined ? (
-          <Text className="text-[10px] font-semibold" style={{ color: colors.textMuted }}>
-            ({deal.stage.probability}% win prob)
+      <View className="mt-1 flex-row items-baseline justify-between">
+        <View className="flex-row items-baseline gap-x-1.5">
+          <Text className="text-base font-bold" style={{ color: colors.primary }}>
+            {currencySymbol} {formattedVal}
           </Text>
-        ) : null}
+          {deal.stage?.probability !== undefined ? (
+            <Text className="text-[10px] font-semibold" style={{ color: colors.textMuted }}>
+              ({deal.stage.probability}% win prob)
+            </Text>
+          ) : null}
+        </View>
+
+        {deal.billingType && (
+          <View
+            className="rounded-full px-2 py-0.5 border"
+            style={{
+              backgroundColor: colors.cardAlt,
+              borderColor: colors.border,
+            }}
+          >
+            <Text className="text-[9px] font-semibold" style={{ color: colors.textSecondary }}>
+              {deal.billingType}
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Contact & Company Association */}
+      {/* 5-Segment Visual Stage Progression Bar */}
+      <View className="mt-2.5 flex-row items-center gap-x-1">
+        {Array.from({ length: totalStages }).map((_, idx) => {
+          const isFilled = idx < stageOrder;
+          return (
+            <View
+              key={idx}
+              className="h-1 flex-1 rounded-full"
+              style={{
+                backgroundColor: isFilled ? stageColor : colors.border,
+              }}
+            />
+          );
+        })}
+      </View>
+
+      {/* Contact & Company Association Pill */}
       {(deal.contact || deal.account) && (
         <View
-          className="mt-2.5 flex-row items-center gap-x-2.5 rounded-xl px-2.5 py-1.5 border"
+          className="mt-2.5 flex-row items-center gap-x-2 rounded-xl px-2.5 py-1.5 border"
           style={{
             backgroundColor: colors.cardAlt,
             borderColor: colors.border,
@@ -117,7 +188,7 @@ export default function DealCard({ deal, onStageChange }) {
 
       {/* Action Footer */}
       <View
-        className="mt-2.5 flex-row items-center justify-between border-t pt-2.5"
+        className="mt-2.5 flex-row items-center justify-between border-t pt-2"
         style={{ borderColor: colors.border }}
       >
         <View className="flex-row items-center gap-x-1.5">
@@ -153,19 +224,18 @@ export default function DealCard({ deal, onStageChange }) {
             </>
           ) : (
             <Text className="text-[10px] italic" style={{ color: colors.textMuted }}>
-              No phone attached
+              No direct contact
             </Text>
           )}
         </View>
 
         <View className="flex-row items-center gap-x-1">
-          <Text className="text-[10px] font-bold" style={{ color: colors.primaryLight }}>
+          <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
             View Dossier
           </Text>
-          <Ionicons name="chevron-forward" size={12} color={colors.primaryLight} />
+          <Ionicons name="chevron-forward" size={12} color={colors.primary} />
         </View>
       </View>
     </Pressable>
   );
 }
-

@@ -147,7 +147,7 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
                 <Ionicons name="share-social" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Multi-Module Visibility & Team Sharing
                 </Text>
                 <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -184,7 +184,7 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
 
           <ScrollView showsVerticalScrollIndicator={false} className="mt-3">
             {/* Section 1: Active Modules */}
-            <Text className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
+            <Text className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
               Cross-Module Visibility
             </Text>
             <View className="space-y-1.5 mb-4">
@@ -234,7 +234,7 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
             </View>
 
             {/* Section 2: Team Member Sharing */}
-            <Text className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
+            <Text className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
               Team Member Access Delegation
             </Text>
 
@@ -318,7 +318,7 @@ export default function ShareContactModal({ contact, visible, onClose, onUpdated
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-                  <Text className="text-xs font-black text-white">Save Permissions</Text>
+                  <Text className="text-xs font-bold text-white">Save Permissions</Text>
                 </>
               )}
             </Pressable>

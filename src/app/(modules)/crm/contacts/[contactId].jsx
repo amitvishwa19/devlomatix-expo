@@ -198,13 +198,13 @@ export default function ContactDossierScreen() {
                 borderColor: colors.primaryBorder,
               }}
             >
-              <Text className="text-base font-black" style={{ color: colors.primary }}>
+              <Text className="text-base font-bold" style={{ color: colors.primary }}>
                 {initials}
               </Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-sm font-black" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold" style={{ color: colors.text }}>
                 {contact.name}
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
@@ -359,7 +359,7 @@ export default function ContactDossierScreen() {
           >
             <View className="flex-row items-center gap-x-2 mb-2">
               <Ionicons name="logo-whatsapp" size={15} color={colors.whatsapp} />
-              <Text className="text-xs font-black" style={{ color: colors.whatsapp }}>
+              <Text className="text-xs font-bold" style={{ color: colors.whatsapp }}>
                 Quick WhatsApp Touchpoint
               </Text>
             </View>
@@ -410,7 +410,7 @@ export default function ContactDossierScreen() {
         {/* Linked Deals */}
         <View className="mb-2 flex-row items-center justify-between">
           <Text
-            className="text-xs font-black uppercase tracking-wider"
+            className="text-xs font-bold uppercase tracking-wider"
             style={{ color: colors.textMuted }}
           >
             Active Deals ({deals.length})
@@ -443,7 +443,7 @@ export default function ContactDossierScreen() {
           <View className="flex-row items-center gap-x-1.5">
             <Ionicons name="headset" size={14} color={colors.copilot} />
             <Text
-              className="text-xs font-black uppercase tracking-wider"
+              className="text-xs font-bold uppercase tracking-wider"
               style={{ color: colors.textMuted }}
             >
               Deskflow Support 360° ({supportTickets.length})

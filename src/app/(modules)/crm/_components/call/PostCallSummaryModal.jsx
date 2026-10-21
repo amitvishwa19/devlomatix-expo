@@ -110,7 +110,7 @@ export default function PostCallSummaryModal() {
                 <Ionicons name="document-text-outline" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Post-Call Summary
                 </Text>
                 <Text className="text-[10px]" style={{ color: colors.textMuted }}>

@@ -119,7 +119,7 @@ export default function AccountDetailScreen() {
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-black" style={{ color: colors.text }}>
+              <Text className="text-base font-bold" style={{ color: colors.text }}>
                 {account.name}
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
@@ -147,7 +147,7 @@ export default function AccountDetailScreen() {
               <Text className="text-[10px] font-bold" style={{ color: colors.textMuted }}>
                 Total Deals
               </Text>
-              <Text className="text-sm font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold mt-0.5" style={{ color: colors.text }}>
                 {deals.length}
               </Text>
             </View>
@@ -159,7 +159,7 @@ export default function AccountDetailScreen() {
               <Text className="text-[10px] font-bold" style={{ color: colors.textMuted }}>
                 Pipeline Value
               </Text>
-              <Text className="text-sm font-black mt-0.5" style={{ color: colors.primary }}>
+              <Text className="text-sm font-bold mt-0.5" style={{ color: colors.primary }}>
                 ₹ {totalAccountValue}
               </Text>
             </View>
@@ -171,7 +171,7 @@ export default function AccountDetailScreen() {
               <Text className="text-[10px] font-bold" style={{ color: colors.textMuted }}>
                 Contacts
               </Text>
-              <Text className="text-sm font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold mt-0.5" style={{ color: colors.text }}>
                 {contacts.length}
               </Text>
             </View>
@@ -181,7 +181,7 @@ export default function AccountDetailScreen() {
         {/* Contacts in Account */}
         <View className="mb-2 flex-row items-center justify-between">
           <Text
-            className="text-xs font-black uppercase tracking-wider"
+            className="text-xs font-bold uppercase tracking-wider"
             style={{ color: colors.textMuted }}
           >
             Team Contacts ({contacts.length})
@@ -212,7 +212,7 @@ export default function AccountDetailScreen() {
         {/* Deals in Account */}
         <View className="mt-2.5 mb-2 flex-row items-center justify-between">
           <Text
-            className="text-xs font-black uppercase tracking-wider"
+            className="text-xs font-bold uppercase tracking-wider"
             style={{ color: colors.textMuted }}
           >
             Commercial Deals ({deals.length})

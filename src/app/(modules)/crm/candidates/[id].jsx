@@ -143,13 +143,13 @@ export default function CandidateDetailScreen() {
               className="h-12 w-12 rounded-full items-center justify-center border shadow-xs"
               style={{ backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder }}
             >
-              <Text className="text-base font-black" style={{ color: colors.primaryDark }}>
+              <Text className="text-base font-bold" style={{ color: colors.primaryDark }}>
                 {(candidate.name || 'C').charAt(0).toUpperCase()}
               </Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-black tracking-tight" style={{ color: colors.text }}>
+              <Text className="text-base font-bold tracking-tight" style={{ color: colors.text }}>
                 {candidate.name}
               </Text>
               <Text className="text-xs font-semibold" style={{ color: colors.primaryLight }}>
@@ -161,7 +161,7 @@ export default function CandidateDetailScreen() {
               className="rounded-full px-2.5 py-1 border"
               style={{ backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder }}
             >
-              <Text className="text-[10px] font-black uppercase tracking-wider" style={{ color: colors.primaryDark }}>
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.primaryDark }}>
                 {stage}
               </Text>
             </View>
@@ -194,35 +194,35 @@ export default function CandidateDetailScreen() {
           className="rounded-[16px] border p-4 shadow-sm mb-3"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <Text className="text-xs font-black tracking-tight mb-2.5" style={{ color: colors.text }}>
+          <Text className="text-xs font-bold tracking-tight mb-2.5" style={{ color: colors.text }}>
             Candidate Compensation & Availability
           </Text>
 
           <View className="grid grid-cols-2 gap-2">
             <View className="rounded-xl p-2.5 border" style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}>
-              <Text className="text-[9px] font-black uppercase tracking-wider text-slate-400">Notice Period</Text>
-              <Text className="text-xs font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Notice Period</Text>
+              <Text className="text-xs font-bold mt-0.5" style={{ color: colors.text }}>
                 {noticePeriod}
               </Text>
             </View>
 
             <View className="rounded-xl p-2.5 border" style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}>
-              <Text className="text-[9px] font-black uppercase tracking-wider text-slate-400">Current Salary</Text>
-              <Text className="text-xs font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Current Salary</Text>
+              <Text className="text-xs font-bold mt-0.5" style={{ color: colors.text }}>
                 {currentCtc}
               </Text>
             </View>
 
             <View className="rounded-xl p-2.5 border" style={{ backgroundColor: colors.successSoft, borderColor: colors.successBorder }}>
-              <Text className="text-[9px] font-black uppercase tracking-wider" style={{ color: colors.success }}>Expected Salary</Text>
-              <Text className="text-xs font-black mt-0.5" style={{ color: colors.success }}>
+              <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: colors.success }}>Expected Salary</Text>
+              <Text className="text-xs font-bold mt-0.5" style={{ color: colors.success }}>
                 {expectedCtc}
               </Text>
             </View>
 
             <View className="rounded-xl p-2.5 border" style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}>
-              <Text className="text-[9px] font-black uppercase tracking-wider text-slate-400">Application Date</Text>
-              <Text className="text-xs font-black mt-0.5" style={{ color: colors.text }}>
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Application Date</Text>
+              <Text className="text-xs font-bold mt-0.5" style={{ color: colors.text }}>
                 {candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString() : 'Recent'}
               </Text>
             </View>
@@ -235,7 +235,7 @@ export default function CandidateDetailScreen() {
             className="rounded-[16px] border p-4 shadow-sm mb-3"
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
-            <Text className="text-xs font-black tracking-tight mb-2" style={{ color: colors.text }}>
+            <Text className="text-xs font-bold tracking-tight mb-2" style={{ color: colors.text }}>
               Resume Highlights & Notes
             </Text>
             {parsed.summary ? (
@@ -278,7 +278,7 @@ export default function CandidateDetailScreen() {
           style={{ backgroundColor: colors.whatsapp }}
         >
           <Ionicons name="logo-whatsapp" size={17} color="#ffffff" />
-          <Text className="text-xs font-black text-white">WhatsApp Outreach</Text>
+          <Text className="text-xs font-bold text-white">WhatsApp Outreach</Text>
         </Pressable>
 
         <Pressable
@@ -287,7 +287,7 @@ export default function CandidateDetailScreen() {
           style={{ backgroundColor: colors.primary }}
         >
           <Ionicons name="funnel" size={16} color="#ffffff" />
-          <Text className="text-xs font-black text-white">Convert to Deal</Text>
+          <Text className="text-xs font-bold text-white">Convert to Deal</Text>
         </Pressable>
       </View>
     </AppScreen>

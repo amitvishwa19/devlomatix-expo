@@ -253,7 +253,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
               className="h-14 w-14 items-center justify-center rounded-full"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-xl font-black text-white">
+              <Text className="text-xl font-bold text-white">
                 {user?.displayName?.[0]?.toUpperCase() ||
                   user?.email?.[0]?.toUpperCase() ||
                   'U'}
@@ -264,7 +264,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           <View className="flex-1">
             <View className="flex-row items-center gap-x-2">
               <Text
-                className="text-base font-black tracking-tight"
+                className="text-base font-bold tracking-tight"
                 style={{ color: colors.text }}
                 numberOfLines={1}
               >
@@ -298,7 +298,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-1.5"
+            className="text-xs font-bold uppercase tracking-wider mb-1.5"
             style={{ color: colors.textMuted }}
           >
             Appearance
@@ -350,7 +350,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-2.5"
+            className="text-xs font-bold uppercase tracking-wider mb-2.5"
             style={{ color: colors.textMuted }}
           >
             Account Details
@@ -382,12 +382,12 @@ export default function CrmSettingsScreen({ isTab = false }) {
           <View className="flex-row items-center justify-between mb-3">
             <View>
               <Text
-                className="text-xs font-black uppercase tracking-wider"
+                className="text-xs font-bold uppercase tracking-wider"
                 style={{ color: colors.textMuted }}
               >
                 Active Deal Pipeline
               </Text>
-              <Text className="text-sm font-black mt-1" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold mt-1" style={{ color: colors.text }}>
                 {activePipeline?.name || 'Default Sales Pipeline'}
               </Text>
             </View>
@@ -446,7 +446,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
               <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
             </View>
             <View>
-              <Text className="text-sm font-black" style={{ color: colors.whatsapp }}>
+              <Text className="text-sm font-bold" style={{ color: colors.whatsapp }}>
                 KonnectX WhatsApp Bridge
               </Text>
               <Text className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -492,7 +492,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
             ) : (
               <>
                 <Ionicons name="sync" size={16} color="#ffffff" />
-                <Text className="text-xs font-black text-white">Sync WhatsApp Chats Now</Text>
+                <Text className="text-xs font-bold text-white">Sync WhatsApp Chats Now</Text>
               </>
             )}
           </Pressable>
@@ -513,7 +513,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 <Ionicons name="call" size={16} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Daily Call Records (DCR)
                 </Text>
                 <Text className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -547,7 +547,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-2.5"
+            className="text-xs font-bold uppercase tracking-wider mb-2.5"
             style={{ color: colors.textMuted }}
           >
             Active Ecosystem Bridges
@@ -659,7 +659,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <Text
-            className="text-xs font-black uppercase tracking-wider mb-2"
+            className="text-xs font-bold uppercase tracking-wider mb-2"
             style={{ color: colors.textMuted }}
           >
             Experience Preferences
@@ -712,7 +712,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Access Management
                 </Text>
                 <Text className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -800,7 +800,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
               <Ionicons name="file-tray-full-outline" size={17} color={colors.textSecondary} />
             </View>
             <View>
-              <Text className="text-sm font-black" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold" style={{ color: colors.text }}>
                 Shared Preferences
               </Text>
               <Text className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -829,7 +829,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 <Ionicons name="grid-outline" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Devlomatix Suite Modules
                 </Text>
                 <Text className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -870,7 +870,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 <View className="flex-1">
                   <View className="flex-row items-center gap-x-2">
                     <Text
-                      className="text-xs font-black tracking-tight"
+                      className="text-xs font-bold tracking-tight"
                       style={{ color: colors.text }}
                       numberOfLines={1}
                     >
@@ -941,7 +941,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           onPress={() => setShowLogoutModal(true)}
         >
           <Ionicons name="log-out-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text className="text-xs font-black text-white">Log Out of Workspace</Text>
+          <Text className="text-xs font-bold text-white">Log Out of Workspace</Text>
         </Pressable>
       </ScrollView>
 
@@ -984,7 +984,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
                   await performLogout();
                 }}
               >
-                <Text className="text-sm font-black text-rose-500">
+                <Text className="text-sm font-bold text-rose-500">
                   Log Out
                 </Text>
               </Pressable>

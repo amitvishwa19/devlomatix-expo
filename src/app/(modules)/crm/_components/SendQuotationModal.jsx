@@ -86,7 +86,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
                 <Ionicons name="logo-whatsapp" size={17} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-sm font-black" style={{ color: colors.text }}>
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
                   Send Quotation Proposal
                 </Text>
                 <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
@@ -205,7 +205,7 @@ export default function SendQuotationModal({ quotation, visible, onClose, onSent
               ) : (
                 <>
                   <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
-                  <Text className="text-xs font-black text-white">Send on WhatsApp</Text>
+                  <Text className="text-xs font-bold text-white">Send on WhatsApp</Text>
                 </>
               )}
             </Pressable>

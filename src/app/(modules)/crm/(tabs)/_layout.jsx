@@ -163,7 +163,7 @@ function CrmCustomTabBar({ state, descriptors, navigation }) {
                       borderColor: colors.tabBar,
                     }}
                   >
-                    <Text className="text-[9px] font-black text-white leading-none text-center">
+                    <Text className="text-[9px] font-bold text-white leading-none text-center">
                       {badge}
                     </Text>
                   </View>

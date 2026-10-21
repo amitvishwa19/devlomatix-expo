@@ -208,7 +208,7 @@ export default function CrmCandidatesDirectoryScreen() {
               >
                 <Ionicons name="people-outline" size={28} color={colors.textMuted} />
               </View>
-              <Text className="text-sm font-black text-center" style={{ color: colors.text }}>
+              <Text className="text-sm font-bold text-center" style={{ color: colors.text }}>
                 {searchQuery || selectedStage !== 'ALL' ? 'No Matching Candidates' : 'No Candidates Ingested'}
               </Text>
               <Text className="mt-1 text-xs text-center leading-relaxed" style={{ color: colors.textMuted }}>

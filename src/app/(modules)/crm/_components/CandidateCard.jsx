@@ -89,13 +89,13 @@ export default function CandidateCard({ candidate, onSendWhatsApp, onConvertDeal
             borderColor: colors.primaryBorder,
           }}
         >
-          <Text className="text-xs font-black" style={{ color: colors.primaryDark }}>
+          <Text className="text-xs font-bold" style={{ color: colors.primaryDark }}>
             {(candidate.name || 'C').charAt(0).toUpperCase()}
           </Text>
         </View>
 
         <View className="flex-1">
-          <Text className="text-sm font-black tracking-tight" style={{ color: colors.text }} numberOfLines={1}>
+          <Text className="text-sm font-bold tracking-tight" style={{ color: colors.text }} numberOfLines={1}>
             {candidate.name || 'Candidate'}
           </Text>
           <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }} numberOfLines={1}>

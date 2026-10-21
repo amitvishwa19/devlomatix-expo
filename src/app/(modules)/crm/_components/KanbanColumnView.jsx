@@ -65,7 +65,7 @@ export default function KanbanColumnView({ tasks = [], onUpdateStatus, onOpenTas
                 >
                   <Ionicons name={col.icon} size={13} color={col.color} />
                 </View>
-                <Text className="text-xs font-black tracking-tight" style={{ color: colors.text }}>
+                <Text className="text-xs font-bold tracking-tight" style={{ color: colors.text }}>
                   {col.title}
                 </Text>
               </View>
@@ -77,7 +77,7 @@ export default function KanbanColumnView({ tasks = [], onUpdateStatus, onOpenTas
                   borderColor: col.border,
                 }}
               >
-                <Text className="text-[10px] font-black" style={{ color: col.color }}>
+                <Text className="text-[10px] font-bold" style={{ color: col.color }}>
                   {colTasks.length}
                 </Text>
               </View>
