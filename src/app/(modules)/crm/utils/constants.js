@@ -18,7 +18,10 @@ export const CRM_STAGE_DEFAULTS = [
 
 export const CRM_COPILOT_SUGGESTED_PROMPTS = [
   '⚡ Analyze pipeline risks & stalled deals',
+  '🔥 How can I revive ghosted / dormant deals?',
   '🎯 Which top deals have the highest close momentum?',
   '✍️ Draft an irresistible WhatsApp follow-up pitch',
   '💡 How to overcome enterprise pricing objections?',
+  '📊 Give me an executive revenue forecast & leaderboard summary',
 ];
+
