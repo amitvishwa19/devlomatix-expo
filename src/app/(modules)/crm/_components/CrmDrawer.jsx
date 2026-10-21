@@ -148,6 +148,13 @@ const crmNavigationCategories = [
         activeIcon: 'chatbubbles',
       },
       {
+        route: '/(modules)/crm/mailbox',
+        label: 'CRM Mailbox',
+        badge: 'Email',
+        icon: 'mail-outline',
+        activeIcon: 'mail',
+      },
+      {
         route: '/(modules)/crm/(tabs)/copilot',
         label: 'FlowGenix AI Copilot',
         badge: 'AI',

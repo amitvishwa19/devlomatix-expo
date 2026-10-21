@@ -51,6 +51,9 @@ export default function CrmRootLayout() {
           <Stack.Screen name="quotations/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="candidates/index" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="candidates/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="mailbox/index" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="mailbox/[threadId]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="mailbox/compose" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
         </Stack>
       </CrmDrawerProvider>
     </CrmProvider>

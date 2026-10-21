@@ -137,5 +137,7 @@ export const apiUrls = {
   crmDcrVoiceSummary: baseApi + "/crm/dcr/ai-summary",
   crmBridgeDeskflow: baseApi + "/crm/bridge/deskflow",
   crmQuotationTrack: baseApi + "/crm/quotations/track",
+  crmMailbox: baseApi + "/crm/mailbox",
+  crmMailboxSend: baseApi + "/crm/mailbox/send",
 };
 
