@@ -61,4 +61,4 @@ export const aiMlApiKey = process.env.EXPO_PUBLIC_AIML_API_KEY;
 export const googleGemeniApiKey = process.env.EXPO_PUBLIC_GOOGLE_GEMENI_API_KEY;
 export const aiApiKey = aiMlApiKey;
 export const socket_server_url =
-  process.env.EXPO_PUBLIC_SOCKET_SERVER || 'http://192.168.29.31:5001';
+  process.env.EXPO_PUBLIC_SOCKET_SERVER || 'https://socket.devlomatix.com';

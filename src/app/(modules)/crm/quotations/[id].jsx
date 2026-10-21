@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Alert,
@@ -31,6 +32,7 @@ export default function QuotationDetailScreen() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const loadQuotation = useCallback(async () => {
     if (!id) return;
@@ -111,6 +113,14 @@ export default function QuotationDetailScreen() {
     } catch (e) {
       console.warn('Share error:', e);
     }
+  };
+
+  const handleCopyPublicLink = async () => {
+    if (!quotation) return;
+    const publicUrl = `https://devlomatix.com/quote/${quotation.id}`;
+    await Clipboard.setStringAsync(publicUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
   };
 
   const handleDelete = () => {
@@ -312,6 +322,99 @@ export default function QuotationDetailScreen() {
               Valid: {qData.quotation?.validUntil || '30 Days'}
             </Text>
           </View>
+        </View>
+
+        {/* Live Client Interaction & Tracking Telemetry */}
+        <View
+          className="rounded-[16px] border p-3.5 shadow-sm mb-3"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          }}
+        >
+          <View className="flex-row items-center justify-between mb-2 pb-2 border-b" style={{ borderColor: colors.borderLight }}>
+            <View className="flex-row items-center gap-x-2">
+              <View
+                className="w-6 h-6 rounded-lg items-center justify-center"
+                style={{ backgroundColor: colors.copilotSoft }}
+              >
+                <Ionicons name="analytics" size={13} color={colors.copilot} />
+              </View>
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                Live Proposal Telemetry
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={handleCopyPublicLink}
+              className="flex-row items-center gap-x-1 px-2.5 py-1 rounded-lg border active:opacity-75"
+              style={{
+                backgroundColor: copiedLink ? colors.successSoft : colors.cardAlt,
+                borderColor: copiedLink ? colors.successBorder : colors.border,
+              }}
+            >
+              <Ionicons
+                name={copiedLink ? 'checkmark' : 'link-outline'}
+                size={12}
+                color={copiedLink ? colors.success : colors.primary}
+              />
+              <Text
+                className="text-[10px] font-bold"
+                style={{ color: copiedLink ? colors.success : colors.primary }}
+              >
+                {copiedLink ? 'Link Copied!' : 'Copy Public Link'}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View className="flex-row items-center justify-between py-1">
+            <View className="flex-1 pr-2">
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Customer Views
+              </Text>
+              <View className="flex-row items-center gap-x-1.5 mt-0.5">
+                <Ionicons name="eye-outline" size={14} color={colors.copilot} />
+                <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                  {quotation.viewCount || qData.tracking?.views?.length || 0}
+                  <Text className="text-xs font-normal text-muted-foreground"> views</Text>
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-1 items-end">
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Digital Signature
+              </Text>
+              <View className="flex-row items-center gap-x-1 mt-0.5">
+                {quotation.signedAt || qData.signature?.signedAt || status === 'accepted' ? (
+                  <View className="flex-row items-center gap-x-1">
+                    <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                    <Text className="text-xs font-bold" style={{ color: colors.success }}>
+                      Signed & Verified
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="flex-row items-center gap-x-1">
+                    <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                    <Text className="text-xs font-medium" style={{ color: colors.textMuted }}>
+                      Awaiting Signature
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {(quotation.lastViewedAt || qData.tracking?.lastViewedAt) && (
+            <View className="mt-2 pt-2 border-t flex-row items-center justify-between" style={{ borderColor: colors.borderLight }}>
+              <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                Last opened by client:
+              </Text>
+              <Text className="text-[10px] font-semibold" style={{ color: colors.text }}>
+                {new Date(quotation.lastViewedAt || qData.tracking?.lastViewedAt).toLocaleString()}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Deliverables & Line Items */}

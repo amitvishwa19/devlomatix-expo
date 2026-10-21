@@ -8,12 +8,18 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_BASE_API": "https://dev.devlomatix.com/api/v5"
+        "EXPO_PUBLIC_BASE_API": "https://dev.devlomatix.com/api/v5",
+        "EXPO_PUBLIC_SOCKET_SERVER": "https://socket.devlomatix.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "120757819823-iiq1pjeq9mpu8mom6vqvpi845pgb0dvs.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_GEMENI_API_KEY": "AIzaSyBUNq13tKSws6v36T1b5OCdSiUo6BIfPwU"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_BASE_API": "https://devlomatix.com/api/v5"
+        "EXPO_PUBLIC_BASE_API": "https://devlomatix.com/api/v5",
+        "EXPO_PUBLIC_SOCKET_SERVER": "https://socket.devlomatix.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "120757819823-iiq1pjeq9mpu8mom6vqvpi845pgb0dvs.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_GEMENI_API_KEY": "AIzaSyBUNq13tKSws6v36T1b5OCdSiUo6BIfPwU"
       }
     }
   }

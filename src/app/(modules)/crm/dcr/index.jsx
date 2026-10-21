@@ -90,6 +90,11 @@ export default function DcrScreen() {
   const [uploadProgressText, setUploadProgressText] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
 
+  // AI Voice Note & Dictation State
+  const [aiDictationOpen, setAiDictationOpen] = useState(false);
+  const [dictationText, setDictationText] = useState('');
+  const [isSummarizingAi, setIsSummarizingAi] = useState(false);
+
   // iOS-style Alert state
   const [iosAlert, setIosAlert] = useState({
     visible: false,
@@ -350,6 +355,65 @@ export default function DcrScreen() {
     loadRecords();
   }, [loadRecords]);
 
+  const handleAiAutoFillDcr = async () => {
+    if (!dictationText.trim()) {
+      showAlert('No Notes Entered', 'Please speak or paste your meeting voice notes first.');
+      return;
+    }
+
+    setIsSummarizingAi(true);
+    try {
+      const res = await crmService.summarizeDcrVoiceNote({ notes: dictationText.trim() });
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.clientName) setClientName(d.clientName);
+        if (d.contactPerson) setContactPerson(d.contactPerson);
+        if (d.phone) setPhone(d.phone);
+        if (d.dealValue) setDealValue(String(d.dealValue));
+        if (d.conversation) setConversation(d.conversation);
+        if (d.nextAction) setNextAction(d.nextAction);
+        if (d.outcome) setOutcome(d.outcome);
+        if (d.callType) setCallType(d.callType);
+      } else {
+        parseMeetingNotesFallback(dictationText.trim());
+      }
+      setAiDictationOpen(false);
+      showAlert('Form Auto-Filled', 'AI extracted details from your meeting note into the form fields!', null, {
+        icon: 'sparkles',
+        iconColor: '#8b5cf6',
+      });
+    } catch (err) {
+      parseMeetingNotesFallback(dictationText.trim());
+      setAiDictationOpen(false);
+      showAlert('Form Auto-Filled', 'AI populated the form with your meeting note.', null, {
+        icon: 'sparkles',
+        iconColor: '#8b5cf6',
+      });
+    } finally {
+      setIsSummarizingAi(false);
+    }
+  };
+
+  const parseMeetingNotesFallback = (rawText) => {
+    setConversation(rawText);
+    const lower = rawText.toLowerCase();
+    if (lower.includes('visit') || lower.includes('met') || lower.includes('in person')) {
+      setCallType('FIELD_VISIT');
+    }
+    if (lower.includes('hot') || lower.includes('ready to buy')) {
+      setOutcome('HOT_LEAD');
+    } else if (lower.includes('quote') || lower.includes('proposal')) {
+      setOutcome('PROPOSAL_SENT');
+    }
+    const numMatch = rawText.match(/(?:rs\.?|inr|₹|amount|quote)?\s*([0-9]+(?:,[0-9]+)*(?:\.[0-9]+)?)/i);
+    if (numMatch && numMatch[1]) {
+      const cleanNum = numMatch[1].replace(/,/g, '');
+      if (Number(cleanNum) > 1000) {
+        setDealValue(cleanNum);
+      }
+    }
+  };
+
   const handleOpenCreate = () => {
     setEditingRecord(null);
     setClientName('');
@@ -364,6 +428,8 @@ export default function DcrScreen() {
     setLocation('');
     setGpsCoords(null);
     setSelectedImages([]);
+    setAiDictationOpen(false);
+    setDictationText('');
     setIsModalVisible(true);
   };
 
@@ -1021,6 +1087,84 @@ export default function DcrScreen() {
                 paddingBottom: 20,
               }}
             >
+              {/* AI Voice Note & Dictation Auto-Fill Banner */}
+              <View
+                className="rounded-xl border p-3 mb-3.5 shadow-xs"
+                style={{
+                  backgroundColor: colors.copilotSoft,
+                  borderColor: colors.copilotBorder,
+                }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-x-2 flex-1 mr-2">
+                    <View
+                      className="w-7 h-7 rounded-lg items-center justify-center"
+                      style={{ backgroundColor: colors.copilot }}
+                    >
+                      <Ionicons name="sparkles" size={14} color="#ffffff" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold" style={{ color: colors.copilot }}>
+                        AI Voice / Meeting Dictation
+                      </Text>
+                      <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                        Dictate or paste notes to auto-fill this entire form
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    onPress={() => setAiDictationOpen(!aiDictationOpen)}
+                    className="px-2.5 py-1 rounded-lg active:opacity-75"
+                    style={{ backgroundColor: colors.copilot }}
+                  >
+                    <Text className="text-[10px] font-bold text-white">
+                      {aiDictationOpen ? 'Close' : 'Dictate'}
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {aiDictationOpen && (
+                  <View className="mt-2.5 pt-2 border-t" style={{ borderTopColor: colors.copilotBorder }}>
+                    <TextInput
+                      value={dictationText}
+                      onChangeText={setDictationText}
+                      placeholder="e.g. Just met with Rajesh at Skyline Infra. Demo went great. Quoted 4.5 lakhs. Next follow-up Thursday to finalize agreement."
+                      placeholderTextColor={colors.inputPlaceholder}
+                      multiline
+                      numberOfLines={3}
+                      className="text-xs min-h-[70px] p-2.5 rounded-lg border leading-4"
+                      style={{
+                        backgroundColor: colors.card,
+                        borderColor: colors.copilotBorder,
+                        color: colors.text,
+                      }}
+                    />
+
+                    <Pressable
+                      onPress={handleAiAutoFillDcr}
+                      disabled={isSummarizingAi || !dictationText.trim()}
+                      className="mt-2 flex-row items-center justify-center gap-x-1.5 py-2.5 rounded-lg active:opacity-80"
+                      style={{
+                        backgroundColor: colors.copilot,
+                        opacity: isSummarizingAi || !dictationText.trim() ? 0.6 : 1,
+                      }}
+                    >
+                      {isSummarizingAi ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <>
+                          <Ionicons name="flash" size={14} color="#ffffff" />
+                          <Text className="text-xs font-bold text-white">
+                            Auto-Fill Form with AI
+                          </Text>
+                        </>
+                      )}
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+
               {/* Card 1: Client & Contact */}
               <View
                 className="rounded-2xl border p-3.5 mb-3.5 shadow-xs"

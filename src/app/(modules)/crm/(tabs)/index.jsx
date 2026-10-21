@@ -434,6 +434,25 @@ export default function CrmDashboard() {
                             Candidates
                         </Text>
                     </Pressable>
+
+                    <Pressable
+                        onPress={() => router.push('/(modules)/crm/analytics')}
+                        className="w-[31%] items-center justify-center rounded-[16px] border p-2.5 active:opacity-75"
+                        style={{
+                            backgroundColor: colors.cardAlt,
+                            borderColor: colors.border,
+                        }}
+                    >
+                        <View
+                            className="h-8 w-8 items-center justify-center rounded-xl"
+                            style={{ backgroundColor: colors.info }}
+                        >
+                            <Ionicons name="trending-up" size={16} color="#ffffff" />
+                        </View>
+                        <Text className="mt-1.5 text-[11px] font-bold" style={{ color: colors.text }}>
+                            Analytics
+                        </Text>
+                    </Pressable>
                 </View>
 
                 {/* Top Priority Opportunities */}

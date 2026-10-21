@@ -27,7 +27,7 @@ try {
   // Firebase messaging fallback
 }
 
-import { getSession } from '~/utils/authStorage';
+import { getSession, clearSession, refreshAuthSession } from '~/utils/authStorage';
 import { resolveWorkspaceId } from '~/utils/workspace';
 import { WebRtcClient } from '~/lib/webrtc/webrtc-client';
 import { socket_server_url } from '~/utils/constants';
@@ -47,26 +47,12 @@ const getSocketUrl = () => {
     return process.env.EXPO_PUBLIC_SOCKET_SERVER.replace(/\/+$/, '');
   }
 
-  // 1. Try to detect Metro bundler host IP from expo-constants
-  const hostUri =
-    Constants?.expoConfig?.hostUri ||
-    Constants?.manifest2?.extra?.expoClient?.hostUri ||
-    Constants?.manifest?.debuggerHost;
-
-  if (hostUri) {
-    const hostIp = hostUri.split(':')[0];
-    if (hostIp && hostIp !== 'localhost' && hostIp !== '127.0.0.1') {
-      return `http://${hostIp}:5001`;
-    }
-  }
-
-  // 2. Fallback to configured socket_server_url if non-localhost
-  if (socket_server_url && !socket_server_url.includes('localhost') && !socket_server_url.includes('127.0.0.1')) {
+  // Fallback to configured socket_server_url or production socket server
+  if (socket_server_url) {
     return socket_server_url.replace(/\/+$/, '');
   }
 
-  // 3. Fallback to host machine Wi-Fi LAN IP
-  return 'http://192.168.29.31:5001';
+  return 'https://socket.devlomatix.com';
 };
 
 export function CrmSocketProvider({ children }) {
@@ -370,9 +356,27 @@ export function CrmSocketProvider({ children }) {
         });
       });
 
-      s.on('connect_error', (err) => {
+      s.on('connect_error', async (err) => {
         setIsConnected(false);
-        console.warn(`[CRM_SOCKET] Connection failed to ${socketUrl}:`, err?.message || err);
+        const msg = err?.message || String(err);
+        console.warn(`[CRM_SOCKET] Connection failed to ${socketUrl}:`, msg);
+
+        if (msg.toLowerCase().includes('token expired') || msg.toLowerCase().includes('jwt expired')) {
+          console.log('[CRM_SOCKET] Socket token expired. Refreshing session automatically...');
+          try {
+            s.disconnect();
+          } catch (_) {}
+
+          const refreshed = await refreshAuthSession();
+          if (refreshed?.accessToken) {
+            console.log('[CRM_SOCKET] Session refreshed successfully. Reconnecting socket with fresh token...');
+            s.auth = { token: refreshed.accessToken };
+            s.connect();
+          } else {
+            console.warn('[CRM_SOCKET] Automatic token refresh failed. Session cleared.');
+            await clearSession();
+          }
+        }
       });
 
       s.on('disconnect', (reason) => {

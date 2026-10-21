@@ -29,6 +29,7 @@ export default function ContactDossierScreen() {
   const { startCall } = useCrmSocket();
 
   const [contact, setContact] = useState(null);
+  const [supportTickets, setSupportTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
@@ -42,6 +43,15 @@ export default function ContactDossierScreen() {
       const res = await crmService.getContact(contactId);
       if (res.success && res.data) {
         setContact(res.data);
+        // Fetch linked Deskflow support tickets for 360° customer context
+        crmService
+          .getContactDeskflowTickets(contactId, res.data.email)
+          .then((tRes) => {
+            if (tRes.success && Array.isArray(tRes.data)) {
+              setSupportTickets(tRes.data);
+            }
+          })
+          .catch(() => {});
       }
     } catch (e) {
       console.warn('Failed to load contact:', e.message);
@@ -424,6 +434,90 @@ export default function ContactDossierScreen() {
           >
             <Text className="text-xs font-semibold" style={{ color: colors.textMuted }}>
               No active deals with this contact yet.
+            </Text>
+          </View>
+        )}
+
+        {/* Deskflow 360° Support Tickets Bridge */}
+        <View className="mt-3 mb-2 flex-row items-center justify-between">
+          <View className="flex-row items-center gap-x-1.5">
+            <Ionicons name="headset" size={14} color={colors.copilot} />
+            <Text
+              className="text-xs font-black uppercase tracking-wider"
+              style={{ color: colors.textMuted }}
+            >
+              Deskflow Support 360° ({supportTickets.length})
+            </Text>
+          </View>
+          {supportTickets.some((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS') && (
+            <View
+              className="rounded-full px-2 py-0.5"
+              style={{ backgroundColor: colors.warningSoft }}
+            >
+              <Text className="text-[10px] font-bold" style={{ color: colors.warning }}>
+                Active Grievance
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {supportTickets.length > 0 ? (
+          <View
+            className="rounded-2xl border p-3 shadow-sm mb-3 space-y-2.5"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            {supportTickets.map((ticket) => (
+              <View
+                key={ticket.id}
+                className="p-2.5 rounded-xl border flex-row items-start justify-between"
+                style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+              >
+                <View className="flex-1 pr-2">
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                    {ticket.subject || ticket.title || 'Support Request'}
+                  </Text>
+                  <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+                    Ticket #{ticket.id?.slice(-6) || 'HD'} • {ticket.category || 'General'}
+                  </Text>
+                </View>
+                <View
+                  className="rounded-full px-2 py-0.5"
+                  style={{
+                    backgroundColor:
+                      ticket.status === 'OPEN'
+                        ? colors.dangerSoft
+                        : ticket.status === 'RESOLVED'
+                        ? colors.successSoft
+                        : colors.cardAlt,
+                  }}
+                >
+                  <Text
+                    className="text-[9px] font-bold uppercase"
+                    style={{
+                      color:
+                        ticket.status === 'OPEN'
+                          ? colors.danger
+                          : ticket.status === 'RESOLVED'
+                          ? colors.success
+                          : colors.textMuted,
+                    }}
+                  >
+                    {ticket.status || 'OPEN'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View
+            className="rounded-2xl border border-dashed p-3.5 items-center justify-center mb-3"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <Text className="text-xs font-medium" style={{ color: colors.textMuted }}>
+              No support tickets filed. Customer sentiment is clear.
             </Text>
           </View>
         )}

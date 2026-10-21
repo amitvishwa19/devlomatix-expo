@@ -16,6 +16,7 @@ import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import DealBillingModal from '../_components/DealBillingModal';
+import AiStalledDealRevivalModal from '../_components/AiStalledDealRevivalModal';
 import * as crmService from '~/services/crm';
 
 export default function DealDossierScreen() {
@@ -30,6 +31,7 @@ export default function DealDossierScreen() {
   const [loadingAi, setLoadingAi] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [billingModalVisible, setBillingModalVisible] = useState(false);
+  const [revivalModalVisible, setRevivalModalVisible] = useState(false);
   const [stageUpdating, setStageUpdating] = useState(false);
 
   const fetchDeal = useCallback(async () => {
@@ -142,6 +144,12 @@ export default function DealDossierScreen() {
         visible={billingModalVisible}
         onClose={() => setBillingModalVisible(false)}
         deal={deal}
+      />
+      <AiStalledDealRevivalModal
+        visible={revivalModalVisible}
+        onClose={() => setRevivalModalVisible(false)}
+        deal={deal}
+        onSuccess={onRefresh}
       />
 
       <ScrollView
@@ -294,11 +302,34 @@ export default function DealDossierScreen() {
                   ))}
                 </View>
               )}
+
+              <Pressable
+                onPress={() => setRevivalModalVisible(true)}
+                className="mt-3 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 active:opacity-80"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Ionicons name="flame" size={14} color="#ffffff" />
+                <Text className="text-xs font-bold text-white">
+                  Revive Stalled Deal (Ghosting Recovery)
+                </Text>
+              </Pressable>
             </View>
           ) : (
-            <Text className="text-xs italic" style={{ color: colors.textMuted }}>
-              No AI telemetry computed yet.
-            </Text>
+            <View>
+              <Text className="text-xs italic mb-2" style={{ color: colors.textMuted }}>
+                No AI telemetry computed yet.
+              </Text>
+              <Pressable
+                onPress={() => setRevivalModalVisible(true)}
+                className="flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 active:opacity-80"
+                style={{ backgroundColor: colors.copilot }}
+              >
+                <Ionicons name="flame" size={14} color="#ffffff" />
+                <Text className="text-xs font-bold text-white">
+                  AI Ghosting Recovery Options
+                </Text>
+              </Pressable>
+            </View>
           )}
         </View>
 
@@ -414,6 +445,15 @@ export default function DealDossierScreen() {
         {/* Action Shortcuts */}
         <View className="flex-row gap-x-2 mt-1.5">
           <Pressable
+            onPress={() => setRevivalModalVisible(true)}
+            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-sm active:opacity-80"
+            style={{ backgroundColor: colors.copilot }}
+          >
+            <Ionicons name="flame" size={15} color="#ffffff" />
+            <Text className="text-xs font-bold text-white">AI Revive</Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => openCreateTask({ dealId: deal.id, contactId: deal.contactId, title: `Follow up on ${deal.title}` })}
             className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-sm active:opacity-80"
             style={{ backgroundColor: colors.primary }}
@@ -424,11 +464,11 @@ export default function DealDossierScreen() {
 
           <Pressable
             onPress={() => setBillingModalVisible(true)}
-            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 shadow-sm active:opacity-80"
-            style={{ backgroundColor: colors.copilot }}
+            className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-3 border active:opacity-80"
+            style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
           >
-            <Ionicons name="card" size={15} color="#ffffff" />
-            <Text className="text-xs font-bold text-white">Issue Invoice</Text>
+            <Ionicons name="card-outline" size={15} color={colors.text} />
+            <Text className="text-xs font-bold" style={{ color: colors.text }}>Invoice</Text>
           </Pressable>
         </View>
       </ScrollView>

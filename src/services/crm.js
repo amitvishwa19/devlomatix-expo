@@ -265,6 +265,18 @@ export async function getDealHealthScore(dealId, params = {}) {
   return { success: true, data: extractPayload(res.data) };
 }
 
+export async function reviveStalledDeal(dealId, options = {}, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(apiUrls.crmCopilotRevive, { dealId, ...options }, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function generateDealActionPlan(dealId, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(apiUrls.crmCopilotActionPlan, { dealId }, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
 export async function askCopilotChat(message, chatHistory = [], params = {}) {
   const resolvedParams = await prepareParams(params);
   const res = await api.post(apiUrls.crmCopilotChat, { message, chatHistory }, { params: resolvedParams });
@@ -303,6 +315,40 @@ export async function deleteDcrRecord(dcrId, params = {}) {
   const resolvedParams = await prepareParams(params);
   const res = await api.delete(`${apiUrls.crmDcr}/${dcrId}`, { params: resolvedParams });
   return { success: true, data: extractPayload(res.data) };
+}
+
+export async function summarizeDcrVoiceNote(body, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(apiUrls.crmDcrVoiceSummary, body, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+// ==========================================
+// 🎫 DESKFLOW 360° CUSTOMER SUPPORT BRIDGE
+// ==========================================
+
+export async function getContactDeskflowTickets(contactId, email = null, params = {}) {
+  try {
+    const resolvedParams = await prepareParams({ contactId, email, ...params });
+    const res = await api.get(apiUrls.crmBridgeDeskflow, { params: resolvedParams });
+    return { success: true, data: extractArray(res.data) };
+  } catch (err) {
+    return { success: false, data: [], error: err.message };
+  }
+}
+
+// ==========================================
+// 📄 QUOTATION TRACKING TELEMETRY
+// ==========================================
+
+export async function getQuotationTracking(quotationId, params = {}) {
+  try {
+    const resolvedParams = await prepareParams({ quotationId, ...params });
+    const res = await api.get(`${apiUrls.crmQuotationTrack}/${quotationId}`, { params: resolvedParams });
+    return { success: true, data: extractPayload(res.data) };
+  } catch (err) {
+    return { success: false, data: null, error: err.message };
+  }
 }
 
 // ==========================================
