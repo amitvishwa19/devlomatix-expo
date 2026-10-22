@@ -131,7 +131,7 @@ export default function KabadxAccountScreen() {
             <TouchableOpacity
               onPress={() => {
                 Toast.show({ type: 'info', text1: 'Logged Out', text2: 'Signed out of KabadX account' });
-                router.replace('/(tabs)/home');
+                router.replace('/(tabs)');
               }}
               className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl border border-red-500/20 py-3.5 bg-red-500/5">
               <Ionicons name="log-out-outline" size={18} color="#dc2626" />

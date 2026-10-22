@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { PermissionsAndroid, Platform } from "react-native";
 import axios from "~/utils/axios";
 import { apiUrls } from "~/utils/api";
-import { storageKey } from "../utils/constants";
+import { storageKey } from '~/utils/crm/constants';
 import { useRouter } from "expo-router";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as Notifications from "expo-notifications";

@@ -71,9 +71,9 @@ export const NotificationProvider = ({ children }) => {
         const data = content?.data;
         if (data?.type === 'crm_email') {
           if (data?.threadId) {
-            router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+            router.push(`/mailbox/${data.threadId}`);
           } else {
-            router.push('/(modules)/crm/mailbox');
+            router.push('/mailbox');
           }
         }
       },
@@ -89,9 +89,9 @@ export const NotificationProvider = ({ children }) => {
           const data = remoteMessage?.data;
           if (data?.type === 'crm_email') {
             if (data?.threadId) {
-              router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+              router.push(`/mailbox/${data.threadId}`);
             } else {
-              router.push('/(modules)/crm/mailbox');
+              router.push('/mailbox');
             }
           }
         });
@@ -100,9 +100,9 @@ export const NotificationProvider = ({ children }) => {
           const data = remoteMessage?.data;
           if (data?.type === 'crm_email') {
             if (data?.threadId) {
-              router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+              router.push(`/mailbox/${data.threadId}`);
             } else {
-              router.push('/(modules)/crm/mailbox');
+              router.push('/mailbox');
             }
           }
         }).catch(() => {});

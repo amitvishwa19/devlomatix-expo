@@ -24,10 +24,12 @@ import { UniversalLoaderProvider } from "~/providers/UniversalLoaderProvider";
 import { IosAlertProvider } from "~/providers/IosAlertProvider";
 import { RbacProvider } from "~/contexts/RbacContext";
 import { CrmSocketProvider } from "~/providers/CrmSocketProvider";
-import IncomingCallModal from "~/app/(modules)/crm/_components/call/IncomingCallModal";
-import ActiveCallModal from "~/app/(modules)/crm/_components/call/ActiveCallModal";
-import PostCallSummaryModal from "~/app/(modules)/crm/_components/call/PostCallSummaryModal";
-import CallEndedModal from "~/app/(modules)/crm/_components/call/CallEndedModal";
+import IncomingCallModal from "~/app/_components/call/IncomingCallModal";
+import ActiveCallModal from "~/app/_components/call/ActiveCallModal";
+import PostCallSummaryModal from "~/app/_components/call/PostCallSummaryModal";
+import CallEndedModal from "~/app/_components/call/CallEndedModal";
+import { CrmProvider } from "~/providers/CrmProvider";
+import { CrmDrawerProvider } from "~/app/_components/CrmDrawer";
 
 import * as Notifications from "expo-notifications";
 import { getMessaging } from "@react-native-firebase/messaging";
@@ -116,21 +118,42 @@ function RootLayoutNav() {
                 <NotificationStoreProvider>
                 <WidgetProvider>
                     <CrmSocketProvider>
-                        <Stack>
-                            <Stack.Screen name="index" options={{ headerShown: false }} />
-                            <Stack.Screen name="(misc)" options={{ headerShown: false }} />
-                            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                            <Stack.Screen name="(modules)" options={{ headerShown: false }} />
-                            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-                        </Stack>
-                        {/* Global In-App Calling Modals */}
-                        <IncomingCallModal />
-                        <ActiveCallModal />
-                        <PostCallSummaryModal />
-                        <CallEndedModal />
-                        {/* <GlobalChatbot bottom={-10} right={20} /> */}
-                        <Toast config={toastConfig} topOffset={34} />
+                        <CrmProvider>
+                            <CrmDrawerProvider>
+                                <Stack screenOptions={{ headerShown: false }}>
+                                    <Stack.Screen name="index" />
+                                    <Stack.Screen name="(misc)" />
+                                    <Stack.Screen name="(auth)" />
+                                    <Stack.Screen name="(tabs)" />
+                                    <Stack.Screen name="(modules)" />
+                                    <Stack.Screen name="chat/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="chat/[chatId]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="deals/[dealId]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="contacts/[contactId]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="accounts/[accountId]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="analytics/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="dcr/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="settings/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="quotations/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="quotations/new" options={{ animation: 'slide_from_bottom' }} />
+                                    <Stack.Screen name="quotations/[id]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="candidates/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="candidates/[id]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="mailbox/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="mailbox/[threadId]" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="mailbox/compose" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                                    <Stack.Screen name="tasks/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+                                </Stack>
+                                {/* Global In-App Calling Modals */}
+                                <IncomingCallModal />
+                                <ActiveCallModal />
+                                <PostCallSummaryModal />
+                                <CallEndedModal />
+                                {/* <GlobalChatbot bottom={-10} right={20} /> */}
+                                <Toast config={toastConfig} topOffset={34} />
+                            </CrmDrawerProvider>
+                        </CrmProvider>
                     </CrmSocketProvider>
                 </WidgetProvider>
                 </NotificationStoreProvider>

@@ -1,177 +1,200 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
-import { Tabs, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotificationStore } from '~/contexts/NotificationStore';
-import { useAppTheme } from '~/theme/AppTheme';
-import { getSession } from '~/utils/authStorage';
-import { useRbac } from '~/contexts/RbacContext';
+import { useCrm } from '~/providers/CrmProvider';
+import { useCrmTheme } from '~/utils/crm/colors';
+
+let HapticsModule = null;
+try {
+  HapticsModule = require('expo-haptics');
+} catch (e) {
+  // Graceful fallback if native module unavailable
+}
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-export default function TabLayout() {
-    const router = useRouter();
-    const [isReady, setIsReady] = useState(false);
-    const { roles, permissions, isSuperAdmin, isAdmin, loading: rbacLoading, user } = useRbac();
+const tabConfig = {
+  index: { icon: 'rocket-outline', activeIcon: 'rocket', label: 'Dashboard' },
+  pipeline: { icon: 'funnel-outline', activeIcon: 'funnel', label: 'Pipeline' },
+  contacts: { icon: 'people-outline', activeIcon: 'people', label: 'Contacts' },
+  mailbox: { icon: 'mail-outline', activeIcon: 'mail', label: 'Mailbox' },
+  chat: { icon: 'chatbubbles-outline', activeIcon: 'chatbubbles', label: 'Chat' },
+  copilot: { icon: 'sparkles-outline', activeIcon: 'sparkles', label: 'Copilot' },
+  settings: { icon: 'settings-outline', activeIcon: 'settings', label: 'Settings' },
+};
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const checkSession = async () => {
-            const session = await getSession();
-
-            if (!isMounted) return;
-
-            if (!session?.isLoggedIn) {
-                router.replace('/(auth)/login');
-                return;
-            }
-
-            setIsReady(true);
-        };
-
-        checkSession();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [router]);
-
-    // After RBAC loads, redirect users with zero roles & zero permissions
-    useEffect(() => {
-        if (!isReady || rbacLoading) return;
-        if (isSuperAdmin || isAdmin) return;
-        const hasNoAccess =
-            (!roles || roles.length === 0) &&
-            (!permissions || permissions.length === 0);
-        if (hasNoAccess) {
-            router.replace('/(misc)/no-access');
-        }
-    }, [isReady, rbacLoading, isSuperAdmin, isAdmin, roles, permissions]);
-
-    if (!isReady) {
-        return null;
-    }
-
-    return (
-        <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
-            <Tabs.Screen name="home" options={{ title: 'Home' }} />
-            <Tabs.Screen name="apps" options={{ title: 'Productivity' }} />
-            <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
-            <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
-            <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
-        </Tabs>);
-
+export default function CrmTabLayout() {
+  return (
+    <Tabs
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <CrmCustomTabBar {...props} />}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
+      <Tabs.Screen name="pipeline" options={{ title: 'Pipeline' }} />
+      <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
+      <Tabs.Screen name="mailbox" options={{ title: 'Mailbox' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="copilot" options={{ title: 'AI Copilot' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+    </Tabs>
+  );
 }
 
-function CustomTabBar({ state, descriptors, navigation }) {
-    const insets = useSafeAreaInsets();
-    const { palette } = useAppTheme();
+function CrmCustomTabBar({ state, descriptors, navigation }) {
+  const insets = useSafeAreaInsets();
+  const { colors } = useCrmTheme();
 
-    const { unreadCount } = useNotificationStore();
+  // Dynamic Badges
+  const { unreadCount = 0 } = useNotificationStore() || {};
 
-    const icon = (routeName, iconColor) => {
-        const size = 20;
+  // Auto-hide when keyboard opens
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-        switch (routeName) {
-            case 'home':
-                return (
-                    <View>
-                        <FontAwesome size={size} name="home" color={iconColor} />
-                        {unreadCount > 0 && (
-                            <View className="absolute -right-2.5 -top-2 h-4 min-w-[16px] items-center justify-center rounded-full bg-teal-600 px-1">
-                                <Text className="text-[10px] font-bold text-white">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                );
-            case 'tasks':
-                return <Ionicons size={size} name="layers-outline" color={iconColor} />;
-            case 'apps':
-                return <Ionicons size={size} name="briefcase-outline" color={iconColor} />;
-            case 'activity':
-                return <Ionicons size={size} name="pulse-outline" color={iconColor} />;
-            case 'settings':
-                return <Ionicons size={size} name="settings-outline" color={iconColor} />;
-            default:
-                return <FontAwesome size={size} name="circle" color={iconColor} />;
-        }
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
     };
+  }, []);
 
-    return (
-        <View
-            pointerEvents="box-none"
-            className="absolute bottom-2 left-0 right-0 items-center"
-            style={{
-                paddingBottom: Math.max(insets.bottom, 10),
-                zIndex: 100,
-                elevation: 20
-            }}>
-            <Animated.View
-                className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-4"
-                style={{
-                    backgroundColor: palette.colors.tabBar,
-                    zIndex: 100,
-                    elevation: 20
-                }}>
-                {state.routes.map((route, index) => {
-                    const { options } = descriptors[route.key];
-                    const label =
-                        typeof options.tabBarLabel === 'string' ?
-                            options.tabBarLabel :
-                            options.title !== undefined ?
-                                options.title :
-                                route.name;
-                    const isFocused = state.index === index;
+  if (isKeyboardVisible) {
+    return null;
+  }
 
-                    const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true
-                        });
+  const getBadgeContent = (routeName) => {
+    if (routeName === 'chat' && unreadCount > 0) {
+      return unreadCount > 99 ? '99+' : String(unreadCount);
+    }
+    return null;
+  };
 
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name, route.params);
-                        }
-                    };
+  return (
+    <View
+      pointerEvents="box-none"
+      className="absolute bottom-2 left-0 right-0 items-center"
+      style={{
+        paddingBottom: Math.max(insets.bottom, 10),
+        zIndex: 100,
+        elevation: 20,
+      }}
+    >
+      <Animated.View
+        className="w-[95%] flex-row items-center justify-around rounded-2xl px-2 py-2.5 border"
+        style={{
+          backgroundColor: colors.tabBar,
+          borderColor: colors.tabBarBorder,
+          shadowColor: colors.shadowColor,
+          shadowOpacity: colors.shadowOpacity,
+          shadowOffset: { width: 0, height: 8 },
+          shadowRadius: 16,
+          zIndex: 100,
+          elevation: 20,
+        }}
+      >
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const label = options.title || route.name;
+          const isFocused = state.index === index;
+          const cfg = tabConfig[route.name] || { icon: 'ellipse-outline', activeIcon: 'ellipse', label };
+          const badge = getBadgeContent(route.name);
 
-                    const onLongPress = () => {
-                        navigation.emit({
-                            type: 'tabLongPress',
-                            target: route.key
-                        });
-                    };
+          const onPress = () => {
+            // Tactile Haptic Feedback
+            if (HapticsModule?.impactAsync) {
+              if (isFocused) {
+                // Firmer medium pulse on re-tap (triggers scroll-to-top)
+                HapticsModule.impactAsync(
+                  HapticsModule.ImpactFeedbackStyle?.Medium ?? 'medium'
+                ).catch(() => { });
+              } else {
+                // Subtle light click for tab change
+                HapticsModule.impactAsync(
+                  HapticsModule.ImpactFeedbackStyle?.Light ?? 'light'
+                ).catch(() => { });
+              }
+            }
 
-                    return (
-                        <AnimatedTouchableOpacity
-                            key={route.key}
-                            layout={LinearTransition.springify().mass(0.5)}
-                            onPress={onPress}
-                            onLongPress={onLongPress}
-                            testID={options.tabBarButtonTestID}
-                            className="flex-row items-center gap-x-2 rounded-2xl p-2"
-                            style={{ backgroundColor: isFocused ? palette.colors.tabActive : 'transparent' }}>
-                            {icon(route.name, isFocused ? palette.tabActiveIcon : palette.tabInactiveIcon)}
-                            {isFocused ?
-                                <Animated.Text
-                                    entering={FadeIn.duration(200)}
-                                    exiting={FadeOut.duration(200)}
-                                    className="text-sm font-bold"
-                                    style={{ color: palette.tabActiveTextColor }}>
-                                    {label}
-                                </Animated.Text> :
-                                null}
-                        </AnimatedTouchableOpacity>);
+            // Standard tab press / scroll to top event
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-                })}
-            </Animated.View>
-        </View>);
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
 
+          return (
+            <AnimatedTouchableOpacity
+              key={route.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isFocused }}
+              accessibilityLabel={label}
+              layout={LinearTransition.springify().mass(0.5)}
+              onPress={onPress}
+              className="flex-row items-center gap-x-1.5 rounded-xl px-2.5 py-2"
+              style={{
+                backgroundColor: isFocused ? colors.tabBarActiveBg : 'transparent',
+              }}
+            >
+              <View className="relative items-center justify-center">
+                <Ionicons
+                  size={18}
+                  name={isFocused ? cfg.activeIcon : cfg.icon}
+                  color={isFocused ? colors.tabBarActiveText : colors.tabBarInactive}
+                />
+                {badge ? (
+                  <View
+                    className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] items-center justify-center rounded-full px-0.5 border"
+                    style={{
+                      backgroundColor: colors.primary || '#0284c7',
+                      borderColor: colors.tabBar,
+                    }}
+                  >
+                    <Text className="text-[9px] font-bold text-white leading-none text-center">
+                      {badge}
+                    </Text>
+                  </View>
+                ) : route.name === 'copilot' ? (
+                  <View
+                    className="absolute -top-0.5 -right-1 h-2 w-2 rounded-full border"
+                    style={{
+                      backgroundColor: '#a855f7',
+                      borderColor: colors.tabBar,
+                    }}
+                  />
+                ) : null}
+              </View>
+
+              {isFocused ? (
+                <Animated.Text
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(200)}
+                  numberOfLines={1}
+                  className="text-[11px] font-bold tracking-tight max-w-[80px]"
+                  style={{ color: colors.tabBarActiveText }}
+                >
+                  {label}
+                </Animated.Text>
+              ) : null}
+            </AnimatedTouchableOpacity>
+          );
+        })}
+      </Animated.View>
+    </View>
+  );
 }

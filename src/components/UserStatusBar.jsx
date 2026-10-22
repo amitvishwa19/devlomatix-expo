@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Text, TouchableOpacity, View } from 'react-native';
-import { useCrmDrawer } from '~/app/(modules)/crm/_components/CrmDrawer';
+import { useCrmDrawer } from '~/app/_components/CrmDrawer';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
@@ -73,7 +73,7 @@ export default function UserStatusBar({
     if (onPressUser) {
       onPressUser();
     } else {
-      router.push('/(modules)/crm/settings');
+      router.push('/settings');
     }
   };
 
@@ -136,7 +136,7 @@ export default function UserStatusBar({
         {/* Analytics */}
         {showAnalytics && (
           <TouchableOpacity
-            onPress={() => router.push('/(modules)/crm/analytics')}
+            onPress={() => router.push('/analytics')}
             className="h-8 w-8 items-center justify-center rounded-xl border"
             style={{
               backgroundColor: actionBtnBg,

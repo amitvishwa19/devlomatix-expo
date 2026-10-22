@@ -321,7 +321,7 @@ export default function CurexaSettingsScreen() {
 
         {/* Return Button */}
         <Pressable
-          onPress={() => router.replace('/(tabs)/home')}
+          onPress={() => router.replace('/(tabs)')}
           className="rounded-[14px] bg-emerald-600 py-3 items-center justify-center shadow-sm"
         >
           <Text className="text-[12px] font-bold text-white">Return to Main Devlomatix Apps</Text>

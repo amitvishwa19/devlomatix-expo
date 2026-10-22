@@ -242,7 +242,7 @@ function CurexaDrawerModal({ visible, onClose }) {
             <Pressable
               onPress={() => {
                 onClose();
-                router.replace('/(tabs)/home');
+                router.replace('/(tabs)');
               }}
               className="flex-row items-center justify-center gap-2 rounded-[14px] bg-gray-500/15 py-2.5"
             >

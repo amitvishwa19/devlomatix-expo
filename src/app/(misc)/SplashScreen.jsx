@@ -84,7 +84,7 @@ export default function AppSplashScreen() {
             });
 
           const hasAccess = isSuperAdmin || isAdmin || rawRoles.length > 0 || rawPerms.length > 0;
-          nextRoute = hasAccess ? '/(modules)/crm/(tabs)' : '/(misc)/no-access';
+          nextRoute = hasAccess ? '/(tabs)' : '/(misc)/no-access';
         }
 
         router.replace(nextRoute);

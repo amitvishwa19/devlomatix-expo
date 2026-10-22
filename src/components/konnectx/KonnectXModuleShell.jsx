@@ -29,7 +29,7 @@ export default function KonnectXModuleShell({
               backgroundColor: palette.colors.surface,
               borderColor: palette.colors.border
             }}
-            onPress={() => router.replace('/(tabs)/product')}>
+            onPress={() => router.replace('/(tabs)')}>
             <View className="flex-row items-center gap-2">
               <Ionicons name="arrow-back" size={16} color={palette.textColor} />
               <Text className="text-sm font-semibold" style={{ color: palette.textColor }}>
