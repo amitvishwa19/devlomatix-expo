@@ -12,7 +12,11 @@ async function prepareParams(params = {}) {
  */
 export async function getMailboxThreads(params = {}) {
   try {
-    const resolvedParams = await prepareParams(params);
+    const mailboxEmail =
+      typeof params.mailboxEmail === 'string' && params.mailboxEmail.trim()
+        ? params.mailboxEmail.trim()
+        : 'ALL';
+    const resolvedParams = await prepareParams({ ...params, mailboxEmail });
     const res = await api.get(apiUrls.crmMailbox, { params: resolvedParams });
     const payload = res.data;
     return {
@@ -95,6 +99,27 @@ export async function updateMailboxThread(threadId, actionPayload = {}, params =
     return {
       success: false,
       error: error?.response?.data?.error || error?.message || 'Failed to update thread',
+    };
+  }
+}
+
+/**
+ * Delete a thread (moves to TRASH, or permanently deletes if already in TRASH)
+ */
+export async function deleteMailboxThread(threadId, params = {}) {
+  if (!threadId) return { success: false, error: 'threadId is required' };
+  try {
+    const resolvedParams = await prepareParams(params);
+    const res = await api.delete(`${apiUrls.crmMailbox}/${threadId}`, { params: resolvedParams });
+    return {
+      success: true,
+      data: res.data?.data || null,
+    };
+  } catch (error) {
+    console.warn('[MAILBOX_DELETE_WARN]', error?.response?.data || error?.message);
+    return {
+      success: false,
+      error: error?.response?.data?.error || error?.message || 'Failed to delete thread',
     };
   }
 }

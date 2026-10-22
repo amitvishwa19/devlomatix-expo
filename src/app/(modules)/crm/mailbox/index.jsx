@@ -15,8 +15,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import AppScreen from '~/components/AppScreen';
 import CrmHeader from '../_components/CrmHeader';
 import { useCrmTheme } from '../utils/colors';
-import { getMailboxThreads, updateMailboxThread } from '~/services/mailbox';
+import { getMailboxThreads, updateMailboxThread, deleteMailboxThread } from '~/services/mailbox';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
+import Toast from 'react-native-toast-message';
+import IosDeleteConfirmModal from './_components/IosDeleteConfirmModal';
 
 let HapticsModule = null;
 try {
@@ -69,17 +71,54 @@ export default function CrmMailboxScreen({ isTab = false }) {
   const [mailboxes, setMailboxes] = useState([]);
   const [activeMailboxEmail, setActiveMailboxEmail] = useState('ALL');
   const [isMailboxModalVisible, setIsMailboxModalVisible] = useState(false);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null);
 
-  // Load threads
+  // Active mailbox object for header / switchers
+  const activeMailbox = useMemo(() => {
+    const cleanActive = (activeMailboxEmail || 'ALL').trim().toLowerCase();
+    return (
+      mailboxes.find((m) => (m.email || '').trim().toLowerCase() === cleanActive) ||
+      mailboxes[0] || {
+        id: 'all',
+        email: 'ALL',
+        label: 'All Inboxes',
+        type: 'ALL',
+      }
+    );
+  }, [mailboxes, activeMailboxEmail]);
+
+  // Load threads supporting both options object and positional arguments
   const loadThreads = useCallback(
-    async (folder = currentFolder, search = searchQuery, mailboxEmail = activeMailboxEmail, isRefresh = false) => {
+    async (folderOrOpts, searchParam, mailboxEmailParam, isRefreshParam) => {
+      let folder = currentFolder;
+      let search = searchQuery;
+      let mailboxEmail = activeMailboxEmail;
+      let isRefresh = false;
+
+      if (folderOrOpts && typeof folderOrOpts === 'object') {
+        if (folderOrOpts.folder !== undefined) folder = folderOrOpts.folder;
+        if (folderOrOpts.search !== undefined) search = folderOrOpts.search;
+        if (folderOrOpts.mailboxEmail !== undefined) mailboxEmail = folderOrOpts.mailboxEmail;
+        if (folderOrOpts.isRefresh !== undefined) isRefresh = !!folderOrOpts.isRefresh;
+      } else {
+        if (folderOrOpts !== undefined) folder = folderOrOpts;
+        if (searchParam !== undefined) search = searchParam;
+        if (mailboxEmailParam !== undefined) mailboxEmail = mailboxEmailParam;
+        if (isRefreshParam !== undefined) isRefresh = !!isRefreshParam;
+      }
+
+      // Safeguard: ensure mailboxEmail is never a boolean or invalid
+      if (typeof mailboxEmail !== 'string' || !mailboxEmail.trim()) {
+        mailboxEmail = activeMailboxEmail || 'ALL';
+      }
+
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
       try {
         const res = await getMailboxThreads({ folder, search, mailboxEmail, limit: 50 });
         if (res.success) {
-          setThreads(res.data);
+          setThreads(res.data || []);
           if (res.counts) setCounts(res.counts);
           if (res.mailboxes && Array.isArray(res.mailboxes) && res.mailboxes.length > 0) {
             setMailboxes(res.mailboxes);
@@ -96,8 +135,18 @@ export default function CrmMailboxScreen({ isTab = false }) {
   );
 
   useEffect(() => {
-    loadThreads(currentFolder, searchQuery, activeMailboxEmail);
+    loadThreads({ folder: currentFolder, search: searchQuery, mailboxEmail: activeMailboxEmail });
   }, [currentFolder, activeMailboxEmail]);
+
+  const handleSelectMailbox = (email) => {
+    const clean = (email || 'ALL').trim();
+    setIsMailboxModalVisible(false);
+    if (clean.toLowerCase() !== (activeMailboxEmail || 'ALL').toLowerCase()) {
+      setActiveMailboxEmail(clean);
+    } else {
+      loadThreads({ folder: currentFolder, search: searchQuery, mailboxEmail: clean });
+    }
+  };
 
   // Real-time socket updates for incoming and sent emails
   useEffect(() => {
@@ -158,7 +207,82 @@ export default function CrmMailboxScreen({ isTab = false }) {
     await updateMailboxThread(thread.id, { action: 'toggleStar' });
   };
 
-  // Render individual email thread item
+  // Toggle Read / Unread with instant optimistic state
+  const handleToggleRead = async (thread) => {
+    try {
+      HapticsModule?.selectionAsync?.();
+    } catch (_) {}
+
+    const isCurrentlyUnread = (thread.unreadCount || 0) > 0;
+    const nextUnread = isCurrentlyUnread ? 0 : 1;
+
+    setThreads((prev) =>
+      prev.map((t) => (t.id === thread.id ? { ...t, unreadCount: nextUnread } : t))
+    );
+    setCounts((prev) => ({
+      ...prev,
+      unread: isCurrentlyUnread ? Math.max(0, (prev.unread || 0) - 1) : (prev.unread || 0) + 1,
+    }));
+
+    await updateMailboxThread(thread.id, { action: isCurrentlyUnread ? 'markRead' : 'markUnread' });
+  };
+
+  // Trigger iOS Delete Confirmation Modal
+  const handlePromptDelete = (thread) => {
+    try {
+      HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
+    } catch (_) {}
+    setDeleteConfirmTarget(thread);
+  };
+
+  // Instantaneous optimistic delete execution
+  const handleExecuteDelete = async () => {
+    if (!deleteConfirmTarget) return;
+    const target = deleteConfirmTarget;
+    setDeleteConfirmTarget(null);
+
+    const prevThreads = threads;
+    const prevCounts = counts;
+
+    // 1. Instant optimistic update to local useState
+    setThreads((prev) => prev.filter((t) => t.id !== target.id));
+    setCounts((prev) => ({
+      ...prev,
+      inbox: currentFolder === 'INBOX' ? Math.max(0, (prev.inbox || 0) - 1) : prev.inbox,
+      unread: (target.unreadCount || 0) > 0 ? Math.max(0, (prev.unread || 0) - 1) : prev.unread,
+      starred: target.isStarred ? Math.max(0, (prev.starred || 0) - 1) : prev.starred,
+      trash: currentFolder === 'TRASH' ? Math.max(0, (prev.trash || 0) - 1) : (prev.trash || 0) + 1,
+    }));
+
+    Toast.show({
+      type: 'success',
+      text1: currentFolder === 'TRASH' ? 'Permanently deleted' : 'Moved to Trash',
+    });
+
+    try {
+      const res = await deleteMailboxThread(target.id);
+      if (!res.success) {
+        // Rollback state if backend returns error
+        setThreads(prevThreads);
+        setCounts(prevCounts);
+        Toast.show({
+          type: 'error',
+          text1: 'Delete failed',
+          text2: res.error || 'Server error',
+        });
+      }
+    } catch (err) {
+      setThreads(prevThreads);
+      setCounts(prevCounts);
+      Toast.show({
+        type: 'error',
+        text1: 'Delete failed',
+        text2: err.message,
+      });
+    }
+  };
+
+  // Render individual email thread item with uniform card height and density
   const renderThreadCard = ({ item }) => {
     const isUnread = (item.unreadCount || 0) > 0;
     const senderName = item.contact?.name || item.messages?.[0]?.from || 'Unknown Sender';
@@ -173,9 +297,21 @@ export default function CrmMailboxScreen({ isTab = false }) {
           try {
             HapticsModule?.selectionAsync?.();
           } catch (_) {}
+          // Optimistically mark as read in local state when opened
+          if (isUnread) {
+            setThreads((prev) =>
+              prev.map((t) => (t.id === item.id ? { ...t, unreadCount: 0 } : t))
+            );
+            setCounts((prev) => ({
+              ...prev,
+              unread: Math.max(0, (prev.unread || 0) - 1),
+            }));
+          }
           router.push(`/(modules)/crm/mailbox/${item.id}`);
         }}
-        className="mx-3 mb-2 rounded-2xl border p-3 active:opacity-75"
+        onLongPress={() => handlePromptDelete(item)}
+        delayLongPress={300}
+        className="mx-3 mb-2 rounded-[16px] border p-2.5 active:opacity-75"
         style={{
           backgroundColor: isUnread
             ? isDark ? '#1e293b' : '#f0f7ff'
@@ -185,32 +321,46 @@ export default function CrmMailboxScreen({ isTab = false }) {
             : colors.border,
           shadowColor: colors.shadowColor,
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 3,
+          shadowOpacity: 0.04,
+          shadowRadius: 2,
           elevation: 1,
         }}
       >
-        <View className="flex-row items-start gap-2.5">
+        <View className="flex-row items-center gap-2.5">
           {/* Avatar / Direction Icon */}
-          <View
-            className="h-10 w-10 items-center justify-center rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: isOutbound
-                ? isDark ? '#064e3b' : '#ecfdf5'
-                : isDark ? '#1e3a8a' : '#eff6ff',
-            }}
-          >
-            <Text
-              className="font-bold text-xs"
-              style={{ color: isOutbound ? '#10b981' : colors.primary }}
+          <View className="relative shrink-0">
+            <View
+              className="h-9 w-9 items-center justify-center rounded-xl overflow-hidden"
+              style={{
+                backgroundColor: isOutbound
+                  ? isDark ? '#064e3b' : '#ecfdf5'
+                  : isDark ? '#1e3a8a' : '#eff6ff',
+              }}
             >
-              {initials}
-            </Text>
+              <Text
+                className="font-bold text-[11px]"
+                style={{ color: isOutbound ? '#10b981' : colors.primary }}
+              >
+                {initials}
+              </Text>
+            </View>
+
+            {/* Unread indicator dot */}
+            {isUnread && (
+              <View
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+                style={{
+                  backgroundColor: colors.primary,
+                  borderColor: isDark ? '#1e293b' : '#f0f7ff',
+                }}
+              />
+            )}
           </View>
 
-          {/* Center Column: Sender, Subject, Snippet */}
-          <View className="flex-1 min-w-0 pr-1">
-            <View className="flex-row items-center justify-between mb-0.5">
+          {/* Center Column: Uniform 3-line layout */}
+          <View className="flex-1 min-w-0 justify-center">
+            {/* Line 1: Sender Name & Count + Time, Star & Trash */}
+            <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-1.5 flex-1 pr-2">
                 <Text
                   className={`text-[13px] ${isUnread ? 'font-bold' : 'font-semibold'}`}
@@ -231,78 +381,65 @@ export default function CrmMailboxScreen({ isTab = false }) {
                 )}
               </View>
 
-              <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
-                {formatTime(item.lastMessageAt || item.createdAt)}
-              </Text>
+              <View className="flex-row items-center gap-1 shrink-0">
+                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                  {formatTime(item.lastMessageAt || item.createdAt)}
+                </Text>
+                <Pressable
+                  onPress={() => handleToggleStar(item)}
+                  hitSlop={8}
+                  className="p-0.5 active:opacity-60"
+                >
+                  <Ionicons
+                    name={item.isStarred ? 'star' : 'star-outline'}
+                    size={16}
+                    color={item.isStarred ? '#f59e0b' : colors.textSoft}
+                  />
+                </Pressable>
+                <Pressable
+                  onPress={() => handlePromptDelete(item)}
+                  hitSlop={8}
+                  className="p-0.5 ml-0.5 active:opacity-60"
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={15}
+                    color={colors.textSoft}
+                  />
+                </Pressable>
+              </View>
             </View>
 
-            {/* Subject */}
-            <Text
-              className={`text-[13px] mb-1 ${isUnread ? 'font-bold' : 'font-medium'}`}
-              style={{ color: isUnread ? colors.text : colors.textSecondary }}
-              numberOfLines={1}
-            >
-              {item.subject || '(No Subject)'}
-            </Text>
+            {/* Line 2: Subject + Optional Deal Pill */}
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              <Text
+                className={`text-[12px] flex-1 ${isUnread ? 'font-bold' : 'font-medium'}`}
+                style={{ color: isUnread ? colors.text : colors.textSecondary }}
+                numberOfLines={1}
+              >
+                {item.subject || '(No Subject)'}
+              </Text>
+              {item.deal && (
+                <View
+                  className="flex-row items-center gap-0.5 px-1.5 py-0.2 rounded shrink-0"
+                  style={{ backgroundColor: isDark ? '#1e3a8a' : '#eff6ff' }}
+                >
+                  <Ionicons name="pricetag-outline" size={9} color={colors.primary} />
+                  <Text className="text-[9px] font-semibold" style={{ color: colors.primary }}>
+                    {item.deal.title}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-            {/* Snippet */}
+            {/* Line 3: Snippet (1 line, exact same height across all cards) */}
             <Text
-              className="text-[12px] leading-tight"
+              className="text-[11px] mt-0.5"
               style={{ color: colors.textMuted }}
-              numberOfLines={2}
+              numberOfLines={1}
             >
               {item.snippet || 'No message preview'}
             </Text>
-
-            {/* Bottom Meta Tags: Contact / Deal */}
-            {(item.contact || item.deal) && (
-              <View className="flex-row items-center gap-1.5 mt-2 flex-wrap">
-                {item.contact && (
-                  <View
-                    className="flex-row items-center gap-1 px-2 py-0.5 rounded-md"
-                    style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
-                  >
-                    <Ionicons name="person-outline" size={10} color={colors.textMuted} />
-                    <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
-                      {item.contact.name}
-                    </Text>
-                  </View>
-                )}
-                {item.deal && (
-                  <View
-                    className="flex-row items-center gap-1 px-2 py-0.5 rounded-md"
-                    style={{ backgroundColor: isDark ? '#1e3a8a' : '#eff6ff' }}
-                  >
-                    <Ionicons name="pricetag-outline" size={10} color={colors.primary} />
-                    <Text className="text-[10px] font-semibold" style={{ color: colors.primary }}>
-                      {item.deal.title}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* Right Actions: Star toggle & unread dot */}
-          <View className="items-center justify-between h-full pt-0.5">
-            <Pressable
-              onPress={() => handleToggleStar(item)}
-              hitSlop={10}
-              className="p-1"
-            >
-              <Ionicons
-                name={item.isStarred ? 'star' : 'star-outline'}
-                size={18}
-                color={item.isStarred ? '#f59e0b' : colors.textSoft}
-              />
-            </Pressable>
-
-            {isUnread && (
-              <View
-                className="w-2.5 h-2.5 rounded-full mt-2"
-                style={{ backgroundColor: colors.primary }}
-              />
-            )}
           </View>
         </View>
       </Pressable>
@@ -370,9 +507,9 @@ export default function CrmMailboxScreen({ isTab = false }) {
           >
             <Ionicons
               name={
-                activeMailboxEmail === 'ALL'
+                activeMailbox.type === 'ALL'
                   ? 'layers-outline'
-                  : mailboxes.find((m) => m.email === activeMailboxEmail)?.type === 'PERSONAL'
+                  : activeMailbox.type === 'PERSONAL'
                   ? 'person-outline'
                   : 'briefcase-outline'
               }
@@ -380,13 +517,13 @@ export default function CrmMailboxScreen({ isTab = false }) {
               color={colors.primary}
             />
             <Text className="text-[11px] font-bold flex-1" style={{ color: colors.text }} numberOfLines={1}>
-              {mailboxes.find((m) => m.email === activeMailboxEmail)?.label || 'All Inboxes'}
+              {activeMailbox.label || activeMailbox.postTitle || 'All Inboxes'}
             </Text>
             <Ionicons name="chevron-down" size={12} color={colors.textMuted} />
           </Pressable>
 
           <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-            {activeMailboxEmail === 'ALL' ? 'Unified' : activeMailboxEmail.split('@')[0]}
+            {activeMailbox.type === 'ALL' ? 'Unified' : activeMailbox.email?.split('@')[0]}
           </Text>
         </View>
       )}
@@ -407,7 +544,7 @@ export default function CrmMailboxScreen({ isTab = false }) {
               placeholderTextColor={colors.inputPlaceholder}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              onSubmitEditing={() => loadThreads(currentFolder, searchQuery)}
+              onSubmitEditing={() => loadThreads({ folder: currentFolder, search: searchQuery })}
               returnKeyType="search"
               className="flex-1 ml-2 text-xs"
               style={{ color: colors.text }}
@@ -416,7 +553,7 @@ export default function CrmMailboxScreen({ isTab = false }) {
               <Pressable
                 onPress={() => {
                   setSearchQuery('');
-                  loadThreads(currentFolder, '');
+                  loadThreads({ folder: currentFolder, search: '' });
                 }}
               >
                 <Ionicons name="close-circle" size={15} color={colors.textMuted} />
@@ -511,7 +648,7 @@ export default function CrmMailboxScreen({ isTab = false }) {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => loadThreads(currentFolder, searchQuery, true)}
+              onRefresh={() => loadThreads({ isRefresh: true })}
               tintColor={colors.primary}
             />
           }
@@ -583,17 +720,17 @@ export default function CrmMailboxScreen({ isTab = false }) {
 
             <View className="gap-1.5">
               {mailboxes.map((mb) => {
-                const isSelected = (activeMailboxEmail || 'ALL') === mb.email;
+                const isSelected =
+                  (activeMailboxEmail || 'ALL').trim().toLowerCase() ===
+                  (mb.email || '').trim().toLowerCase();
                 return (
                   <Pressable
-                    key={mb.id}
+                    key={mb.id || mb.email}
                     onPress={() => {
                       try {
                         HapticsModule?.selectionAsync?.();
                       } catch (_) {}
-                      setActiveMailboxEmail(mb.email);
-                      setIsMailboxModalVisible(false);
-                      loadThreads(currentFolder, searchQuery, mb.email);
+                      handleSelectMailbox(mb.email);
                     }}
                     className="flex-row items-center justify-between p-2.5 rounded-xl border active:opacity-75"
                     style={{
@@ -621,11 +758,11 @@ export default function CrmMailboxScreen({ isTab = false }) {
                           style={{ color: isSelected ? colors.primary : colors.text }}
                           numberOfLines={1}
                         >
-                          {mb.label}
+                          {mb.label || mb.postTitle || mb.email}
                         </Text>
                         {mb.email !== 'ALL' && (
                           <Text className="text-[10px]" style={{ color: colors.textMuted }}>
-                            {mb.email}
+                            {mb.email} {mb.department && mb.department !== 'Personal' ? `• ${mb.department}` : ''}
                           </Text>
                         )}
                       </View>
@@ -640,6 +777,28 @@ export default function CrmMailboxScreen({ isTab = false }) {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={!!deleteConfirmTarget}
+        title={
+          currentFolder === 'TRASH'
+            ? 'Permanently Delete Email'
+            : deleteConfirmTarget?.subject
+            ? `Delete "${deleteConfirmTarget.subject}"`
+            : 'Delete Conversation'
+        }
+        message={
+          currentFolder === 'TRASH'
+            ? 'This conversation will be permanently deleted from the server and cannot be recovered.'
+            : 'Are you sure you want to move this conversation to Trash?'
+        }
+        confirmText={currentFolder === 'TRASH' ? 'Delete Permanently' : 'Move to Trash'}
+        isPermanent={currentFolder === 'TRASH'}
+        onConfirm={handleExecuteDelete}
+        onCancel={() => setDeleteConfirmTarget(null)}
+      />
     </AppScreen>
   );
 }
+

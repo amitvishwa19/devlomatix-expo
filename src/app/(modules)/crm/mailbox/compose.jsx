@@ -69,10 +69,23 @@ export default function MailboxComposeScreen() {
           setDeals(dealsRes.data);
         }
         if (threadsRes.success && Array.isArray(threadsRes.mailboxes)) {
-          const validBoxes = threadsRes.mailboxes.filter((m) => m.id !== 'ALL' && m.email);
+          const validBoxes = threadsRes.mailboxes.filter(
+            (m) => m && m.email && m.email !== 'ALL' && m.id !== 'all' && m.type !== 'ALL'
+          );
           setMailboxes(validBoxes);
-          if (!params.fromEmail && validBoxes.length > 0) {
-            setSelectedFromEmail(validBoxes[0].email);
+          if (params.fromEmail) {
+            const matched = validBoxes.find(
+              (m) => m.email.toLowerCase() === String(params.fromEmail).trim().toLowerCase()
+            );
+            if (matched) {
+              setSelectedFromEmail(matched.email);
+            } else {
+              setSelectedFromEmail(String(params.fromEmail));
+            }
+          } else if (validBoxes.length > 0) {
+            const defaultBox =
+              validBoxes.find((m) => m.isPrimary || m.type === 'PERSONAL') || validBoxes[0];
+            setSelectedFromEmail(defaultBox.email);
           }
         }
       } catch (err) {
@@ -184,7 +197,7 @@ export default function MailboxComposeScreen() {
         threadId: threadId || undefined,
         contactId: contactId || undefined,
         dealId: dealId || undefined,
-        fromEmail: selectedFromEmail || undefined,
+        fromEmail: selectedFromEmail && selectedFromEmail !== 'ALL' ? selectedFromEmail : undefined,
         to: allRecipients,
         cc: ccList.length > 0 ? ccList : undefined,
         bcc: bccList.length > 0 ? bccList : undefined,
@@ -283,7 +296,7 @@ export default function MailboxComposeScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Send As / From Field (Org Mailboxes Selector) */}
-          {mailboxes.length > 1 && (
+          {mailboxes.length > 0 && (
             <View
               className="mb-2.5 rounded-2xl border p-2.5"
               style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -296,7 +309,9 @@ export default function MailboxComposeScreen() {
                   </Text>
                 </View>
                 <Text className="text-[10px] font-medium" style={{ color: colors.primary }}>
-                  {mailboxes.find((m) => m.email === selectedFromEmail)?.roleTitle || 'Org Mailbox'}
+                  {mailboxes.find((m) => m.email === selectedFromEmail)?.postTitle ||
+                    mailboxes.find((m) => m.email === selectedFromEmail)?.department ||
+                    'Org Mailbox'}
                 </Text>
               </View>
 
@@ -326,7 +341,7 @@ export default function MailboxComposeScreen() {
                           className="text-[11px] font-bold"
                           style={{ color: isSelected ? colors.primary : colors.text }}
                         >
-                          {mb.name || mb.roleTitle || mb.email}
+                          {mb.postTitle || mb.displayName || mb.label?.split('(')[0]?.trim() || mb.email}
                         </Text>
                         <Text
                           className="text-[9px]"

@@ -17,8 +17,9 @@ import Toast from 'react-native-toast-message';
 import AppScreen from '~/components/AppScreen';
 import CrmHeader from '../_components/CrmHeader';
 import { useCrmTheme } from '../utils/colors';
-import { getMailboxThreadDetail, sendMailboxEmail, updateMailboxThread } from '~/services/mailbox';
+import { getMailboxThreadDetail, sendMailboxEmail, updateMailboxThread, deleteMailboxThread } from '~/services/mailbox';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
+import IosDeleteConfirmModal from './_components/IosDeleteConfirmModal';
 
 let HapticsModule = null;
 try {
@@ -72,6 +73,7 @@ export default function MailboxThreadDetailScreen() {
   const [isSending, setIsSending] = useState(false);
   const [expandedDetails, setExpandedDetails] = useState({});
   const [htmlModalContent, setHtmlModalContent] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const scrollViewRef = useRef(null);
 
@@ -148,6 +150,35 @@ export default function MailboxThreadDetailScreen() {
     }
   };
 
+  // iOS-style delete prompt & execution
+  const handlePromptDelete = () => {
+    try {
+      HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
+    } catch (_) {}
+    setShowDeleteConfirm(true);
+  };
+
+  const handleExecuteDelete = async () => {
+    if (!thread) return;
+    setShowDeleteConfirm(false);
+
+    const isPermanent = thread.folder === 'TRASH';
+    Toast.show({
+      type: 'success',
+      text1: isPermanent ? 'Permanently deleted' : 'Moved to Trash',
+    });
+
+    try {
+      HapticsModule?.notificationAsync?.(HapticsModule.NotificationFeedbackType.Success);
+    } catch (_) {}
+
+    router.back();
+
+    deleteMailboxThread(thread.id).catch((err) => {
+      console.warn('[DELETE_ERR]', err);
+    });
+  };
+
   // Quick Reply
   const handleSendReply = async () => {
     if (!replyText.trim() || !thread) return;
@@ -205,7 +236,7 @@ export default function MailboxThreadDetailScreen() {
       const res = await sendMailboxEmail({
         threadId: thread.id,
         to: [toRecipient],
-        fromEmail: inboundRecipient,
+        fromEmail: inboundRecipient && inboundRecipient !== 'ALL' ? inboundRecipient : undefined,
         subject: replySubject,
         bodyText: cleanReply,
         bodyHtml: `<p>${cleanReply.replace(/\n/g, '<br/>')}</p>`,
@@ -298,23 +329,39 @@ export default function MailboxThreadDetailScreen() {
               </Pressable>
             )}
 
-            {thread.folder !== 'TRASH' ? (
+            {thread.folder === 'TRASH' ? (
+              <>
+                {/* Restore to Inbox */}
+                <Pressable
+                  onPress={() => handleSetFolder('INBOX')}
+                  hitSlop={8}
+                  className="h-8 px-2.5 flex-row items-center justify-center gap-1 rounded-xl border active:opacity-70"
+                  style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                >
+                  <Ionicons name="arrow-undo-outline" size={15} color={colors.primary} />
+                  <Text className="text-[11px] font-semibold" style={{ color: colors.primary }}>
+                    Restore
+                  </Text>
+                </Pressable>
+
+                {/* Permanent Delete */}
+                <Pressable
+                  onPress={handlePromptDelete}
+                  hitSlop={8}
+                  className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+                  style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                >
+                  <Ionicons name="trash" size={16} color="#ef4444" />
+                </Pressable>
+              </>
+            ) : (
               <Pressable
-                onPress={() => handleSetFolder('TRASH')}
+                onPress={handlePromptDelete}
                 hitSlop={8}
                 className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
               >
                 <Ionicons name="trash-outline" size={16} color="#ef4444" />
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={() => handleSetFolder('INBOX')}
-                hitSlop={8}
-                className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-              >
-                <Ionicons name="mail-unread-outline" size={16} color={colors.primary} />
               </Pressable>
             )}
           </View>
@@ -587,6 +634,14 @@ export default function MailboxThreadDetailScreen() {
             onPress={() => {
               const lastInbound = thread.messages?.slice().reverse().find((m) => m.direction === 'INBOUND');
               const threadInboundTo = (lastInbound?.to && Array.isArray(lastInbound.to) && lastInbound.to[0]) || '';
+              let recipient = lastInbound?.fromEmail || thread.contact?.email;
+              if (!recipient && lastInbound?.from) {
+                const match = lastInbound.from.match(/<([^>]+)>/);
+                recipient = match ? match[1] : lastInbound.from;
+              }
+              if (!recipient) {
+                recipient = thread.contact?.email || '';
+              }
               router.push({
                 pathname: '/(modules)/crm/mailbox/compose',
                 params: {
@@ -594,7 +649,8 @@ export default function MailboxThreadDetailScreen() {
                   contactId: thread.contact?.id || '',
                   dealId: thread.deal?.id || '',
                   subject: thread.subject?.startsWith('Re:') ? thread.subject : `Re: ${thread.subject || ''}`,
-                  fromEmail: threadInboundTo,
+                  fromEmail: threadInboundTo && threadInboundTo !== 'ALL' ? threadInboundTo : '',
+                  to: recipient,
                 },
               });
             }}
@@ -684,6 +740,27 @@ export default function MailboxThreadDetailScreen() {
           )}
         </View>
       </Modal>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={showDeleteConfirm}
+        title={
+          thread?.folder === 'TRASH'
+            ? 'Permanently Delete Email'
+            : thread?.subject
+            ? `Delete "${thread.subject}"`
+            : 'Delete Conversation'
+        }
+        message={
+          thread?.folder === 'TRASH'
+            ? 'This conversation will be permanently deleted from the server and cannot be recovered.'
+            : 'Are you sure you want to move this conversation to Trash?'
+        }
+        confirmText={thread?.folder === 'TRASH' ? 'Delete Permanently' : 'Move to Trash'}
+        isPermanent={thread?.folder === 'TRASH'}
+        onConfirm={handleExecuteDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </AppScreen>
   );
 }
