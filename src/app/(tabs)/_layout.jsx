@@ -9,12 +9,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
+import { useRbac } from '~/contexts/RbacContext';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function TabLayout() {
     const router = useRouter();
     const [isReady, setIsReady] = useState(false);
+    const { roles, permissions, isSuperAdmin, isAdmin, loading: rbacLoading, user } = useRbac();
 
     useEffect(() => {
         let isMounted = true;
@@ -22,9 +24,7 @@ export default function TabLayout() {
         const checkSession = async () => {
             const session = await getSession();
 
-            if (!isMounted) {
-                return;
-            }
+            if (!isMounted) return;
 
             if (!session?.isLoggedIn) {
                 router.replace('/(auth)/login');
@@ -40,6 +40,18 @@ export default function TabLayout() {
             isMounted = false;
         };
     }, [router]);
+
+    // After RBAC loads, redirect users with zero roles & zero permissions
+    useEffect(() => {
+        if (!isReady || rbacLoading) return;
+        if (isSuperAdmin || isAdmin) return;
+        const hasNoAccess =
+            (!roles || roles.length === 0) &&
+            (!permissions || permissions.length === 0);
+        if (hasNoAccess) {
+            router.replace('/(misc)/no-access');
+        }
+    }, [isReady, rbacLoading, isSuperAdmin, isAdmin, roles, permissions]);
 
     if (!isReady) {
         return null;

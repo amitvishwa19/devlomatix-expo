@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "~/theme/AppTheme";
 import { getSession } from "~/utils/authStorage";
 import { ONBOARDING_KEY } from "~/utils/onboardingStorage";
+import { RoleProtectedScreen } from "~/components/RoleProtectedScreen";
 
 const STORAGE_KEYS = [
   { key: "devlomatix.user", label: "User Data", secure: false },
@@ -131,7 +132,12 @@ export default function SharedPrefScreen() {
   };
 
   return (
-    <SafeAreaView
+    <RoleProtectedScreen
+      requiredRole="Super Admin"
+      title="Shared Preferences Restricted"
+      message="Shared preferences contains internal security keys, authentication tokens, and device cache. Only Super Administrators are permitted to access this panel."
+    >
+      <SafeAreaView
       className="flex-1"
       style={{ backgroundColor: palette.colors.page }}
     >
@@ -307,5 +313,6 @@ export default function SharedPrefScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  </RoleProtectedScreen>
   );
 }

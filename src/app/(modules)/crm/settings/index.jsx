@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import {
@@ -23,6 +23,7 @@ import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
 import { clearSession, getSession } from '~/utils/authStorage';
+import { fetchAccessData } from '~/services/access-management';
 import { usePermissions } from '~/hooks/usePermissions';
 import { PermissionGate } from '~/components/PermissionGate';
 
@@ -99,10 +100,46 @@ export default function CrmSettingsScreen({ isTab = false }) {
   const refreshAll = crm?.refreshAll || (() => {});
   const refreshing = crm?.refreshing || false;
 
-  const { isSuperAdmin, isAdmin, roles: userRoles, permissions: userPerms } = usePermissions();
+  const {
+    isSuperAdmin,
+    isAdmin,
+    roles: userRoles,
+    permissions: userPerms,
+    canAccessModule,
+    hasPermission,
+  } = usePermissions();
   const [user, setUser] = useState(null);
   const [permModules, setPermModules] = useState([]);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Compute accessible module count in Devlomatix Suite
+  const accessibleModulesCount = useMemo(() => {
+    return ECOSYSTEM_MODULES.filter(
+      (mod) => canAccessModule(mod.id) || canAccessModule(mod.name)
+    ).length;
+  }, [canAccessModule]);
+
+  // Ecosystem bridge authorizations
+  const konnectxAllowed = useMemo(
+    () => canAccessModule('konnectx') || isSuperAdmin,
+    [canAccessModule, isSuperAdmin]
+  );
+  const dcrAllowed = useMemo(
+    () => canAccessModule('dcr') || canAccessModule('crm') || hasPermission('read:dcr') || isSuperAdmin,
+    [canAccessModule, hasPermission, isSuperAdmin]
+  );
+  const payflowAllowed = useMemo(
+    () => canAccessModule('payflow') || isSuperAdmin,
+    [canAccessModule, isSuperAdmin]
+  );
+  const flowgenixAllowed = useMemo(
+    () => canAccessModule('flowgenix') || isSuperAdmin,
+    [canAccessModule, isSuperAdmin]
+  );
+  const hireflowAllowed = useMemo(
+    () => canAccessModule('hireflow') || isSuperAdmin,
+    [canAccessModule, isSuperAdmin]
+  );
 
   // Preference switches
   const [preferences, setPreferences] = useState({
@@ -276,12 +313,32 @@ export default function CrmSettingsScreen({ isTab = false }) {
               <View
                 className="rounded-full px-2.5 py-0.5 border"
                 style={{
-                  backgroundColor: colors.primarySoft,
-                  borderColor: colors.primaryBorder,
+                  backgroundColor:
+                    userRoles?.length > 0 || isSuperAdmin
+                      ? colors.primarySoft
+                      : isDark
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : '#fee2e2',
+                  borderColor:
+                    userRoles?.length > 0 || isSuperAdmin
+                      ? colors.primaryBorder
+                      : isDark
+                      ? 'rgba(239, 68, 68, 0.3)'
+                      : '#fca5a5',
                 }}
               >
-                <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.primary }}>
-                  Pro
+                <Text
+                  className="text-[10px] font-bold uppercase tracking-wider"
+                  style={{
+                    color:
+                      userRoles?.length > 0 || isSuperAdmin ? colors.primary : '#ef4444',
+                  }}
+                >
+                  {isSuperAdmin
+                    ? 'Super Admin'
+                    : userRoles?.length > 0
+                    ? userRoles[0]
+                    : 'Restricted'}
                 </Text>
               </View>
             </View>
@@ -441,21 +498,35 @@ export default function CrmSettingsScreen({ isTab = false }) {
             borderColor: colors.whatsappBorder,
           }}
         >
-          <View className="flex-row items-center gap-x-2.5 mb-2">
-            <View
-              className="h-8 w-8 items-center justify-center rounded-xl"
-              style={{ backgroundColor: colors.whatsapp }}
-            >
-              <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-x-2.5">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: konnectxAllowed ? colors.whatsapp : (isDark ? '#334155' : '#94a3b8') }}
+              >
+                <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
+              </View>
+              <View>
+                <Text className="text-sm font-bold" style={{ color: konnectxAllowed ? colors.whatsapp : colors.text }}>
+                  KonnectX WhatsApp Bridge
+                </Text>
+                <Text className="text-[11px]" style={{ color: colors.textMuted }}>
+                  Auto-scan conversations & sync contacts
+                </Text>
+              </View>
             </View>
-            <View>
-              <Text className="text-sm font-bold" style={{ color: colors.whatsapp }}>
-                KonnectX WhatsApp Bridge
-              </Text>
-              <Text className="text-[11px]" style={{ color: colors.textMuted }}>
-                Auto-scan conversations & sync contacts
-              </Text>
-            </View>
+            {!konnectxAllowed && (
+              <View
+                className="rounded-full px-2 py-0.5 border flex-row items-center gap-x-1"
+                style={{
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#fca5a5',
+                }}
+              >
+                <Ionicons name="lock-closed" size={9} color="#ef4444" />
+                <Text className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">Locked</Text>
+              </View>
+            )}
           </View>
 
           <Text className="text-xs mt-1.5 leading-5" style={{ color: colors.textSecondary }}>
@@ -482,20 +553,32 @@ export default function CrmSettingsScreen({ isTab = false }) {
           )}
 
           <Pressable
-            onPress={handleSyncWhatsApp}
+            onPress={() => {
+              if (!konnectxAllowed) {
+                Alert.alert(
+                  'Access Restricted',
+                  'You do not have authorization to access the KonnectX module. Contact your administrator to grant permissions.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+                return;
+              }
+              handleSyncWhatsApp();
+            }}
             disabled={syncingWa}
             className="mt-3.5 flex-row items-center justify-center gap-x-2 rounded-xl py-3 shadow-xs active:opacity-80 min-h-[46px]"
             style={{
-              backgroundColor: colors.whatsapp,
-              opacity: syncingWa ? 0.5 : 1,
+              backgroundColor: konnectxAllowed ? colors.whatsapp : (isDark ? '#334155' : '#94a3b8'),
+              opacity: syncingWa || !konnectxAllowed ? 0.6 : 1,
             }}
           >
             {syncingWa ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <>
-                <Ionicons name="sync" size={16} color="#ffffff" />
-                <Text className="text-xs font-bold text-white">Sync WhatsApp Chats Now</Text>
+                <Ionicons name={konnectxAllowed ? "sync" : "lock-closed"} size={16} color="#ffffff" />
+                <Text className="text-xs font-bold text-white">
+                  {konnectxAllowed ? 'Sync WhatsApp Chats Now' : 'KonnectX Locked'}
+                </Text>
               </>
             )}
           </Pressable>
@@ -504,8 +587,22 @@ export default function CrmSettingsScreen({ isTab = false }) {
         {/* 6. DCR (Daily Call Records) Card */}
         <Pressable
           className="rounded-2xl border p-4 shadow-xs mb-4 active:opacity-75"
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          onPress={() => router.push('/(modules)/crm/dcr')}
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            opacity: dcrAllowed ? 1 : 0.6,
+          }}
+          onPress={() => {
+            if (dcrAllowed) {
+              router.push('/(modules)/crm/dcr');
+            } else {
+              Alert.alert(
+                'Access Restricted',
+                'You do not have authorization to access Daily Call Records (DCR). Please contact your administrator to grant permissions.',
+                [{ text: 'OK', style: 'default' }]
+              );
+            }
+          }}
         >
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-x-2.5">
@@ -526,17 +623,25 @@ export default function CrmSettingsScreen({ isTab = false }) {
             </View>
             <View className="flex-row items-center gap-x-1">
               <View
-                className="rounded-lg px-2.5 py-1 border"
+                className="rounded-lg px-2.5 py-1 border flex-row items-center gap-x-1"
                 style={{
                   backgroundColor: colors.cardAlt,
                   borderColor: colors.borderLight,
                 }}
               >
-                <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
-                  Open DCR
+                {!dcrAllowed && <Ionicons name="lock-closed" size={10} color={colors.textMuted} />}
+                <Text
+                  className="text-[10px] font-bold"
+                  style={{ color: dcrAllowed ? colors.primary : colors.textMuted }}
+                >
+                  {dcrAllowed ? 'Open DCR' : 'Locked'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+              <Ionicons
+                name={dcrAllowed ? "chevron-forward" : "lock-closed-outline"}
+                size={15}
+                color={colors.textMuted}
+              />
             </View>
           </View>
           <Text className="text-xs leading-5 mt-1.5" style={{ color: colors.textSecondary }}>
@@ -557,16 +662,32 @@ export default function CrmSettingsScreen({ isTab = false }) {
           </Text>
 
           {/* PayFlow Bridge */}
-          <View
-            className="flex-row items-center justify-between py-3 border-b"
-            style={{ borderBottomColor: colors.borderLight }}
+          <Pressable
+            className="flex-row items-center justify-between py-3 border-b active:opacity-70"
+            style={{
+              borderBottomColor: colors.borderLight,
+              opacity: payflowAllowed ? 1 : 0.6,
+            }}
+            onPress={() => {
+              if (!payflowAllowed) {
+                Alert.alert(
+                  'Access Restricted',
+                  'You do not have authorization to access the PayFlow Billing Bridge. Please contact your workspace administrator.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+              }
+            }}
           >
             <View className="flex-row items-center gap-x-2.5">
               <View
                 className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.cardAlt }}
               >
-                <Ionicons name="card-outline" size={17} color={colors.copilot} />
+                <Ionicons
+                  name="card-outline"
+                  size={17}
+                  color={payflowAllowed ? colors.copilot : colors.textMuted}
+                />
               </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
@@ -578,29 +699,57 @@ export default function CrmSettingsScreen({ isTab = false }) {
               </View>
             </View>
             <View
-              className="rounded-full px-2.5 py-1 border"
+              className="rounded-full px-2.5 py-1 border flex-row items-center gap-x-1"
               style={{
-                backgroundColor: colors.successSoft,
-                borderColor: colors.successBorder,
+                backgroundColor: payflowAllowed
+                  ? colors.successSoft
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.15)'
+                  : '#fee2e2',
+                borderColor: payflowAllowed
+                  ? colors.successBorder
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.3)'
+                  : '#fca5a5',
               }}
             >
-              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
-                Connected
+              {!payflowAllowed && <Ionicons name="lock-closed" size={9} color="#ef4444" />}
+              <Text
+                className="text-[10px] font-bold"
+                style={{ color: payflowAllowed ? colors.success : '#ef4444' }}
+              >
+                {payflowAllowed ? 'Connected' : 'Locked'}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           {/* FlowGenix Bridge */}
-          <View
-            className="flex-row items-center justify-between py-3 border-b"
-            style={{ borderBottomColor: colors.borderLight }}
+          <Pressable
+            className="flex-row items-center justify-between py-3 border-b active:opacity-70"
+            style={{
+              borderBottomColor: colors.borderLight,
+              opacity: flowgenixAllowed ? 1 : 0.6,
+            }}
+            onPress={() => {
+              if (!flowgenixAllowed) {
+                Alert.alert(
+                  'Access Restricted',
+                  'You do not have authorization to access the FlowGenix AI Agent bridge. Please contact your workspace administrator.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+              }
+            }}
           >
             <View className="flex-row items-center gap-x-2.5">
               <View
                 className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.primarySoft }}
               >
-                <Ionicons name="sparkles-outline" size={17} color={colors.primary} />
+                <Ionicons
+                  name="sparkles-outline"
+                  size={17}
+                  color={flowgenixAllowed ? colors.primary : colors.textMuted}
+                />
               </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
@@ -612,26 +761,54 @@ export default function CrmSettingsScreen({ isTab = false }) {
               </View>
             </View>
             <View
-              className="rounded-full px-2.5 py-1 border"
+              className="rounded-full px-2.5 py-1 border flex-row items-center gap-x-1"
               style={{
-                backgroundColor: colors.successSoft,
-                borderColor: colors.successBorder,
+                backgroundColor: flowgenixAllowed
+                  ? colors.successSoft
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.15)'
+                  : '#fee2e2',
+                borderColor: flowgenixAllowed
+                  ? colors.successBorder
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.3)'
+                  : '#fca5a5',
               }}
             >
-              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
-                Active
+              {!flowgenixAllowed && <Ionicons name="lock-closed" size={9} color="#ef4444" />}
+              <Text
+                className="text-[10px] font-bold"
+                style={{ color: flowgenixAllowed ? colors.success : '#ef4444' }}
+              >
+                {flowgenixAllowed ? 'Active' : 'Locked'}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           {/* Hireflow Bridge */}
-          <View className="flex-row items-center justify-between py-3">
+          <Pressable
+            className="flex-row items-center justify-between py-3 active:opacity-70"
+            style={{ opacity: hireflowAllowed ? 1 : 0.6 }}
+            onPress={() => {
+              if (!hireflowAllowed) {
+                Alert.alert(
+                  'Access Restricted',
+                  'You do not have authorization to access the Hireflow ATS bridge. Please contact your workspace administrator.',
+                  [{ text: 'OK', style: 'default' }]
+                );
+              }
+            }}
+          >
             <View className="flex-row items-center gap-x-2.5">
               <View
                 className="h-8 w-8 items-center justify-center rounded-xl"
                 style={{ backgroundColor: colors.infoSoft || colors.cardAlt }}
               >
-                <Ionicons name="briefcase-outline" size={17} color={colors.info} />
+                <Ionicons
+                  name="briefcase-outline"
+                  size={17}
+                  color={hireflowAllowed ? colors.info : colors.textMuted}
+                />
               </View>
               <View>
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
@@ -643,17 +820,29 @@ export default function CrmSettingsScreen({ isTab = false }) {
               </View>
             </View>
             <View
-              className="rounded-full px-2.5 py-1 border"
+              className="rounded-full px-2.5 py-1 border flex-row items-center gap-x-1"
               style={{
-                backgroundColor: colors.successSoft,
-                borderColor: colors.successBorder,
+                backgroundColor: hireflowAllowed
+                  ? colors.successSoft
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.15)'
+                  : '#fee2e2',
+                borderColor: hireflowAllowed
+                  ? colors.successBorder
+                  : isDark
+                  ? 'rgba(239, 68, 68, 0.3)'
+                  : '#fca5a5',
               }}
             >
-              <Text className="text-[10px] font-bold" style={{ color: colors.success }}>
-                Connected
+              {!hireflowAllowed && <Ionicons name="lock-closed" size={9} color="#ef4444" />}
+              <Text
+                className="text-[10px] font-bold"
+                style={{ color: hireflowAllowed ? colors.success : '#ef4444' }}
+              >
+                {hireflowAllowed ? 'Connected' : 'Locked'}
               </Text>
             </View>
-          </View>
+          </Pressable>
         </View>
 
         {/* 8. Experience & Notifications Preferences */}
@@ -744,7 +933,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
           </View>
 
           {/* User Roles */}
-          {user?.roles?.length > 0 && (
+          {user?.roles?.length > 0 ? (
             <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
               <Text
                 className="text-[10px] font-bold uppercase tracking-wider mb-2"
@@ -775,10 +964,36 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 })}
               </View>
             </View>
+          ) : (
+            <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
+              <Text
+                className="text-[10px] font-bold uppercase tracking-wider mb-2"
+                style={{ color: colors.textMuted }}
+              >
+                Assigned Roles
+              </Text>
+              <View
+                className="rounded-xl p-3 border flex-row items-center gap-x-2.5"
+                style={{
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#fef2f2',
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.25)' : '#fecaca',
+                }}
+              >
+                <Ionicons name="alert-circle-outline" size={17} color="#ef4444" />
+                <View className="flex-1">
+                  <Text className="text-xs font-bold text-rose-500">
+                    No Roles Assigned · Restricted User
+                  </Text>
+                  <Text className="text-[11px] mt-0.5 leading-4" style={{ color: colors.textMuted }}>
+                    No role or module permissions have been assigned to your workspace profile ({user?.email || 'devlomatixsolutions@gmail.com'}). All enterprise tools remain locked.
+                  </Text>
+                </View>
+              </View>
+            </View>
           )}
 
           {/* User Permissions Preview */}
-          {permModules.length > 0 && (
+          {permModules.length > 0 ? (
             <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
               <Text
                 className="text-[10px] font-bold uppercase tracking-wider mb-2"
@@ -803,33 +1018,61 @@ export default function CrmSettingsScreen({ isTab = false }) {
                 ))}
               </View>
             </View>
+          ) : (
+            <View className="pt-3 mt-3 border-t" style={{ borderColor: colors.borderLight }}>
+              <Text
+                className="text-[10px] font-bold uppercase tracking-wider mb-2"
+                style={{ color: colors.textMuted }}
+              >
+                Module Authorizations
+              </Text>
+              <View
+                className="rounded-lg p-2.5 border flex-row items-center gap-x-2"
+                style={{
+                  backgroundColor: colors.cardAlt,
+                  borderColor: colors.borderLight,
+                }}
+              >
+                <Ionicons name="lock-closed-outline" size={14} color={colors.textMuted} />
+                <Text className="text-[11px] font-medium" style={{ color: colors.textMuted }}>
+                  0 module permissions granted · All enterprise suite tools are locked
+                </Text>
+              </View>
+            </View>
           )}
         </Pressable>
 
-        {/* 10. Shared Preferences */}
-        <Pressable
-          className="rounded-2xl border p-4 shadow-xs mb-4 flex-row items-center justify-between active:opacity-75"
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          onPress={() => router.push('/(misc)/sharedpref')}
-        >
-          <View className="flex-row items-center gap-x-2.5">
-            <View
-              className="h-8 w-8 items-center justify-center rounded-xl"
-              style={{ backgroundColor: colors.cardAlt }}
-            >
-              <Ionicons name="file-tray-full-outline" size={17} color={colors.textSecondary} />
+        {/* 10. Shared Preferences (Super Admin Only) */}
+        {isSuperAdmin && (
+          <Pressable
+            className="rounded-2xl border p-4 shadow-xs mb-4 flex-row items-center justify-between active:opacity-75"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            onPress={() => router.push('/(misc)/sharedpref')}
+          >
+            <View className="flex-row items-center gap-x-2.5">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-xl"
+                style={{ backgroundColor: colors.cardAlt }}
+              >
+                <Ionicons name="file-tray-full-outline" size={17} color={colors.textSecondary} />
+              </View>
+              <View>
+                <View className="flex-row items-center gap-x-1.5">
+                  <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                    Shared Preferences
+                  </Text>
+                  <View className="rounded px-1.5 py-0.5 bg-indigo-500/15">
+                    <Text className="text-[9px] font-bold text-indigo-500">SUPER ADMIN</Text>
+                  </View>
+                </View>
+                <Text className="text-[11px]" style={{ color: colors.textMuted }}>
+                  Inspect local cache, tokens and device keys
+                </Text>
+              </View>
             </View>
-            <View>
-              <Text className="text-sm font-bold" style={{ color: colors.text }}>
-                Shared Preferences
-              </Text>
-              <Text className="text-[11px]" style={{ color: colors.textMuted }}>
-                Inspect local cache, tokens and device keys
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-        </Pressable>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+        )}
 
         {/* 11. Devlomatix Modules & Suite Navigation */}
         <View
@@ -860,98 +1103,165 @@ export default function CrmSettingsScreen({ isTab = false }) {
             <View
               className="rounded-full px-2.5 py-1 border"
               style={{
-                backgroundColor: colors.primarySoft,
-                borderColor: colors.primaryBorder,
+                backgroundColor:
+                  accessibleModulesCount > 0
+                    ? colors.primarySoft
+                    : isDark
+                    ? 'rgba(239, 68, 68, 0.15)'
+                    : '#fee2e2',
+                borderColor:
+                  accessibleModulesCount > 0
+                    ? colors.primaryBorder
+                    : isDark
+                    ? 'rgba(239, 68, 68, 0.3)'
+                    : '#fca5a5',
               }}
             >
-              <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
-                {ECOSYSTEM_MODULES.length} Modules
+              <Text
+                className="text-[10px] font-bold"
+                style={{ color: accessibleModulesCount > 0 ? colors.primary : '#ef4444' }}
+              >
+                {accessibleModulesCount === 0
+                  ? 'All Locked'
+                  : `${accessibleModulesCount} / ${ECOSYSTEM_MODULES.length} Accessible`}
               </Text>
             </View>
           </View>
 
-          {/* Module List */}
-          {ECOSYSTEM_MODULES.map((mod, idx) => (
-            <Pressable
-              key={mod.id}
-              className={`flex-row items-center justify-between py-3.5 active:opacity-70 ${
-                idx > 0 ? 'border-t' : ''
-              }`}
-              style={{ borderTopColor: colors.borderLight }}
-              onPress={() => router.push(mod.route)}
+          {/* Notice Banner when all modules are locked */}
+          {accessibleModulesCount === 0 && (
+            <View
+              className="mb-3 rounded-xl p-3 border flex-row items-start gap-x-2.5"
+              style={{
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#fef2f2',
+                borderColor: isDark ? 'rgba(239, 68, 68, 0.25)' : '#fecaca',
+              }}
             >
-              <View className="flex-row items-center gap-x-3 flex-1 mr-2">
-                <View
-                  className="h-9 w-9 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: mod.bg }}
-                >
-                  <Ionicons name={mod.icon} size={18} color={mod.color} />
-                </View>
-                <View className="flex-1">
-                  <View className="flex-row items-center gap-x-2">
+              <Ionicons name="lock-closed" size={16} color="#ef4444" style={{ marginTop: 1 }} />
+              <View className="flex-1">
+                <Text className="text-xs font-bold text-rose-500">
+                  Modules Locked & Disabled
+                </Text>
+                <Text className="text-[11px] mt-0.5 leading-4" style={{ color: colors.textMuted }}>
+                  Your account ({user?.email || 'devlomatixsolutions@gmail.com'}) has no active roles or module permissions assigned. All enterprise suite modules are locked.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Module List */}
+          {ECOSYSTEM_MODULES.map((mod, idx) => {
+            const isAllowed = canAccessModule(mod.id) || canAccessModule(mod.name);
+            return (
+              <Pressable
+                key={mod.id}
+                className={`flex-row items-center justify-between py-3.5 active:opacity-70 ${
+                  idx > 0 ? 'border-t' : ''
+                }`}
+                style={{
+                  borderTopColor: colors.borderLight,
+                  opacity: isAllowed ? 1 : 0.55,
+                }}
+                onPress={() => {
+                  if (isAllowed) {
+                    router.push(mod.route);
+                  } else {
+                    Alert.alert(
+                      'Access Restricted',
+                      `You do not have authorization to access ${mod.name}. Please contact your workspace administrator to assign the required permissions.`,
+                      [{ text: 'OK', style: 'default' }]
+                    );
+                  }
+                }}
+              >
+                <View className="flex-row items-center gap-x-3 flex-1 mr-2">
+                  <View
+                    className="h-9 w-9 items-center justify-center rounded-xl"
+                    style={{ backgroundColor: mod.bg }}
+                  >
+                    <Ionicons name={mod.icon} size={18} color={mod.color} />
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-x-2">
+                      <Text
+                        className="text-xs font-bold tracking-tight"
+                        style={{ color: colors.text }}
+                        numberOfLines={1}
+                      >
+                        {mod.name}
+                      </Text>
+                      <View
+                        className="rounded-full px-2 py-0.5 border"
+                        style={{
+                          backgroundColor: colors.cardAlt,
+                          borderColor: colors.borderLight,
+                        }}
+                      >
+                        <Text
+                          className="text-[9px] font-bold uppercase tracking-wider"
+                          style={{ color: mod.color }}
+                        >
+                          {mod.badge}
+                        </Text>
+                      </View>
+                      {!isAllowed && (
+                        <View
+                          className="rounded-full px-1.5 py-0.5 border flex-row items-center gap-x-1"
+                          style={{
+                            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                            borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#fca5a5',
+                          }}
+                        >
+                          <Ionicons name="lock-closed" size={9} color="#ef4444" />
+                          <Text className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">
+                            Locked
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <Text
-                      className="text-xs font-bold tracking-tight"
-                      style={{ color: colors.text }}
+                      className="text-[11px] mt-1 leading-4"
+                      style={{ color: colors.textMuted }}
                       numberOfLines={1}
                     >
-                      {mod.name}
+                      {mod.tagline}
                     </Text>
-                    <View
-                      className="rounded-full px-2 py-0.5 border"
-                      style={{
-                        backgroundColor: colors.cardAlt,
-                        borderColor: colors.borderLight,
-                      }}
-                    >
-                      <Text
-                        className="text-[9px] font-bold uppercase tracking-wider"
-                        style={{ color: mod.color }}
-                      >
-                        {mod.badge}
-                      </Text>
-                    </View>
                   </View>
-                  <Text
-                    className="text-[11px] mt-1 leading-4"
-                    style={{ color: colors.textMuted }}
-                    numberOfLines={1}
+                </View>
+
+                <View className="flex-row items-center gap-x-1">
+                  <View
+                    className="rounded-lg px-2.5 py-1.5 border flex-row items-center gap-x-1"
+                    style={{
+                      backgroundColor: isAllowed
+                        ? colors.cardAlt
+                        : isDark
+                        ? 'rgba(51, 65, 85, 0.4)'
+                        : '#f1f5f9',
+                      borderColor: isAllowed
+                        ? colors.borderLight
+                        : isDark
+                        ? '#334155'
+                        : '#e2e8f0',
+                    }}
                   >
-                    {mod.tagline}
-                  </Text>
+                    {!isAllowed && <Ionicons name="lock-closed" size={10} color={colors.textMuted} />}
+                    <Text
+                      className="text-[11px] font-bold"
+                      style={{ color: isAllowed ? colors.primary : colors.textMuted }}
+                    >
+                      {isAllowed ? 'Open' : 'Locked'}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name={isAllowed ? 'chevron-forward' : 'lock-closed-outline'}
+                    size={15}
+                    color={colors.textMuted}
+                  />
                 </View>
-              </View>
-
-              <View className="flex-row items-center gap-x-1">
-                <View
-                  className="rounded-lg px-2.5 py-1.5 border"
-                  style={{
-                    backgroundColor: colors.cardAlt,
-                    borderColor: colors.borderLight,
-                  }}
-                >
-                  <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
-                    Open
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
-              </View>
-            </Pressable>
-          ))}
-
-          {/* Productivity Tools Shortcut */}
-          <Pressable
-            className="mt-3.5 flex-row items-center justify-center gap-x-2 rounded-xl py-3 border active:opacity-70 min-h-[46px]"
-            style={{
-              backgroundColor: colors.cardAlt,
-              borderColor: colors.borderLight,
-            }}
-            onPress={() => router.push('/(tabs)/apps')}
-          >
-            <Ionicons name="apps-outline" size={16} color={colors.textSecondary} />
-            <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
-              View All Productivity Tools
-            </Text>
-          </Pressable>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* 12. Sign Out Button */}

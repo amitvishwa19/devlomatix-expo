@@ -21,6 +21,7 @@ import { WidgetProvider } from "~/contexts/WidgetContext";
 import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
 import { UniversalLoaderProvider } from "~/providers/UniversalLoaderProvider";
+import { IosAlertProvider } from "~/providers/IosAlertProvider";
 import { RbacProvider } from "~/contexts/RbacContext";
 import { CrmSocketProvider } from "~/providers/CrmSocketProvider";
 import IncomingCallModal from "~/app/(modules)/crm/_components/call/IncomingCallModal";
@@ -95,11 +96,13 @@ export default function RootLayout() {
 
     return (
         <AppThemeProvider>
-            <UniversalLoaderProvider>
-                <RbacProvider>
-                    <RootLayoutNav />
-                </RbacProvider>
-            </UniversalLoaderProvider>
+            <IosAlertProvider>
+                <UniversalLoaderProvider>
+                    <RbacProvider>
+                        <RootLayoutNav />
+                    </RbacProvider>
+                </UniversalLoaderProvider>
+            </IosAlertProvider>
         </AppThemeProvider>
     );
 }

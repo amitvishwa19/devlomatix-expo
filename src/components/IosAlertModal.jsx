@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   ActivityIndicator,
@@ -9,6 +10,11 @@ import {
   View,
 } from 'react-native';
 import { useAppTheme } from '~/theme/AppTheme';
+
+let HapticsModule = null;
+try {
+  HapticsModule = require('expo-haptics');
+} catch (_) {}
 
 /**
  * Authentic iOS-styled Alert Dialog component.
@@ -31,6 +37,14 @@ export default function IosAlertModal({
   closeOnBackdrop = false,
 }) {
   const { palette } = useAppTheme();
+
+  useEffect(() => {
+    if (visible) {
+      try {
+        HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
+      } catch (_) {}
+    }
+  }, [visible]);
 
   if (!visible) return null;
 

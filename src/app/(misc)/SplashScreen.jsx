@@ -59,7 +59,32 @@ export default function AppSplashScreen() {
         if (!onboarded) {
           nextRoute = '/(misc)/onboarding';
         } else if (session?.isLoggedIn) {
-          nextRoute = '/(modules)/crm/(tabs)';
+          // RBAC gate: check if user has any roles or permissions from the stored session
+          const user = session?.user;
+          const rawRoles = user?.roles ?? [];
+          const rawPerms = user?.permissions ?? [];
+
+          // Support both flat strings and objects: [{value:'...'}, ...] or ['...', ...]
+          const permValues = rawPerms.map((p) =>
+            typeof p === 'string' ? p : (p?.value ?? '')
+          );
+
+          const isSuperAdmin =
+            permValues.includes('*') ||
+            rawRoles.some((r) => {
+              const n = (typeof r === 'string' ? r : r?.title ?? r?.name ?? '').toLowerCase();
+              return n === 'super admin' || n === 'superadmin';
+            });
+
+          const isAdmin =
+            isSuperAdmin ||
+            rawRoles.some((r) => {
+              const n = (typeof r === 'string' ? r : r?.title ?? r?.name ?? '').toLowerCase();
+              return n === 'admin';
+            });
+
+          const hasAccess = isSuperAdmin || isAdmin || rawRoles.length > 0 || rawPerms.length > 0;
+          nextRoute = hasAccess ? '/(modules)/crm/(tabs)' : '/(misc)/no-access';
         }
 
         router.replace(nextRoute);
