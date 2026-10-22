@@ -1,17 +1,20 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import Toast from 'react-native-toast-message';
+import { useAppTheme } from '~/theme/AppTheme';
 import CustomButton from '../../components/CustomButton';
 import CustomInput from '../../components/CustomInput';
 import { apiUrls } from '../../utils/api';
 
 export default function SignupScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('founder@devlomatix.com');
-    const [password, setPassword] = useState('111111');
-    const [confirmPassword, setConfirmPassword] = useState('111111');
+    const { isDark } = useAppTheme();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     async function handleRegister() {
@@ -33,8 +36,6 @@ export default function SignupScreen() {
             return;
         }
 
-
-
         setIsLoading(true);
         try {
             const response = await fetch(apiUrls.register, {
@@ -44,8 +45,7 @@ export default function SignupScreen() {
             });
             const data = await response.json();
 
-
-            console.log('register', data)
+            console.log('register', data);
 
             if (response.status === 409 || data.status === 409) {
                 Toast.show({
@@ -83,51 +83,75 @@ export default function SignupScreen() {
         }
     }
 
+    const iconColor  = isDark ? '#64748b' : '#94a3b8';
+    const footerColor= isDark ? '#374151' : '#94a3b8';
+    const linkColor  = isDark ? '#818cf8' : '#2563eb';
+    const backColor  = isDark ? '#64748b' : '#94a3b8';
+
     return (
         <>
-
-
             <CustomInput
                 label="Work email"
                 value={email}
                 onChangeText={setEmail}
-                placeholder="founder@devlomatix.com"
+                placeholder="name@company.com"
                 keyboardType="email-address"
-                autoCapitalize="none" />
+                autoCapitalize="none"
+                leftIcon={<FontAwesome name="envelope-o" size={13} color={iconColor} />}
+            />
 
             <CustomInput
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Create a strong password"
-                secureTextEntry />
+                placeholder="••••••••"
+                secureTextEntry
+                leftIcon={<FontAwesome name="lock" size={15} color={iconColor} />}
+            />
 
             <CustomInput
-                label="Confirm Password"
+                label="Confirm password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="Re-enter your password"
-                secureTextEntry />
+                placeholder="••••••••"
+                secureTextEntry
+                leftIcon={<FontAwesome name="shield" size={14} color={iconColor} />}
+            />
 
-
+            {/* Primary CTA */}
             <CustomButton
-                title={isLoading ? "Creating account..." : "Create account"}
+                title={isLoading ? 'Creating account…' : 'Create Account'}
                 variant="primary"
-                className="mt-1"
+                style={{ marginTop: 4, marginBottom: 20 }}
                 disabled={isLoading}
-                onPress={handleRegister} />
+                loading={isLoading}
+                onPress={handleRegister}
+            />
 
-            <CustomButton
-                title="Back to sign in"
-                variant="secondary"
-                className="mt-3"
-                onPress={() => router.replace('./login')} />
-
-            <View className="mt-3.5">
-                <Text className="text-center text-[13px] leading-5 text-slate-500">
-                    Continuing will create a new user profile.
-                </Text>
+            {/* Footer row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4, marginBottom: 14 }}>
+                <Text style={{ fontSize: 13, color: backColor }}>Already have an account?</Text>
+                <Pressable onPress={() => router.replace('./login')}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: linkColor }}>Sign in</Text>
+                </Pressable>
             </View>
-        </>);
 
+            <Text style={{ textAlign: 'center', fontSize: 11, lineHeight: 17, color: footerColor }}>
+                By creating an account you agree to our{' '}
+                <Text
+                    onPress={() => router.push('/(misc)/terms-conditions')}
+                    style={{ color: linkColor, fontWeight: '600', textDecorationLine: 'underline' }}>
+                    Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
+                    onPress={() => router.push('/(misc)/privacy-policy')}
+                    style={{ color: linkColor, fontWeight: '600', textDecorationLine: 'underline' }}>
+                    Privacy Policy
+                </Text>
+                .
+            </Text>
+        </>
+    );
 }
+

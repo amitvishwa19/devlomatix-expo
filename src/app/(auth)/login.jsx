@@ -1,4 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { getMessaging, getToken } from "@react-native-firebase/messaging";
 import {
     GoogleSignin,
     statusCodes,
@@ -9,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
-import { getMessaging, getToken } from "@react-native-firebase/messaging";
+import { useAppTheme } from "~/theme/AppTheme";
 import { registerForPushNotificationsAsync } from "~/utils/notification";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -18,12 +19,11 @@ import { saveSession } from "../../utils/authStorage";
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState("amitvishwa19@gmail.com");
-    const [password, setPassword] = useState("password");
+    const { isDark } = useAppTheme();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
-
-    //webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '120757819823-iiq1pjeq9mpu8mom6vqvpi845pgb0dvs.apps.googleusercontent.com',
 
     useEffect(() => {
         GoogleSignin.configure({
@@ -77,7 +77,6 @@ export default function LoginScreen() {
             });
 
             if (res.data?.status === 200 && res.data?.user) {
-                //console.log('User', res.data?.user)
                 await handleAuthSuccess(res.data.user, "Login successful");
             } else {
                 Toast.show({
@@ -106,8 +105,6 @@ export default function LoginScreen() {
         try {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
-
-            //console.log('user info',userInfo?.data?.user)
 
             const user = userInfo?.data?.user;
 
@@ -149,7 +146,6 @@ export default function LoginScreen() {
         } catch (error) {
             console.error("Google Sign In error:", error);
             if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                // user cancelled the login flow
                 return;
             }
             Toast.show({
@@ -165,64 +161,104 @@ export default function LoginScreen() {
         }
     };
 
+    const accentColor = isDark ? '#818cf8' : '#2563eb';
+    const dividerColor = isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9';
+    const dividerTextColor = isDark ? '#374151' : '#c0cad8';
+    const iconColor = isDark ? '#64748b' : '#94a3b8';
+    const linkColor = isDark ? '#94a3b8' : '#64748b';
+    const linkAccent = isDark ? '#818cf8' : '#2563eb';
+    const footerColor = isDark ? '#374151' : '#94a3b8';
+
+
     return (
         <>
+            {/* ── Credential fields ── */}
             <CustomInput
-                label="Email"
+                label="Email address"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="name@company.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                leftIcon={<FontAwesome name="envelope-o" size={13} color={iconColor} />}
             />
 
             <CustomInput
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 secureTextEntry
+                leftIcon={<FontAwesome name="lock" size={15} color={iconColor} />}
             />
 
+            {/* Forgot password link */}
             <Pressable
-                className="mb-4 self-end"
-                onPress={() => router.push("./forgot-password")}
-            >
-                <Text className="text-sm font-semibold text-teal-700">
+                style={{ alignSelf: 'flex-end', marginBottom: 20, marginTop: -6 }}
+                onPress={() => router.push('./forgot-password')}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: accentColor }}>
                     Forgot password?
                 </Text>
             </Pressable>
 
+            {/* ── Primary CTA ── */}
             <CustomButton
-                title={loading ? "Signing in..." : "Sign In"}
+                title={loading ? 'Signing in…' : 'Sign In'}
                 variant="primary"
                 onPress={handleLogin}
                 disabled={loading}
-                className="mb-4"
+                loading={loading}
+                style={{ marginBottom: 18 }}
             />
 
-            <View className="mb-4 flex-row items-center">
-                <View className="h-[1px] flex-1 bg-slate-200" />
-                <Text className="mx-4 text-xs font-bold text-slate-400">OR</Text>
-                <View className="h-[1px] flex-1 bg-slate-200" />
+            {/* ── Divider ── */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: dividerColor }} />
+                <Text style={{
+                    marginHorizontal: 14, fontSize: 10, fontWeight: '700',
+                    letterSpacing: 1.2, color: dividerTextColor,
+                }}>
+                    OR CONTINUE WITH
+                </Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: dividerColor }} />
             </View>
 
+            {/* ── Google sign-in ── */}
             <CustomButton
-                title={googleLoading ? "Connecting Google..." : "Continue with Google"}
+                title={googleLoading ? 'Connecting…' : 'Continue with Google'}
                 variant="secondary"
-                icon={<FontAwesome name="google" size={18} color="#0f172a" />}
+                icon={<FontAwesome name="google" size={15} color={isDark ? '#e2e8f0' : '#3c4043'} />}
                 onPress={handleGoogleLogin}
                 disabled={googleLoading || loading}
-                className="mb-4"
+                style={{ marginBottom: 20 }}
             />
 
-            <CustomButton
-                title="Create new account"
-                variant="secondary"
-                onPress={() => router.push("./signup")}
-            />
+            {/* ── Footer link ── */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4, marginBottom: 14 }}>
+                <Text style={{ fontSize: 13, color: linkColor }}>Don't have an account?</Text>
+                <Pressable onPress={() => router.push('./signup')}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: linkAccent }}>
+                        Sign up
+                    </Text>
+                </Pressable>
+            </View >
 
-
+            <Text style={{ textAlign: 'center', fontSize: 11, lineHeight: 17, color: footerColor }}>
+                By logging in you agree to our{' '}
+                <Text
+                    onPress={() => router.push('/(misc)/terms-conditions')}
+                    style={{ color: linkAccent, fontWeight: '600', textDecorationLine: 'underline' }}>
+                    Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
+                    onPress={() => router.push('/(misc)/privacy-policy')}
+                    style={{ color: linkAccent, fontWeight: '600', textDecorationLine: 'underline' }}>
+                    Privacy Policy
+                </Text>
+                .
+            </Text>
         </>
     );
 }
+
