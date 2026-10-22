@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Modal, Pressable, ScrollView, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
-import * as crmService from '~/services/crm';
 
 export default function CreateContactModal() {
   const insets = useSafeAreaInsets();
@@ -49,7 +48,7 @@ export default function CreateContactModal() {
     setEmail('');
     setJobTitle('');
     setCreateContactVisible(false);
-    optimisticAddContact(contactPayload).catch(() => {});
+    optimisticAddContact(contactPayload).catch(() => { });
   };
 
   return (
@@ -101,7 +100,7 @@ export default function CreateContactModal() {
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5">
+          <ScrollView showsVerticalScrollIndicator={false} className="mt-2.5 p-1">
             {/* Name */}
             <Text className="text-xs font-bold mb-1" style={{ color: colors.text }}>
               Full Name *
@@ -182,7 +181,7 @@ export default function CreateContactModal() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-x-2 mb-2.5 py-1">
                   <Pressable
                     onPress={() => setAccountId('')}
-                    className="rounded-xl border px-3 py-1.5"
+                    className="rounded-xl border px-3 py-1.5 mr-2"
                     style={{
                       backgroundColor: !accountId ? colors.primary : colors.cardAlt,
                       borderColor: !accountId ? colors.primary : colors.border,
@@ -198,7 +197,7 @@ export default function CreateContactModal() {
                       <Pressable
                         key={a.id}
                         onPress={() => setAccountId(a.id)}
-                        className="rounded-xl border px-3 py-1.5"
+                        className="rounded-xl border px-3 py-1.5 mr-2"
                         style={{
                           backgroundColor: isSelected ? colors.primary : colors.cardAlt,
                           borderColor: isSelected ? colors.primary : colors.border,
