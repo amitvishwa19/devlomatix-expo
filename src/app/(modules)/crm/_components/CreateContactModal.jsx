@@ -9,7 +9,7 @@ import * as crmService from '~/services/crm';
 export default function CreateContactModal() {
   const insets = useSafeAreaInsets();
   const { colors } = useCrmTheme();
-  const { createContactVisible, setCreateContactVisible, accounts, refreshAll } = useCrm();
+  const { createContactVisible, setCreateContactVisible, accounts, optimisticAddContact } = useCrm();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -28,38 +28,28 @@ export default function CreateContactModal() {
       return;
     }
 
-    try {
-      setSubmitting(true);
-      setError(null);
-      const tagList = tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
+    const tagList = tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const selAccount = accounts.find((a) => a.id === accountId);
 
-      const res = await crmService.createContact({
-        name: name.trim(),
-        phone: phone.trim(),
-        email: email.trim() || undefined,
-        jobTitle: jobTitle.trim() || undefined,
-        accountId: accountId || undefined,
-        tags: tagList.length > 0 ? tagList : ['LEAD'],
-      });
+    const contactPayload = {
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email.trim() || undefined,
+      jobTitle: jobTitle.trim() || undefined,
+      accountId: accountId || undefined,
+      account: selAccount,
+      tags: tagList.length > 0 ? tagList : ['LEAD'],
+    };
 
-      if (res.success) {
-        setName('');
-        setPhone('');
-        setEmail('');
-        setJobTitle('');
-        setCreateContactVisible(false);
-        refreshAll();
-      } else {
-        setError(res.error || 'Failed to create contact');
-      }
-    } catch (e) {
-      setError(e.message || 'Error creating contact');
-    } finally {
-      setSubmitting(false);
-    }
+    setName('');
+    setPhone('');
+    setEmail('');
+    setJobTitle('');
+    setCreateContactVisible(false);
+    optimisticAddContact(contactPayload).catch(() => {});
   };
 
   return (

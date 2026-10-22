@@ -17,7 +17,7 @@ export default function CreateDealModal() {
     activePipeline,
     contacts,
     accounts,
-    refreshAll,
+    optimisticAddDeal,
   } = useCrm();
 
   const [title, setTitle] = useState('');
@@ -59,32 +59,24 @@ export default function CreateDealModal() {
       return;
     }
 
-    try {
-      setSubmitting(true);
-      setError(null);
-      const res = await crmService.createDeal({
-        title: title.trim(),
-        value: parseFloat(value) || 0,
-        currency,
-        pipelineId: pipelineId || undefined,
-        stageId: stageId || undefined,
-        contactId: contactId || undefined,
-        accountId: accountId || undefined,
-        priority,
-        notes: notes.trim() || undefined,
-      });
+    const selContact = contacts.find((c) => c.id === contactId);
+    const selAccount = accounts.find((a) => a.id === accountId);
+    const dealPayload = {
+      title: title.trim(),
+      value: parseFloat(value) || 0,
+      currency,
+      pipelineId: pipelineId || undefined,
+      stageId: stageId || undefined,
+      contactId: contactId || undefined,
+      contact: selContact,
+      accountId: accountId || undefined,
+      account: selAccount,
+      priority,
+      notes: notes.trim() || undefined,
+    };
 
-      if (res.success) {
-        setCreateDealVisible(false);
-        refreshAll();
-      } else {
-        setError(res.error || 'Failed to create deal');
-      }
-    } catch (e) {
-      setError(e.message || 'Error creating deal');
-    } finally {
-      setSubmitting(false);
-    }
+    setCreateDealVisible(false);
+    optimisticAddDeal(dealPayload).catch(() => {});
   };
 
   return (

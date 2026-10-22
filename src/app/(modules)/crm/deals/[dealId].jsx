@@ -18,12 +18,13 @@ import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import DealBillingModal from '../_components/DealBillingModal';
 import AiStalledDealRevivalModal from '../_components/AiStalledDealRevivalModal';
 import * as crmService from '~/services/crm';
+import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 
 export default function DealDossierScreen() {
   const { dealId } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
-  const { openQuickWhatsApp, openCreateTask, refreshAll } = useCrm();
+  const { openQuickWhatsApp, openCreateTask, refreshAll, optimisticMoveDealStage, optimisticDeleteDeal } = useCrm();
 
   const [deal, setDeal] = useState(null);
   const [healthAi, setHealthAi] = useState(null);
@@ -32,6 +33,7 @@ export default function DealDossierScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [billingModalVisible, setBillingModalVisible] = useState(false);
   const [revivalModalVisible, setRevivalModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [stageUpdating, setStageUpdating] = useState(false);
 
   const fetchDeal = useCallback(async () => {
@@ -78,16 +80,17 @@ export default function DealDossierScreen() {
 
   const handleStageSelect = async (newStageId) => {
     if (!deal || deal.stageId === newStageId) return;
-    try {
-      setStageUpdating(true);
-      await crmService.updateDealStage(deal.id, newStageId);
-      fetchDeal();
-      refreshAll();
-    } catch (e) {
-      console.warn('Failed to update stage:', e.message);
-    } finally {
-      setStageUpdating(false);
-    }
+    const stages = deal.pipeline?.stages || [];
+    const targetStage = stages.find((s) => s.id === newStageId);
+
+    // Instant optimistic update
+    setDeal((prev) => ({
+      ...prev,
+      stageId: newStageId,
+      stage: targetStage || prev.stage,
+    }));
+
+    optimisticMoveDealStage(deal.id, newStageId).catch(() => {});
   };
 
   if (loading && !deal) {
@@ -128,14 +131,25 @@ export default function DealDossierScreen() {
         subtitle={`${deal.currency} ${formattedVal} • ${deal.stage?.name || 'In Funnel'}`}
         showBack={true}
         rightActions={
-          <Pressable
-            onPress={() => setBillingModalVisible(true)}
-            className="h-8 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
-            style={{ backgroundColor: colors.copilot }}
-          >
-            <Ionicons name="card" size={13} color="#ffffff" />
-            <Text className="text-xs font-bold text-white">Invoice</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={() => setBillingModalVisible(true)}
+              className="h-8 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"
+              style={{ backgroundColor: colors.copilot }}
+            >
+              <Ionicons name="card" size={13} color="#ffffff" />
+              <Text className="text-xs font-bold text-white">Invoice</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setDeleteModalVisible(true)}
+              hitSlop={8}
+              className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            >
+              <Ionicons name="trash-outline" size={15} color="#ef4444" />
+            </Pressable>
+          </View>
         }
       />
 
@@ -472,6 +486,21 @@ export default function DealDossierScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={deleteModalVisible}
+        title={deal?.title ? `Delete "${deal.title}"` : 'Delete Opportunity'}
+        message="Are you sure you want to delete this opportunity? This action cannot be undone."
+        confirmText="Delete Deal"
+        isPermanent={true}
+        onConfirm={() => {
+          setDeleteModalVisible(false);
+          optimisticDeleteDeal(deal.id);
+          router.back();
+        }}
+        onCancel={() => setDeleteModalVisible(false)}
+      />
     </AppScreen>
   );
 }

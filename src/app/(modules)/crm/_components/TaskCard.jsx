@@ -14,31 +14,21 @@ const TASK_TYPE_ICONS = {
   REVIEW: 'document-text-outline',
 };
 
-export default function TaskCard({ task, onStatusChange }) {
+export default function TaskCard({ task, onStatusChange, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
-  const { openQuickWhatsApp, loadTasks } = useCrm();
-  const [isCompleted, setIsCompleted] = useState(task?.status === 'COMPLETED');
-  const [updating, setUpdating] = useState(false);
+  const { openQuickWhatsApp } = useCrm();
 
   if (!task) return null;
 
+  const isCompleted = task.status === 'COMPLETED';
   const typeConfig = colors.taskType[task.type] || colors.taskType.CALL;
   const typeIcon = TASK_TYPE_ICONS[task.type] || 'calendar-outline';
 
-  const toggleComplete = async () => {
-    try {
-      setUpdating(true);
-      const nextStatus = isCompleted ? 'PENDING' : 'COMPLETED';
-      setIsCompleted(!isCompleted);
-      await crmService.updateTask(task.id, { status: nextStatus });
-      if (onStatusChange) onStatusChange(task.id, nextStatus);
-      loadTasks();
-    } catch (e) {
-      setIsCompleted(isCompleted);
-      console.warn('Failed to toggle task status:', e.message);
-    } finally {
-      setUpdating(false);
+  const toggleComplete = () => {
+    const nextStatus = isCompleted ? 'PENDING' : 'COMPLETED';
+    if (onStatusChange) {
+      onStatusChange(task.id, nextStatus);
     }
   };
 
@@ -66,8 +56,7 @@ export default function TaskCard({ task, onStatusChange }) {
         <View className="flex-row items-start gap-x-2.5 flex-1">
           <Pressable
             onPress={toggleComplete}
-            disabled={updating}
-            className="mt-0.5 h-5 w-5 items-center justify-center rounded-lg border"
+            className="mt-0.5 h-5 w-5 items-center justify-center rounded-lg border active:opacity-75"
             style={{
               backgroundColor: isCompleted ? colors.primary : colors.cardAlt,
               borderColor: isCompleted ? colors.primary : colors.border,
@@ -160,21 +149,33 @@ export default function TaskCard({ task, onStatusChange }) {
           </Text>
         </View>
 
-        {task.contact?.phone && (
-          <Pressable
-            onPress={() => openQuickWhatsApp(task.contact, task.deal, `Hi ${task.contact.name}, regarding ${task.title}...`)}
-            className="flex-row items-center gap-x-1 rounded-lg px-2 py-0.5 border"
-            style={{
-              backgroundColor: colors.whatsappSoft,
-              borderColor: colors.whatsappBorder,
-            }}
-          >
-            <Ionicons name="logo-whatsapp" size={11} color={colors.whatsapp} />
-            <Text className="text-[9px] font-bold" style={{ color: colors.whatsapp }}>
-              Follow-up
-            </Text>
-          </Pressable>
-        )}
+        <View className="flex-row items-center gap-x-1.5">
+          {task.contact?.phone && (
+            <Pressable
+              onPress={() => openQuickWhatsApp(task.contact, task.deal, `Hi ${task.contact.name}, regarding ${task.title}...`)}
+              className="flex-row items-center gap-x-1 rounded-lg px-2 py-0.5 border"
+              style={{
+                backgroundColor: colors.whatsappSoft,
+                borderColor: colors.whatsappBorder,
+              }}
+            >
+              <Ionicons name="logo-whatsapp" size={11} color={colors.whatsapp} />
+              <Text className="text-[9px] font-bold" style={{ color: colors.whatsapp }}>
+                Follow-up
+              </Text>
+            </Pressable>
+          )}
+
+          {onDeletePrompt && (
+            <Pressable
+              onPress={() => onDeletePrompt(task)}
+              hitSlop={8}
+              className="p-1 active:opacity-60"
+            >
+              <Ionicons name="trash-outline" size={13} color={colors.textSoft} />
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );

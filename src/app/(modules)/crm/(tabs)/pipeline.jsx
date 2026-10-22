@@ -9,6 +9,7 @@ import CreateDealModal from '../_components/CreateDealModal';
 import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
+import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 import { useCrmTheme } from '../utils/colors';
 
 export default function CrmPipelineTab() {
@@ -26,11 +27,13 @@ export default function CrmPipelineTab() {
     refreshing,
     refreshAll,
     openCreateDeal,
+    optimisticDeleteDeal,
   } = useCrm();
 
   const [selectedStageId, setSelectedStageId] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('VALUE_DESC'); // 'VALUE_DESC' | 'RECENT' | 'PRIORITY'
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Filter deals
   const filteredDeals = useMemo(() => {
@@ -266,7 +269,9 @@ export default function CrmPipelineTab() {
             </Text>
           </View>
         ) : filteredDeals.length > 0 ? (
-          filteredDeals.map((deal) => <DealCard key={deal.id} deal={deal} />)
+          filteredDeals.map((deal) => (
+            <DealCard key={deal.id} deal={deal} onDeletePrompt={(d) => setDeleteTarget(d)} />
+          ))
         ) : (
           <View
             className="rounded-[16px] border border-dashed p-6 items-center justify-center"
@@ -292,6 +297,23 @@ export default function CrmPipelineTab() {
           </View>
         )}
       </ScrollView>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={!!deleteTarget}
+        title={deleteTarget?.title ? `Delete "${deleteTarget.title}"` : 'Delete Opportunity'}
+        message="Are you sure you want to delete this opportunity? This action cannot be undone."
+        confirmText="Delete Deal"
+        isPermanent={true}
+        onConfirm={() => {
+          if (deleteTarget) {
+            const id = deleteTarget.id;
+            setDeleteTarget(null);
+            optimisticDeleteDeal(id);
+          }
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppScreen>
   );
 }

@@ -16,7 +16,7 @@ const DUE_DATE_OPTIONS = [
 export default function CreateTaskModal() {
   const insets = useSafeAreaInsets();
   const { colors } = useCrmTheme();
-  const { createTaskVisible, setCreateTaskVisible, createTaskDefaults, deals, contacts, refreshAll } = useCrm();
+  const { createTaskVisible, setCreateTaskVisible, createTaskDefaults, deals, contacts, optimisticAddTask } = useCrm();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('CALL');
@@ -46,33 +46,24 @@ export default function CreateTaskModal() {
       return;
     }
 
-    try {
-      setSubmitting(true);
-      setError(null);
+    const due = new Date();
+    due.setDate(due.getDate() + dueDateDays);
+    const selDeal = deals.find((d) => d.id === dealId);
+    const selContact = contacts.find((c) => c.id === contactId);
 
-      const due = new Date();
-      due.setDate(due.getDate() + dueDateDays);
+    const taskPayload = {
+      title: title.trim(),
+      type,
+      priority,
+      dealId: dealId || undefined,
+      deal: selDeal,
+      contactId: contactId || undefined,
+      contact: selContact,
+      dueDate: due.toISOString(),
+    };
 
-      const res = await crmService.createTask({
-        title: title.trim(),
-        type,
-        priority,
-        dealId: dealId || undefined,
-        contactId: contactId || undefined,
-        dueDate: due.toISOString(),
-      });
-
-      if (res.success) {
-        setCreateTaskVisible(false);
-        refreshAll();
-      } else {
-        setError(res.error || 'Failed to create task');
-      }
-    } catch (e) {
-      setError(e.message || 'Error creating task');
-    } finally {
-      setSubmitting(false);
-    }
+    setCreateTaskVisible(false);
+    optimisticAddTask(taskPayload).catch(() => {});
   };
 
   return (

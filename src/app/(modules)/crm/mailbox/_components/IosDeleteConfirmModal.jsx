@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
-import { Modal, Pressable, Text, View, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useEffect } from 'react';
+import { Modal, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../../utils/colors';
 
 let HapticsModule = null;
 try {
   HapticsModule = require('expo-haptics');
-} catch (_) {}
+} catch (_) { }
 
 /**
  * iOS-style ActionSheet confirmation modal for deleting/trashing emails.
@@ -28,7 +28,7 @@ export default function IosDeleteConfirmModal({
     if (visible) {
       try {
         HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
-      } catch (_) {}
+      } catch (_) { }
     }
   }, [visible]);
 
@@ -37,14 +37,14 @@ export default function IosDeleteConfirmModal({
   const handleConfirm = () => {
     try {
       HapticsModule?.notificationAsync?.(HapticsModule.NotificationFeedbackType.Success);
-    } catch (_) {}
+    } catch (_) { }
     onConfirm?.();
   };
 
   const handleCancel = () => {
     try {
       HapticsModule?.selectionAsync?.();
-    } catch (_) {}
+    } catch (_) { }
     onCancel?.();
   };
 
@@ -70,7 +70,7 @@ export default function IosDeleteConfirmModal({
         <Pressable onPress={(e) => e.stopPropagation()}>
           {/* Top Grouped Card: Description & Destructive Action */}
           <View
-            className="rounded-[16px] overflow-hidden shadow-lg border"
+            className="rounded-xl overflow-hidden shadow-lg border"
             style={{
               backgroundColor: cardBg,
               borderColor: isDark ? '#334155' : '#e2e8f0',
@@ -118,21 +118,28 @@ export default function IosDeleteConfirmModal({
           </View>
 
           {/* Bottom Card: Independent Cancel Button */}
-          <Pressable
-            onPress={handleCancel}
-            className="mt-2 py-3.5 items-center justify-center rounded-[16px] shadow-sm border active:opacity-75"
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? (isDark ? '#334155' : '#f8fafc') : cardBg,
+          <View
+            className="mt-2.5 rounded-xl overflow-hidden shadow-sm border mb-2"
+            style={{
+              backgroundColor: cardBg,
               borderColor: isDark ? '#334155' : '#e2e8f0',
-            })}
+            }}
           >
-            <Text
-              className="text-[15px] font-bold"
-              style={{ color: colors.primary }}
+            <Pressable
+              onPress={handleCancel}
+              className="py-3.5 items-center justify-center active:opacity-75"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? (isDark ? '#334155' : '#f1f5f9') : cardBg,
+              })}
             >
-              Cancel
-            </Text>
-          </Pressable>
+              <Text
+                className="text-[15px] font-bold"
+                style={{ color: colors.primary }}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>

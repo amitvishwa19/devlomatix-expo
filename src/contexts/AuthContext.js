@@ -120,12 +120,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  useEffect(() => {
+    if (expoPushToken && (authState.authenticated || user)) {
+      axios
+        .post(apiUrls.updatePushToken, {
+          expoPushToken,
+          deviceToken,
+        })
+        .then(() => {
+          console.log('[PUSH_TOKEN] Successfully synced mobile push token to server:', expoPushToken);
+        })
+        .catch((err) => {
+          console.warn('[PUSH_TOKEN_SYNC_ERR]', err?.message);
+        });
+    }
+  }, [expoPushToken, authState.authenticated, user, deviceToken]);
+
   const emailLogin = async (email, password, location) => {
     try {
       const res = await axios.post(apiUrls.login, {
         email,
         password,
         location,
+        deviceToken,
+        expoPushToken,
       });
       if (res.data.status === 200) {
         setAuthState({
@@ -158,7 +176,10 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) {
         axios.defaults.headers.common["Authorization"] =
           `Bearer ${accessToken}`;
-        const res = await axios.post(apiUrls.userfromtoken);
+        const res = await axios.post(apiUrls.userfromtoken, {
+          deviceToken,
+          expoPushToken,
+        });
 
         if (res?.data.status == 200) {
           setAuthState({

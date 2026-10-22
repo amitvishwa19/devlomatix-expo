@@ -12,30 +12,34 @@ import TaskCard from '../_components/TaskCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import CreateTaskModal from '../_components/CreateTaskModal';
 import KanbanColumnView from '../_components/KanbanColumnView';
-import * as crmService from '~/services/crm';
+import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 
 export default function CrmTasksScreen() {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const scrollRef = useRef(null);
   useScrollToTop(scrollRef);
-  const { tasks = [], loading, refreshing, refreshAll, openCreateTask } = useCrm();
+  const {
+    tasks = [],
+    loading,
+    refreshing,
+    refreshAll,
+    openCreateTask,
+    optimisticToggleTask,
+    optimisticDeleteTask,
+  } = useCrm();
 
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' | 'KANBAN'
   const [activeTab, setActiveTab] = useState('PENDING'); // 'PENDING' | 'COMPLETED'
   const [selectedType, setSelectedType] = useState('ALL');
+  const [deleteTaskTarget, setDeleteTaskTarget] = useState(null);
 
   const taskList = Array.isArray(tasks) ? tasks : [];
   const pendingTasks = taskList.filter((t) => t && t.status !== 'COMPLETED');
   const completedTasks = taskList.filter((t) => t && t.status === 'COMPLETED');
 
-  const handleUpdateTaskStatus = async (taskId, newStatus) => {
-    try {
-      await crmService.updateTask(taskId, { status: newStatus });
-      refreshAll();
-    } catch (e) {
-      console.warn('Failed to update task status:', e?.message || e);
-    }
+  const handleUpdateTaskStatus = (taskId, newStatus) => {
+    optimisticToggleTask(taskId, newStatus).catch(() => {});
   };
 
   const currentList = activeTab === 'PENDING' ? pendingTasks : completedTasks;
@@ -198,7 +202,14 @@ export default function CrmTasksScreen() {
                 </Text>
               </View>
             ) : filteredTasks.length > 0 ? (
-              filteredTasks.map((task) => <TaskCard key={task.id} task={task} />)
+              filteredTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onStatusChange={handleUpdateTaskStatus}
+                  onDeletePrompt={(t) => setDeleteTaskTarget(t)}
+                />
+              ))
             ) : (
               <View
                 className="rounded-[16px] border border-dashed p-6 items-center justify-center"
@@ -228,6 +239,23 @@ export default function CrmTasksScreen() {
           </ScrollView>
         </>
       )}
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={!!deleteTaskTarget}
+        title={deleteTaskTarget?.title ? `Delete "${deleteTaskTarget.title}"` : 'Delete Task'}
+        message="Are you sure you want to delete this action item? This cannot be undone."
+        confirmText="Delete Task"
+        isPermanent={true}
+        onConfirm={() => {
+          if (deleteTaskTarget) {
+            const id = deleteTaskTarget.id;
+            setDeleteTaskTarget(null);
+            optimisticDeleteTask(id);
+          }
+        }}
+        onCancel={() => setDeleteTaskTarget(null)}
+      />
     </AppScreen>
   );
 }

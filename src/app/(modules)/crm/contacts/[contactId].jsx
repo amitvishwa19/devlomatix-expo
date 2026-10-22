@@ -19,13 +19,14 @@ import CrmHeader from '../_components/CrmHeader';
 import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import ShareContactModal from '../_components/ShareContactModal';
+import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 import * as crmService from '~/services/crm';
 
 export default function ContactDossierScreen() {
   const { contactId } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
-  const { openQuickWhatsApp, openCreateTask, openCreateDeal, refreshAll } = useCrm();
+  const { openQuickWhatsApp, openCreateTask, openCreateDeal, refreshAll, optimisticDeleteContact } = useCrm();
   const { startCall } = useCrmSocket();
 
   const [contact, setContact] = useState(null);
@@ -33,6 +34,7 @@ export default function ContactDossierScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
+  const [deleteContactVisible, setDeleteContactVisible] = useState(false);
   const [quickMsg, setQuickMsg] = useState('');
   const [sendingMsg, setSendingMsg] = useState(false);
   const [msgFeedback, setMsgFeedback] = useState(null);
@@ -137,14 +139,25 @@ export default function ContactDossierScreen() {
         subtitle={`${contact.jobTitle || 'Lead'} • ${contact.account?.name || 'Individual'}`}
         showBack={true}
         rightActions={
-          <Pressable
-            onPress={() => setShareVisible(true)}
-            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl border active:opacity-75"
-            style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
-          >
-            <Ionicons name="share-social-outline" size={15} color={colors.primary} />
-            <Text className="text-xs font-bold" style={{ color: colors.primary }}>Share</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={() => setShareVisible(true)}
+              className="h-9 px-2.5 flex-row items-center justify-center gap-x-1.5 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Ionicons name="share-social-outline" size={15} color={colors.primary} />
+              <Text className="text-xs font-bold" style={{ color: colors.primary }}>Share</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setDeleteContactVisible(true)}
+              hitSlop={8}
+              className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-70"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            >
+              <Ionicons name="trash-outline" size={16} color="#ef4444" />
+            </Pressable>
+          </View>
         }
       />
 
@@ -530,6 +543,21 @@ export default function ContactDossierScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={deleteContactVisible}
+        title={contact?.name ? `Delete "${contact.name}"` : 'Delete Contact'}
+        message="Are you sure you want to delete this contact? This will remove all their details from your CRM."
+        confirmText="Delete Contact"
+        isPermanent={true}
+        onConfirm={() => {
+          setDeleteContactVisible(false);
+          optimisticDeleteContact(contact.id);
+          router.back();
+        }}
+        onCancel={() => setDeleteContactVisible(false)}
+      />
     </AppScreen>
   );
 }

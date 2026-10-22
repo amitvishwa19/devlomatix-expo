@@ -5,7 +5,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '../utils/colors';
 
-export default function DealCard({ deal, onStageChange }) {
+export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
@@ -54,6 +54,8 @@ export default function DealCard({ deal, onStageChange }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/deals/${deal.id}`)}
+      onLongPress={() => onDeletePrompt?.(deal)}
+      delayLongPress={350}
       className="mb-2.5 rounded-[16px] border p-3 active:opacity-85"
       style={{
         backgroundColor: colors.card,
@@ -229,11 +231,22 @@ export default function DealCard({ deal, onStageChange }) {
           )}
         </View>
 
-        <View className="flex-row items-center gap-x-1">
-          <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
-            View Dossier
-          </Text>
-          <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+        <View className="flex-row items-center gap-x-2">
+          {onDeletePrompt && (
+            <Pressable
+              onPress={() => onDeletePrompt(deal)}
+              hitSlop={8}
+              className="p-1 active:opacity-60"
+            >
+              <Ionicons name="trash-outline" size={14} color={colors.textSoft} />
+            </Pressable>
+          )}
+          <View className="flex-row items-center gap-x-1">
+            <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
+              View Dossier
+            </Text>
+            <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+          </View>
         </View>
       </View>
     </Pressable>

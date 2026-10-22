@@ -6,7 +6,7 @@ import { useCrm } from '~/providers/CrmProvider';
 import { getSession } from '~/utils/authStorage';
 import { useCrmTheme } from '../utils/colors';
 
-export default function ContactCard({ contact, onShare }) {
+export default function ContactCard({ contact, onShare, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
@@ -50,6 +50,8 @@ export default function ContactCard({ contact, onShare }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/contacts/${contact.id}`)}
+      onLongPress={() => onDeletePrompt?.(contact)}
+      delayLongPress={350}
       className="mb-2 rounded-[16px] border p-3 active:opacity-85"
       style={{
         backgroundColor: colors.card,
@@ -180,6 +182,20 @@ export default function ContactCard({ contact, onShare }) {
                   }}
                 >
                   <Ionicons name="share-social-outline" size={13} color={colors.textMuted} />
+                </Pressable>
+              )}
+
+              {onDeletePrompt && (
+                <Pressable
+                  onPress={() => onDeletePrompt(contact)}
+                  hitSlop={8}
+                  className="h-7 w-7 items-center justify-center rounded-lg border active:opacity-75"
+                  style={{
+                    backgroundColor: colors.cardAlt,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={13} color={colors.textMuted} />
                 </Pressable>
               )}
 

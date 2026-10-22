@@ -16,9 +16,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppScreen from '~/components/AppScreen';
 import { useCrmTheme } from '../utils/colors';
 import CrmHeader from '../_components/CrmHeader';
-import SendQuotationModal from '../_components/SendQuotationModal';
 import * as quotationService from '~/services/quotation';
 import { printOrShareQuotationPdf } from '~/services/quotationPdf';
+import Toast from 'react-native-toast-message';
+
+let HapticsModule = null;
+try {
+  HapticsModule = require('expo-haptics');
+} catch (_) {}
 
 export default function QuotationDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -64,14 +69,26 @@ export default function QuotationDetailScreen() {
   };
 
   const handleUpdateStatus = async (newStatus) => {
+    if (!quotation || quotation.status === newStatus) return;
+    const prevStatus = quotation.status;
+
+    // Instant optimistic update
+    setQuotation((prev) => (prev ? { ...prev, status: newStatus } : prev));
+
     try {
-      setUpdatingStatus(true);
+      HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
+    } catch (_) {}
+
+    Toast.show({
+      type: 'success',
+      text1: `Quotation marked as ${newStatus}`,
+    });
+
+    try {
       await quotationService.updateQuotationStatus(id, newStatus);
-      setQuotation((prev) => (prev ? { ...prev, status: newStatus } : prev));
     } catch (e) {
-      Alert.alert('Error', e.message || 'Failed to update status');
-    } finally {
-      setUpdatingStatus(false);
+      setQuotation((prev) => (prev ? { ...prev, status: prevStatus } : prev));
+      Toast.show({ type: 'error', text1: 'Status update failed', text2: e.message });
     }
   };
 

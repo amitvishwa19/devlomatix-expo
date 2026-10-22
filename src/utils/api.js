@@ -18,6 +18,7 @@ export const apiUrls = {
   googleLogin: baseApi + "/auth/login/google", //POST
   userfromtoken: baseApi + "/auth/userfromtoken", //POST
   userFromId: baseApi + "/auth/user", //POST
+  updatePushToken: baseApi + "/auth/push-token", //POST
 
   //Agent tab
   agent: baseApi + "/agent",

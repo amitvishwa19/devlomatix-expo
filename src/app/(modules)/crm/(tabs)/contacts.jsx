@@ -11,6 +11,7 @@ import CreateContactModal from '../_components/CreateContactModal';
 import CrmHeader from '../_components/CrmHeader';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import ShareContactModal from '../_components/ShareContactModal';
+import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 import { useCrmTheme } from '../utils/colors';
 import { CRM_TAG_FILTERS } from '../utils/constants';
 
@@ -27,12 +28,20 @@ export default function CrmContactsTab() {
   const { colors } = useCrmTheme();
   const scrollRef = useRef(null);
   useScrollToTop(scrollRef);
-  const { contacts, loading, refreshing, refreshAll, openCreateContact } = useCrm();
+  const {
+    contacts,
+    loading,
+    refreshing,
+    refreshAll,
+    openCreateContact,
+    optimisticDeleteContact,
+  } = useCrm();
 
   const [currentUserId, setCurrentUserId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('ALL');
   const [shareContact, setShareContact] = useState(null);
+  const [deleteContactTarget, setDeleteContactTarget] = useState(null);
 
   useEffect(() => {
     getSession().then((s) => {
@@ -188,6 +197,7 @@ export default function CrmContactsTab() {
               key={contact.id}
               contact={contact}
               onShare={(c) => setShareContact(c)}
+              onDeletePrompt={(c) => setDeleteContactTarget(c)}
             />
           ))
         ) : (
@@ -217,6 +227,23 @@ export default function CrmContactsTab() {
           </View>
         )}
       </ScrollView>
+
+      {/* iOS-Style Delete Confirmation Modal */}
+      <IosDeleteConfirmModal
+        visible={!!deleteContactTarget}
+        title={deleteContactTarget?.name ? `Delete "${deleteContactTarget.name}"` : 'Delete Contact'}
+        message="Are you sure you want to delete this contact? This will remove all their details from your CRM."
+        confirmText="Delete Contact"
+        isPermanent={true}
+        onConfirm={() => {
+          if (deleteContactTarget) {
+            const id = deleteContactTarget.id;
+            setDeleteContactTarget(null);
+            optimisticDeleteContact(id);
+          }
+        }}
+        onCancel={() => setDeleteContactTarget(null)}
+      />
     </AppScreen>
   );
 }

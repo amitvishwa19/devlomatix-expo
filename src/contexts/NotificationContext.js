@@ -1,5 +1,6 @@
 import { getMessaging, onMessage } from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import React, {
   createContext,
   useContext,
@@ -25,6 +26,7 @@ export const NotificationProvider = ({ children }) => {
   const [expoPushToken, setExpoPushToken] = useState(null);
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   const notificationListener = useRef();
   const responseListener = useRef();
@@ -64,15 +66,54 @@ export const NotificationProvider = ({ children }) => {
 
     const resSub = Notifications.addNotificationResponseReceivedListener(
       (r) => {
-        console.log("🔔 Notification Tapped:", r.notification.request.content);
+        const content = r.notification?.request?.content;
+        console.log("🔔 Notification Tapped:", content);
+        const data = content?.data;
+        if (data?.type === 'crm_email') {
+          if (data?.threadId) {
+            router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+          } else {
+            router.push('/(modules)/crm/mailbox');
+          }
+        }
       },
     );
     responseListener.current = resSub;
+
+    // Direct FCM background/killed app tap handler
+    let unsubFcmOpened = null;
+    try {
+      const msg = getMessaging();
+      if (msg) {
+        unsubFcmOpened = msg.onNotificationOpenedApp((remoteMessage) => {
+          const data = remoteMessage?.data;
+          if (data?.type === 'crm_email') {
+            if (data?.threadId) {
+              router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+            } else {
+              router.push('/(modules)/crm/mailbox');
+            }
+          }
+        });
+
+        msg.getInitialNotification().then((remoteMessage) => {
+          const data = remoteMessage?.data;
+          if (data?.type === 'crm_email') {
+            if (data?.threadId) {
+              router.push(`/(modules)/crm/mailbox/${data.threadId}`);
+            } else {
+              router.push('/(modules)/crm/mailbox');
+            }
+          }
+        }).catch(() => {});
+      }
+    } catch (_) {}
 
     return () => {
       unsubFcm();
       sub.remove();
       resSub.remove();
+      if (unsubFcmOpened) unsubFcmOpened();
     };
   }, []);
 
