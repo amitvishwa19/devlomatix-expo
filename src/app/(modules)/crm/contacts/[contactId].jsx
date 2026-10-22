@@ -22,6 +22,7 @@ import ShareContactModal from '../_components/ShareContactModal';
 import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
 import * as crmService from '~/services/crm';
 import { getMailboxThreads } from '~/services/mailbox';
+import { PermissionGate } from '~/components/PermissionGate';
 
 function formatTimelineDate(dateStr) {
   if (!dateStr) return '';
@@ -311,14 +312,16 @@ export default function ContactDossierScreen() {
               <Text className="text-xs font-bold" style={{ color: colors.primary }}>Share</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => setDeleteContactVisible(true)}
-              hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-70"
-              style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            >
-              <Ionicons name="trash-outline" size={16} color="#ef4444" />
-            </Pressable>
+            <PermissionGate action="delete" resource="contact">
+              <Pressable
+                onPress={() => setDeleteContactVisible(true)}
+                hitSlop={8}
+                className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-70"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </Pressable>
+            </PermissionGate>
           </View>
         }
       />

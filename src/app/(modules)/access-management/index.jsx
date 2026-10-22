@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/theme/AppTheme';
+import RoleProtectedScreen from '~/components/RoleProtectedScreen';
 import { fetchAccessData, upsertUser, deleteUser, upsertRole, deleteRole, upsertPermissions } from '~/services/access-management';
 
 import DashboardTab from './_components/DashboardTab';
@@ -266,8 +267,14 @@ export default function AccessManagementScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${palette.page}`}>
-      <StatusBar style={palette.statusBar} />
+    <RoleProtectedScreen
+      requiredRole={['Super Admin', 'Admin']}
+      requiredPermission={['navbar:System:Parent', 'access.manage', 'system:manage']}
+      title="Access Management Restricted"
+      message="You do not have administrative privileges to manage organization roles and permissions."
+    >
+      <SafeAreaView className={`flex-1 ${palette.page}`}>
+        <StatusBar style={palette.statusBar} />
       <View className={`flex-1 ${palette.page}`}>
         <View className="px-5 pb-2 pt-5">
           <Pressable className="mb-3 flex-row items-center gap-2" onPress={() => router.back()}>
@@ -360,5 +367,6 @@ export default function AccessManagementScreen() {
         </ScrollView>
       </View>
     </SafeAreaView>
+  </RoleProtectedScreen>
   );
 }

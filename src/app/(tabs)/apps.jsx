@@ -6,8 +6,19 @@ import { Animated, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useAppTheme } from '~/theme/AppTheme';
+import { usePermissions } from '~/hooks/usePermissions';
 
 const tools = [
+  {
+    id: 'access-management',
+    name: 'Access Management',
+    icon: 'shield-checkmark-outline',
+    color: '#0d9488',
+    bg: 'bg-teal-500/15',
+    description: 'Organization roles, permissions matrix, and security policies.',
+    route: '/(modules)/access-management',
+    requireAdmin: true,
+  },
   {
     id: 'notes',
     name: 'Quick Notes',
@@ -88,7 +99,10 @@ const tools = [
 export default function ProductivityScreen() {
   const router = useRouter();
   const { palette } = useAppTheme();
+  const { isSuperAdmin, isAdmin } = usePermissions();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  const visibleTools = tools.filter((tool) => !tool.requireAdmin || (isAdmin || isSuperAdmin));
 
   return (
     <SafeAreaView className={`flex-1 ${palette.page}`}>
@@ -111,7 +125,7 @@ export default function ProductivityScreen() {
           </View>
 
           <View className="mb-4 flex-row flex-wrap gap-3">
-            {tools.map((tool) => (
+            {visibleTools.map((tool) => (
               <Pressable
                 key={tool.id}
                 onPress={tool.route ? () => router.push(tool.route) : undefined}

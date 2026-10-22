@@ -13,6 +13,8 @@ import * as campaignsService from '~/services/konnectx/campaigns';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
 import { resolveWorkspaceId } from '~/utils/workspace';
+import { usePermissions } from '~/hooks/usePermissions';
+import Toast from 'react-native-toast-message';
 
 const appMeta = {
     crm: {
@@ -145,6 +147,7 @@ const MODULE_COLORS = {
 export default function HomeScreen() {
     const router = useRouter();
     const { palette } = useAppTheme();
+    const { canAccessModule } = usePermissions();
     const { widgets, toggleWidget, setAll } = useWidgets();
     const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
     const [showCustomize, setShowCustomize] = useState(false);
@@ -345,7 +348,18 @@ export default function HomeScreen() {
                             if (key === 'hireflow' && hireflowStats) statsToDisplay = hireflowStats;
                             if (key === 'konnectx' && konnectxStats) statsToDisplay = konnectxStats;
 
+                            const hasAccess = canAccessModule(key);
+
                             const onPress = async () => {
+                                if (!hasAccess) {
+                                    Toast.show({
+                                        type: 'info',
+                                        text1: 'Access Restricted',
+                                        text2: `Your assigned role does not have authorization to access ${app.name}.`,
+                                    });
+                                    return;
+                                }
+
                                 if (key === 'hireflow') {
                                     const workspaceId = await resolveWorkspaceId();
                                     if (workspaceId) {
@@ -361,7 +375,7 @@ export default function HomeScreen() {
                             return (
                                 <Pressable
                                     key={key}
-                                    className={`mb-4 rounded-[24px] p-5 shadow-xl ${palette.surface} ${palette.shadow}`}
+                                    className={`mb-4 rounded-[24px] p-5 shadow-xl ${palette.surface} ${palette.shadow} ${!hasAccess ? 'opacity-85' : ''}`}
                                     onPress={onPress}
                                 >
                                     <View className="mb-3.5 flex-row items-center justify-between">
@@ -369,10 +383,18 @@ export default function HomeScreen() {
                                             <View className={`h-2.5 w-2.5 rounded-full ${app.dot}`} />
                                             <Text className={`text-[18px] font-bold ${palette.text}`}>{app.name}</Text>
                                         </View>
-                                        <View className={`rounded-full px-3 py-1.5 ${app.accentBg}`}>
-                                            <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
-                                                {app.badge}
-                                            </Text>
+                                        <View className="flex-row items-center gap-1.5">
+                                            {!hasAccess && (
+                                                <View className="rounded-full px-2 py-0.5 bg-amber-500/15 flex-row items-center gap-1">
+                                                    <Ionicons name="lock-closed" size={10} color="#f59e0b" />
+                                                    <Text className="text-[9px] font-bold text-amber-500">LOCKED</Text>
+                                                </View>
+                                            )}
+                                            <View className={`rounded-full px-3 py-1.5 ${hasAccess ? app.accentBg : 'bg-slate-500/50'}`}>
+                                                <Text className="text-[11px] font-bold uppercase tracking-[1px] text-white">
+                                                    {app.badge}
+                                                </Text>
+                                            </View>
                                         </View>
                                     </View>
 

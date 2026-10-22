@@ -21,6 +21,7 @@ import AiStalledDealRevivalModal from '../_components/AiStalledDealRevivalModal'
 import * as crmService from '~/services/crm';
 import { printOrShareQuotationPdf } from '~/services/quotationPdf';
 import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
+import { PermissionGate } from '~/components/PermissionGate';
 
 let HapticsModule = null;
 try {
@@ -236,14 +237,16 @@ export default function DealDossierScreen() {
               <Text className="text-xs font-bold text-white">Invoice</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => setDeleteModalVisible(true)}
-              hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
-              style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            >
-              <Ionicons name="trash-outline" size={15} color="#ef4444" />
-            </Pressable>
+            <PermissionGate action="delete" resource="deal">
+              <Pressable
+                onPress={() => setDeleteModalVisible(true)}
+                hitSlop={8}
+                className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              >
+                <Ionicons name="trash-outline" size={15} color="#ef4444" />
+              </Pressable>
+            </PermissionGate>
           </View>
         }
       />

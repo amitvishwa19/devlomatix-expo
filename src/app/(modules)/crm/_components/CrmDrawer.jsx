@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrmTheme } from '../utils/colors';
 import { useAppTheme } from '~/theme/AppTheme';
 import { getSession } from '~/utils/authStorage';
+import { usePermissions } from '~/hooks/usePermissions';
 
 const CrmDrawerContext = createContext(null);
 
@@ -203,6 +204,7 @@ function CrmDrawerModal({ visible, onClose }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useCrmTheme();
   const { palette } = useAppTheme();
+  const { isSuperAdmin, roles: userRoles, canAccessModule } = usePermissions();
 
   const [user, setUser] = useState(null);
 
@@ -292,9 +294,18 @@ function CrmDrawerModal({ visible, onClose }) {
               </View>
             )}
             <View className="flex-1">
-              <Text className="text-xs font-bold" style={{ color: colors.text }} numberOfLines={1}>
-                {user?.displayName || user?.name || 'CRM Operator'}
-              </Text>
+              <View className="flex-row items-center gap-1.5">
+                <Text className="text-xs font-bold" style={{ color: colors.text }} numberOfLines={1}>
+                  {user?.displayName || user?.name || 'CRM Operator'}
+                </Text>
+                {userRoles?.length > 0 && (
+                  <View className="rounded px-1.5 py-0.5 bg-indigo-500/15">
+                    <Text className="text-[8.5px] font-bold text-indigo-500 uppercase">
+                      {isSuperAdmin ? 'SUPER ADMIN' : userRoles[0]}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <Text className="text-[10px]" style={{ color: colors.textMuted }} numberOfLines={1}>
                 {user?.email || 'Logged in'}
               </Text>
@@ -377,22 +388,30 @@ function CrmDrawerModal({ visible, onClose }) {
                 Devlomatix Apps
               </Text>
               <View className="flex-row flex-wrap gap-1.5 px-1">
-                {suiteModules.map((mod) => (
-                  <Pressable
-                    key={mod.name}
-                    onPress={() => navigateTo(mod.route)}
-                    className="flex-row items-center gap-x-1.5 rounded-lg px-2.5 py-1.5 border active:opacity-75"
-                    style={{
-                      backgroundColor: colors.cardAlt,
-                      borderColor: colors.borderLight,
-                    }}
-                  >
-                    <Ionicons name={mod.icon} size={12} color={mod.color} />
-                    <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
-                      {mod.name}
-                    </Text>
-                  </Pressable>
-                ))}
+                {suiteModules.map((mod) => {
+                  const hasModAccess = canAccessModule(mod.name);
+                  return (
+                    <Pressable
+                      key={mod.name}
+                      onPress={() => navigateTo(mod.route)}
+                      className="flex-row items-center gap-x-1.5 rounded-lg px-2.5 py-1.5 border active:opacity-75"
+                      style={{
+                        backgroundColor: colors.cardAlt,
+                        borderColor: colors.borderLight,
+                        opacity: hasModAccess ? 1 : 0.65,
+                      }}
+                    >
+                      <Ionicons
+                        name={hasModAccess ? mod.icon : 'lock-closed'}
+                        size={12}
+                        color={hasModAccess ? mod.color : colors.textMuted}
+                      />
+                      <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
+                        {mod.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           </ScrollView>

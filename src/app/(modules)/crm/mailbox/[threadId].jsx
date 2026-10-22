@@ -21,6 +21,7 @@ import { getMailboxThreadDetail, sendMailboxEmail, updateMailboxThread, deleteMa
 import { askCopilotChat } from '~/services/crm';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import IosDeleteConfirmModal from './_components/IosDeleteConfirmModal';
+import { PermissionGate } from '~/components/PermissionGate';
 
 let HapticsModule = null;
 try {
@@ -391,24 +392,28 @@ export default function MailboxThreadDetailScreen() {
                 </Pressable>
 
                 {/* Permanent Delete */}
+                <PermissionGate action="delete" resource="mailbox">
+                  <Pressable
+                    onPress={handlePromptDelete}
+                    hitSlop={8}
+                    className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                  >
+                    <Ionicons name="trash" size={16} color="#ef4444" />
+                  </Pressable>
+                </PermissionGate>
+              </>
+            ) : (
+              <PermissionGate action="delete" resource="mailbox">
                 <Pressable
                   onPress={handlePromptDelete}
                   hitSlop={8}
                   className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
                   style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
-                  <Ionicons name="trash" size={16} color="#ef4444" />
+                  <Ionicons name="trash-outline" size={16} color="#ef4444" />
                 </Pressable>
-              </>
-            ) : (
-              <Pressable
-                onPress={handlePromptDelete}
-                hitSlop={8}
-                className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-70"
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-              >
-                <Ionicons name="trash-outline" size={16} color="#ef4444" />
-              </Pressable>
+              </PermissionGate>
             )}
           </View>
         }

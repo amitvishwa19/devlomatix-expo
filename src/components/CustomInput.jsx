@@ -17,7 +17,7 @@ export default function CustomInput({ label, value, onChangeText, placeholder, s
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
                     secureTextEntry={isObscured}
-                    className={`h-12 w-full rounded-lg border border-slate-200 bg-slate-50 pl-4 ${secureTextEntry ? 'pr-12' : 'pr-4'} text-[15px] text-slate-900`} />
+                    className={`h-12 w-full rounded-lg border border-slate-200 bg-slate-50 pl-4 ${secureTextEntry ? 'pr-12' : 'pr-4'} text-md `} />
 
                 {secureTextEntry && (
                     <Pressable

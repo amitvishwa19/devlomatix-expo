@@ -6,6 +6,8 @@ import Toast from 'react-native-toast-message';
 import { useCrm } from '~/providers/CrmProvider';
 import { printOrShareQuotationPdf } from '~/services/quotationPdf';
 import { useCrmTheme } from '../utils/colors';
+import { usePermissions } from '~/hooks/usePermissions';
+import { PermissionGate } from '~/components/PermissionGate';
 
 let HapticsModule = null;
 try {
@@ -15,6 +17,7 @@ try {
 export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
+  const { canDelete } = usePermissions();
   const { openQuickWhatsApp, stages, optimisticMoveDealStage } = useCrm();
   const [sharingPdf, setSharingPdf] = useState(false);
   const [advancingStage, setAdvancingStage] = useState(false);
@@ -175,7 +178,11 @@ export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
   return (
     <Pressable
       onPress={() => router.push(`/(modules)/crm/deals/${deal.id}`)}
-      onLongPress={() => onDeletePrompt?.(deal)}
+      onLongPress={() => {
+        if (canDelete('deal')) {
+          onDeletePrompt?.(deal);
+        }
+      }}
       delayLongPress={350}
       className="mb-2.5 rounded-[16px] border p-3 active:opacity-85"
       style={{
@@ -413,13 +420,15 @@ export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
 
         <View className="flex-row items-center gap-x-2">
           {onDeletePrompt && (
-            <Pressable
-              onPress={() => onDeletePrompt(deal)}
-              hitSlop={8}
-              className="p-1 active:opacity-60"
-            >
-              <Ionicons name="trash-outline" size={14} color={colors.textSoft} />
-            </Pressable>
+            <PermissionGate action="delete" resource="deal">
+              <Pressable
+                onPress={() => onDeletePrompt(deal)}
+                hitSlop={8}
+                className="p-1 active:opacity-60"
+              >
+                <Ionicons name="trash-outline" size={14} color={colors.textSoft} />
+              </Pressable>
+            </PermissionGate>
           )}
           <View className="flex-row items-center gap-x-1">
             <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>

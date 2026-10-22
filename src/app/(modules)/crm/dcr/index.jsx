@@ -27,6 +27,7 @@ import { createDcrRecord, deleteDcrRecord, getDcrRecords, updateDcrRecord } from
 import * as crmService from '~/services/crm';
 import { uploadImageToSupabase } from '~/services/supabaseStorage';
 import { useCrmTheme } from '../utils/colors';
+import { PermissionGate } from '~/components/PermissionGate';
 
 let AudioModule = null;
 try {
@@ -2160,17 +2161,19 @@ export default function DcrScreen() {
                 </TouchableOpacity>
 
                 {/* Delete Button */}
-                <TouchableOpacity
-                  onPress={() => handleDeleteDcr(detailRecord?.id)}
-                  hitSlop={8}
-                  className="w-8 h-8 rounded-full items-center justify-center border"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2',
-                    borderColor: isDark ? 'rgba(239,68,68,0.3)' : '#fca5a5',
-                  }}
-                >
-                  <Ionicons name="trash-outline" size={15} color="#ef4444" />
-                </TouchableOpacity>
+                <PermissionGate action="delete" resource="dcr">
+                  <TouchableOpacity
+                    onPress={() => handleDeleteDcr(detailRecord?.id)}
+                    hitSlop={8}
+                    className="w-8 h-8 rounded-full items-center justify-center border"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2',
+                      borderColor: isDark ? 'rgba(239,68,68,0.3)' : '#fca5a5',
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={15} color="#ef4444" />
+                  </TouchableOpacity>
+                </PermissionGate>
 
                 {/* Close Button */}
                 <TouchableOpacity

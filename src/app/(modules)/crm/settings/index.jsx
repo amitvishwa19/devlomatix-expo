@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -21,8 +22,9 @@ import { useAppTheme } from '~/theme/AppTheme';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
 import * as crmService from '~/services/crm';
-import { fetchAccessData } from '~/services/access-management';
 import { clearSession, getSession } from '~/utils/authStorage';
+import { usePermissions } from '~/hooks/usePermissions';
+import { PermissionGate } from '~/components/PermissionGate';
 
 const ECOSYSTEM_MODULES = [
   {
@@ -97,6 +99,7 @@ export default function CrmSettingsScreen({ isTab = false }) {
   const refreshAll = crm?.refreshAll || (() => {});
   const refreshing = crm?.refreshing || false;
 
+  const { isSuperAdmin, isAdmin, roles: userRoles, permissions: userPerms } = usePermissions();
   const [user, setUser] = useState(null);
   const [permModules, setPermModules] = useState([]);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -701,20 +704,37 @@ export default function CrmSettingsScreen({ isTab = false }) {
         <Pressable
           className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          onPress={() => router.push('/(modules)/access-management')}
+          onPress={() => {
+            if (isAdmin || isSuperAdmin) {
+              router.push('/(modules)/access-management');
+            } else {
+              Alert.alert('Access Restricted', 'Access Management requires Administrator privileges.');
+            }
+          }}
         >
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-x-2.5">
               <View
                 className="h-8 w-8 items-center justify-center rounded-xl"
-                style={{ backgroundColor: colors.primarySoft }}
+                style={{ backgroundColor: (isAdmin || isSuperAdmin) ? colors.primarySoft : 'rgba(239, 68, 68, 0.12)' }}
               >
-                <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
+                <Ionicons
+                  name={(isAdmin || isSuperAdmin) ? "shield-checkmark-outline" : "lock-closed-outline"}
+                  size={17}
+                  color={(isAdmin || isSuperAdmin) ? colors.primary : '#ef4444'}
+                />
               </View>
               <View>
-                <Text className="text-sm font-bold" style={{ color: colors.text }}>
-                  Access Management
-                </Text>
+                <View className="flex-row items-center gap-x-1.5">
+                  <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                    Access Management
+                  </Text>
+                  {!(isAdmin || isSuperAdmin) && (
+                    <View className="rounded px-1.5 py-0.5 bg-rose-500/15">
+                      <Text className="text-[9px] font-bold text-rose-500">ADMIN ONLY</Text>
+                    </View>
+                  )}
+                </View>
                 <Text className="text-[11px]" style={{ color: colors.textMuted }}>
                   Role-based permissions & security policies
                 </Text>
