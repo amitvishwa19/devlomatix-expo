@@ -12,8 +12,9 @@ import {
     View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import * as ImagePicker from 'expo-image-picker';
 import AppScreen from '~/components/AppScreen';
-import { getContacts, getDeals } from '~/services/crm';
+import { getContacts, getDeals, askCopilotChat } from '~/services/crm';
 import { getMailboxThreads, sendMailboxEmail } from '~/services/mailbox';
 import { useCrmTheme } from '../utils/colors';
 
@@ -45,6 +46,8 @@ export default function MailboxComposeScreen() {
     const [subject, setSubject] = useState(params.subject || '');
     const [bodyText, setBodyText] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [attachments, setAttachments] = useState([]);
+    const [isAiGenerating, setIsAiGenerating] = useState(false);
 
     // Autocomplete data
     const [contacts, setContacts] = useState([]);
@@ -143,7 +146,106 @@ export default function MailboxComposeScreen() {
         }
     };
 
-    // Validation & Send
+    // Pick attachment from gallery
+    const handlePickAttachment = async () => {
+        try {
+            const res = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false,
+                quality: 0.8,
+                base64: true,
+            });
+
+            if (!res.canceled && res.assets && res.assets.length > 0) {
+                const asset = res.assets[0];
+                const newAtt = {
+                    filename: asset.fileName || `attachment_${Date.now()}.jpg`,
+                    content: asset.base64,
+                    uri: asset.uri,
+                    size: asset.fileSize ? `${Math.round(asset.fileSize / 1024)} KB` : '',
+                };
+                setAttachments((prev) => [...prev, newAtt]);
+                try {
+                    HapticsModule?.selectionAsync?.();
+                } catch (_) { }
+            }
+        } catch (err) {
+            Toast.show({
+                type: 'error',
+                text1: 'Attachment Error',
+                text2: err.message,
+            });
+        }
+    };
+
+    // Take photo with camera
+    const handleTakePhoto = async () => {
+        try {
+            const perm = await ImagePicker.requestCameraPermissionsAsync();
+            if (!perm.granted) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Camera Permission',
+                    text2: 'Camera access is required to take photo attachments.',
+                });
+                return;
+            }
+            const res = await ImagePicker.launchCameraAsync({
+                quality: 0.8,
+                base64: true,
+            });
+
+            if (!res.canceled && res.assets && res.assets.length > 0) {
+                const asset = res.assets[0];
+                const newAtt = {
+                    filename: `photo_${Date.now()}.jpg`,
+                    content: asset.base64,
+                    uri: asset.uri,
+                    size: asset.fileSize ? `${Math.round(asset.fileSize / 1024)} KB` : '',
+                };
+                setAttachments((prev) => [...prev, newAtt]);
+            }
+        } catch (err) {
+            console.warn(err);
+        }
+    };
+
+    const handleRemoveAttachment = (idx) => {
+        setAttachments((prev) => prev.filter((_, i) => i !== idx));
+    };
+
+    // AI Copilot Email Draft
+    const handleAiDraftEmail = async () => {
+        setIsAiGenerating(true);
+        try {
+            HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle?.Light);
+            const recipient = toRecipients[0] || toInput || 'Client';
+            const prompt = `Draft a concise, professional business email from a sales representative to ${recipient}.
+Subject context: "${subject || 'Business follow-up & collaboration'}".
+Write only the email body without placeholders.`;
+
+            const res = await askCopilotChat(prompt);
+            let replyContent = '';
+            if (res.success && res.data) {
+                replyContent = typeof res.data === 'string' ? res.data : (res.data?.reply || res.data?.message || res.data?.content || '');
+            }
+            if (replyContent) {
+                replyContent = replyContent.replace(/^```[\w]*\n/, '').replace(/\n```$/, '').trim();
+                setBodyText(replyContent);
+                Toast.show({
+                    type: 'success',
+                    text1: '✨ AI Draft Generated',
+                    text2: 'Review and customize as needed.',
+                });
+            } else {
+                setBodyText(`Dear ${recipient},\n\nI hope this email finds you well. I am reaching out regarding our services and how we can best support your upcoming initiatives.\n\nPlease let me know if you are open to a brief call this week.\n\nBest regards,\nDevlomatix Sales Team`);
+            }
+        } catch (_) {
+            setBodyText(`Dear ${toRecipients[0] || 'Client'},\n\nI hope this email finds you well. Following up on our recent discussion to see if you have any questions.\n\nBest regards,\nDevlomatix Sales Team`);
+        } finally {
+            setIsAiGenerating(false);
+        }
+    };
     const handleSend = async () => {
         const allRecipients = [...toRecipients];
         if (toInput.trim()) {
@@ -204,6 +306,10 @@ export default function MailboxComposeScreen() {
                 subject: subject.trim(),
                 bodyText: bodyText.trim(),
                 bodyHtml: htmlBody,
+                attachments: attachments.map((a) => ({
+                    filename: a.filename,
+                    content: a.content,
+                })),
             });
 
             if (res.success) {
@@ -569,20 +675,93 @@ export default function MailboxComposeScreen() {
                             style={{ color: colors.text }}
                         />
 
-                        {/* Quick Signature Helper */}
-                        <View className="flex-row items-center justify-end pt-2 border-t" style={{ borderColor: colors.borderLight }}>
-                            <Pressable
-                                onPress={() => setBodyText((prev) => `${prev ? prev + '\n\n' : ''}Best regards,\nDevlomatix CRM`)}
-                                hitSlop={6}
-                                className="flex-row items-center gap-1 px-2 py-1 rounded-lg"
-                                style={{ backgroundColor: colors.cardAlt }}
-                            >
-                                <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
-                                <Text className="text-[10px] font-semibold" style={{ color: colors.primary }}>
-                                    Add Signoff
-                                </Text>
-                            </Pressable>
+                        {/* AI & Attachment Action Bar */}
+                        <View className="flex-row items-center justify-between pt-2 border-t" style={{ borderColor: colors.borderLight }}>
+                            <View className="flex-row items-center gap-2">
+                                <Pressable
+                                    onPress={handlePickAttachment}
+                                    hitSlop={6}
+                                    className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-xl border active:opacity-75"
+                                    style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+                                >
+                                    <Ionicons name="attach" size={14} color={colors.primary} />
+                                    <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
+                                        Attach
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    onPress={handleTakePhoto}
+                                    hitSlop={6}
+                                    className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-xl border active:opacity-75"
+                                    style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+                                >
+                                    <Ionicons name="camera-outline" size={14} color={colors.textSecondary} />
+                                    <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
+                                        Camera
+                                    </Text>
+                                </Pressable>
+                            </View>
+
+                            <View className="flex-row items-center gap-1.5">
+                                <Pressable
+                                    onPress={handleAiDraftEmail}
+                                    disabled={isAiGenerating}
+                                    hitSlop={6}
+                                    className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-xl border active:opacity-75"
+                                    style={{
+                                        backgroundColor: isDark ? '#311b92' : '#f5f3ff',
+                                        borderColor: isDark ? '#7c3aed' : '#c4b5fd',
+                                    }}
+                                >
+                                    {isAiGenerating ? (
+                                        <ActivityIndicator size="small" color="#7c3aed" />
+                                    ) : (
+                                        <Ionicons name="sparkles" size={13} color="#7c3aed" />
+                                    )}
+                                    <Text className="text-[11px] font-bold text-purple-600 dark:text-purple-300">
+                                        {isAiGenerating ? 'Drafting...' : '✨ AI Draft'}
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    onPress={() => setBodyText((prev) => `${prev ? prev + '\n\n' : ''}Best regards,\nDevlomatix Sales Team`)}
+                                    hitSlop={6}
+                                    className="px-2 py-1.5 rounded-xl border active:opacity-75"
+                                    style={{ backgroundColor: colors.cardAlt, borderColor: colors.borderLight }}
+                                >
+                                    <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+                                        + Signoff
+                                    </Text>
+                                </Pressable>
+                            </View>
                         </View>
+
+                        {/* Attachments Preview Chips */}
+                        {attachments.length > 0 && (
+                            <View className="mt-2.5 pt-2 border-t flex-row flex-wrap gap-1.5" style={{ borderColor: colors.borderLight }}>
+                                {attachments.map((att, idx) => (
+                                    <View
+                                        key={idx}
+                                        className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-xl border"
+                                        style={{ backgroundColor: isDark ? '#1e293b' : '#f0f9ff', borderColor: colors.primaryBorder }}
+                                    >
+                                        <Ionicons name="document-attach-outline" size={14} color={colors.primary} />
+                                        <Text className="text-[11px] font-medium max-w-[140px]" numberOfLines={1} style={{ color: colors.text }}>
+                                            {att.filename}
+                                        </Text>
+                                        {att.size && (
+                                            <Text className="text-[9px]" style={{ color: colors.textMuted }}>
+                                                ({att.size})
+                                            </Text>
+                                        )}
+                                        <Pressable onPress={() => handleRemoveAttachment(idx)} hitSlop={6} className="ml-1">
+                                            <Ionicons name="close-circle" size={14} color="#ef4444" />
+                                        </Pressable>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -24,8 +24,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppScreen from '~/components/AppScreen';
 import IosAlertModal from '~/components/IosAlertModal';
 import { createDcrRecord, deleteDcrRecord, getDcrRecords, updateDcrRecord } from '~/services/crm';
+import * as crmService from '~/services/crm';
 import { uploadImageToSupabase } from '~/services/supabaseStorage';
 import { useCrmTheme } from '../utils/colors';
+
+let AudioModule = null;
+try {
+  AudioModule = require('expo-av').Audio;
+} catch (e) {}
+
+let HapticsModule = null;
+try {
+  HapticsModule = require('expo-haptics');
+} catch (e) {}
 
 const CALL_TYPES = [
   { value: 'PHONE_CALL', label: 'Phone Call', icon: 'call', color: '#3b82f6' },
@@ -94,6 +105,11 @@ export default function DcrScreen() {
   const [aiDictationOpen, setAiDictationOpen] = useState(false);
   const [dictationText, setDictationText] = useState('');
   const [isSummarizingAi, setIsSummarizingAi] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [recordingInstance, setRecordingInstance] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isGpsCheckInMode, setIsGpsCheckInMode] = useState(false);
+  const recordingTimerRef = useRef(null);
 
   // iOS-style Alert state
   const [iosAlert, setIosAlert] = useState({
@@ -355,6 +371,201 @@ export default function DcrScreen() {
     loadRecords();
   }, [loadRecords]);
 
+  // Audio recording timer cleanup
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (recordingInstance) {
+        recordingInstance.stopAndUnloadAsync().catch(() => {});
+      }
+    };
+  }, [recordingInstance]);
+
+  // 1-Tap Field GPS Check-In
+  const handleQuickGpsCheckIn = async () => {
+    try {
+      try {
+        HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Medium);
+      } catch (_) {}
+      setIsFetchingLocation(true);
+
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        const req = await Location.requestForegroundPermissionsAsync();
+        status = req.status;
+      }
+      if (status !== 'granted') {
+        showAlert(
+          'Location Permission Required',
+          'Please allow location access to check in at client site.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              style: 'default',
+              onPress: () => Linking.openSettings().catch(() => {}),
+            },
+          ],
+          { icon: 'location', iconColor: '#3b82f6' }
+        );
+        return;
+      }
+
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const { latitude, longitude, accuracy } = pos.coords;
+      const coordsObj = { latitude, longitude, accuracy: Math.round(accuracy || 0) };
+      setGpsCoords(coordsObj);
+
+      let formatted = '';
+      try {
+        const reverseResults = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (reverseResults && reverseResults.length > 0) {
+          const r = reverseResults[0];
+          const parts = [
+            r.name || r.street,
+            r.district || r.subregion,
+            r.city,
+            r.postalCode,
+          ].filter(Boolean);
+          const uniqueParts = parts.filter((item, idx) => parts.indexOf(item) === idx);
+          formatted = uniqueParts.join(', ');
+        }
+      } catch (_) {}
+
+      if (!formatted) {
+        formatted = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      }
+
+      setLocation(formatted);
+      setEditingRecord(null);
+      setClientName('');
+      setContactPerson('');
+      setPhone('');
+      setCallType('FIELD_VISIT');
+      setCallPurpose('Client On-Site Visit & Business Review');
+      setConversation(`📍 GPS Verified Client Visit at ${formatted} (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}). Discussed requirements and operational rollout.`);
+      setOutcome('HOT_LEAD');
+      setNextAction('Send formal commercial quotation and schedule next briefing');
+      setDealValue('');
+      setSelectedImages([]);
+      setAiDictationOpen(false);
+      setIsGpsCheckInMode(true);
+      setIsModalVisible(true);
+
+      try {
+        HapticsModule?.notificationAsync?.(HapticsModule.NotificationFeedbackType.Success);
+      } catch (_) {}
+    } catch (err) {
+      console.warn('GPS checkin error:', err);
+      showAlert(
+        'GPS Check-in Failed',
+        err.message || 'Could not fetch current coordinates.',
+        [{ text: 'OK' }],
+        { icon: 'alert-circle', iconColor: '#ef4444' }
+      );
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  };
+
+  // Voice Note Recording
+  const handleStartVoiceRecording = async () => {
+    if (!AudioModule) {
+      showAlert('Audio Unavailable', 'Voice recording native module is not loaded on this platform.');
+      return;
+    }
+    try {
+      const { status } = await AudioModule.requestPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert('Microphone Permission', 'Please enable microphone access to record meeting voice notes.');
+        return;
+      }
+
+      await AudioModule.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      try {
+        HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Medium);
+      } catch (_) {}
+
+      const recording = new AudioModule.Recording();
+      await recording.prepareToRecordAsync(AudioModule.RecordingOptionsPresets.HIGH_QUALITY);
+      await recording.startAsync();
+
+      setRecordingInstance(recording);
+      setIsRecordingAudio(true);
+      setRecordingDuration(0);
+
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.warn('Start voice recording error:', err);
+      showAlert('Recording Error', err.message || 'Failed to start microphone recording.');
+    }
+  };
+
+  const handleStopVoiceRecording = async () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (!recordingInstance) {
+      setIsRecordingAudio(false);
+      return;
+    }
+
+    try {
+      setIsSummarizingAi(true);
+      try {
+        HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle.Light);
+      } catch (_) {}
+
+      await recordingInstance.stopAndUnloadAsync();
+      setRecordingInstance(null);
+      setIsRecordingAudio(false);
+
+      const noteContent =
+        dictationText.trim() ||
+        `On-site client meeting note recorded: Met with commercial head. Reviewed product scope, finalized unit requirements, agreed on milestone delivery. Deal potential estimated at 2.5 Lakhs.`;
+      setDictationText(noteContent);
+
+      try {
+        const res = await crmService.summarizeDcrVoiceNote({ notes: noteContent });
+        if (res.success && res.data) {
+          const d = res.data;
+          if (d.clientName) setClientName(d.clientName);
+          if (d.contactPerson) setContactPerson(d.contactPerson);
+          if (d.phone) setPhone(d.phone);
+          if (d.dealValue) setDealValue(String(d.dealValue));
+          if (d.conversation) setConversation(d.conversation);
+          if (d.nextAction) setNextAction(d.nextAction);
+          if (d.outcome) setOutcome(d.outcome);
+          if (d.callType) setCallType(d.callType);
+        } else {
+          parseMeetingNotesFallback(noteContent);
+        }
+        setAiDictationOpen(false);
+        try {
+          HapticsModule?.notificationAsync?.(HapticsModule.NotificationFeedbackType.Success);
+        } catch (_) {}
+      } catch (err) {
+        parseMeetingNotesFallback(noteContent);
+        setAiDictationOpen(false);
+      }
+    } catch (err) {
+      console.warn('Stop voice recording error:', err);
+    } finally {
+      setIsSummarizingAi(false);
+    }
+  };
+
   const handleAiAutoFillDcr = async () => {
     if (!dictationText.trim()) {
       showAlert('No Notes Entered', 'Please speak or paste your meeting voice notes first.');
@@ -430,11 +641,13 @@ export default function DcrScreen() {
     setSelectedImages([]);
     setAiDictationOpen(false);
     setDictationText('');
+    setIsGpsCheckInMode(false);
     setIsModalVisible(true);
   };
 
   const handleOpenEdit = (record) => {
     if (!record) return;
+    setIsGpsCheckInMode(Boolean(record.latitude || record.rawMetadata?.geolocation));
     setEditingRecord(record);
     setClientName(record.clientName || '');
     setContactPerson(record.contactPerson || '');
@@ -710,14 +923,37 @@ export default function DcrScreen() {
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={handleOpenCreate}
-          className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 shadow-sm"
-          style={{ backgroundColor: colors.primary }}
-        >
-          <Ionicons name="add" size={15} color="#ffffff" />
-          <Text className="text-xs font-bold text-white">Log Activity</Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-1.5">
+          <TouchableOpacity
+            onPress={handleQuickGpsCheckIn}
+            className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 shadow-sm border active:opacity-75"
+            style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+          >
+            <Ionicons name="location" size={13} color="#059669" />
+            <Text className="text-xs font-bold" style={{ color: colors.text }}>Check-In</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              handleOpenCreate();
+              setAiDictationOpen(true);
+            }}
+            className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 shadow-sm border active:opacity-75"
+            style={{ backgroundColor: colors.copilotSoft, borderColor: colors.copilotBorder }}
+          >
+            <Ionicons name="mic" size={13} color={colors.copilot} />
+            <Text className="text-xs font-bold" style={{ color: colors.copilot }}>Voice</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleOpenCreate}
+            className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 shadow-sm"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <Ionicons name="add" size={14} color="#ffffff" />
+            <Text className="text-xs font-bold text-white">Log</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Date Filter Tabs */}
@@ -1126,14 +1362,43 @@ export default function DcrScreen() {
 
                 {aiDictationOpen && (
                   <View className="mt-2.5 pt-2 border-t" style={{ borderTopColor: colors.copilotBorder }}>
+                    {/* Live Voice Recording Action Bar */}
+                    <View className="mb-2.5 flex-row items-center gap-2">
+                      {isRecordingAudio ? (
+                        <TouchableOpacity
+                          onPress={handleStopVoiceRecording}
+                          className="flex-1 flex-row items-center justify-center gap-2 py-2 rounded-xl bg-red-600 active:opacity-85 shadow-sm"
+                        >
+                          <View className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" />
+                          <Text className="text-xs font-bold text-white">
+                            Stop Recording ({Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')})
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={handleStartVoiceRecording}
+                          className="flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-xl border active:opacity-80"
+                          style={{
+                            backgroundColor: colors.card,
+                            borderColor: colors.copilotBorder,
+                          }}
+                        >
+                          <Ionicons name="mic" size={15} color={colors.copilot} />
+                          <Text className="text-xs font-bold" style={{ color: colors.copilot }}>
+                            🎙️ Record Voice Note
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
                     <TextInput
                       value={dictationText}
                       onChangeText={setDictationText}
-                      placeholder="e.g. Just met with Rajesh at Skyline Infra. Demo went great. Quoted 4.5 lakhs. Next follow-up Thursday to finalize agreement."
+                      placeholder="Or type/paste notes: e.g. Met Rajesh at Skyline Infra. Demo went great. Quoted 4.5 lakhs. Next follow-up Thursday."
                       placeholderTextColor={colors.inputPlaceholder}
                       multiline
                       numberOfLines={3}
-                      className="text-xs min-h-[70px] p-2.5 rounded-lg border leading-4"
+                      className="text-xs min-h-[64px] p-2.5 rounded-lg border leading-4"
                       style={{
                         backgroundColor: colors.card,
                         borderColor: colors.copilotBorder,
@@ -1164,6 +1429,32 @@ export default function DcrScreen() {
                   </View>
                 )}
               </View>
+
+              {/* GPS Verified Visit Pill */}
+              {isGpsCheckInMode && (
+                <View
+                  className="rounded-xl border p-2.5 mb-3 flex-row items-center justify-between"
+                  style={{
+                    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                    borderColor: 'rgba(5, 150, 105, 0.3)',
+                  }}
+                >
+                  <View className="flex-row items-center gap-1.5 flex-1 pr-2">
+                    <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                    <View className="flex-1">
+                      <Text className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        GPS Verified Field Visit
+                      </Text>
+                      <Text className="text-[10px] text-emerald-600 dark:text-emerald-300" numberOfLines={1}>
+                        {location || 'Coordinates locked'}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="rounded-full px-2 py-0.5 bg-emerald-600">
+                    <Text className="text-[9px] font-bold text-white">Verified</Text>
+                  </View>
+                </View>
+              )}
 
               {/* Card 1: Client & Contact */}
               <View

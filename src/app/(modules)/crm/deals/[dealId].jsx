@@ -10,6 +10,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import AppScreen from '~/components/AppScreen';
 import { useCrmTheme } from '../utils/colors';
 import { useCrm } from '~/providers/CrmProvider';
@@ -18,7 +19,13 @@ import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import DealBillingModal from '../_components/DealBillingModal';
 import AiStalledDealRevivalModal from '../_components/AiStalledDealRevivalModal';
 import * as crmService from '~/services/crm';
+import { printOrShareQuotationPdf } from '~/services/quotationPdf';
 import IosDeleteConfirmModal from '../_components/IosDeleteConfirmModal';
+
+let HapticsModule = null;
+try {
+  HapticsModule = require('expo-haptics');
+} catch (_) {}
 
 export default function DealDossierScreen() {
   const { dealId } = useLocalSearchParams();
@@ -35,6 +42,80 @@ export default function DealDossierScreen() {
   const [revivalModalVisible, setRevivalModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [stageUpdating, setStageUpdating] = useState(false);
+  const [sharingPdf, setSharingPdf] = useState(false);
+
+  const handleShareQuotation = async () => {
+    if (!deal || sharingPdf) return;
+    try {
+      setSharingPdf(true);
+      try {
+        HapticsModule?.selectionAsync?.();
+      } catch (_) {}
+
+      const val = parseFloat(deal.value) || 0;
+      const currency = deal.currency || 'INR';
+
+      const quotationObj = {
+        quotationNumber: `Q-${(deal.id || 'DEAL').slice(-6).toUpperCase()}`,
+        dealId: deal.id,
+        total: val,
+        createdAt: deal.createdAt || new Date().toISOString(),
+        data: {
+          quotation: {
+            quotationNumber: `Q-${(deal.id || 'DEAL').slice(-6).toUpperCase()}`,
+            date: new Date().toISOString(),
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            currency,
+            subject: `Commercial Proposal: ${deal.title}`,
+          },
+          client: {
+            companyName: deal.account?.name || deal.contact?.name || 'Valued Partner',
+            contactPerson: deal.contact?.name || deal.account?.name || '',
+            email: deal.contact?.email || '',
+            phone: deal.contact?.phone || '',
+          },
+          items: [
+            {
+              name: deal.title || 'Enterprise Commercial Deliverables',
+              description: `Scope of delivery for ${deal.account?.name || deal.contact?.name || 'Client Engagement'}. Dedicated implementation, commercial rollout & support.`,
+              quantity: 1,
+              unitPrice: val,
+              discountPercent: 0,
+              taxPercent: 18,
+            },
+          ],
+          summary: {
+            subtotal: val,
+            discountTotal: 0,
+            taxTotal: Math.round(val * 0.18),
+            grandTotal: Math.round(val * 1.18),
+          },
+        },
+      };
+
+      const res = await printOrShareQuotationPdf(quotationObj, null, 'share');
+      if (res.success) {
+        try {
+          HapticsModule?.notificationAsync?.(HapticsModule.NotificationFeedbackType.Success);
+        } catch (_) {}
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Quotation Share Error',
+          text2: res.error || 'Could not export proposal PDF',
+        });
+      }
+    } catch (err) {
+      console.warn('Share quote error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Quotation Export Failed',
+        text2: err.message || 'Error compiling PDF',
+      });
+    } finally {
+      setSharingPdf(false);
+    }
+  };
 
   const fetchDeal = useCallback(async () => {
     if (!dealId) return;
@@ -132,6 +213,20 @@ export default function DealDossierScreen() {
         showBack={true}
         rightActions={
           <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={handleShareQuotation}
+              disabled={sharingPdf}
+              className="h-8 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border active:opacity-80"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              {sharingPdf ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons name="document-text-outline" size={13} color={colors.primary} />
+              )}
+              <Text className="text-xs font-bold" style={{ color: colors.primary }}>Quote</Text>
+            </Pressable>
+
             <Pressable
               onPress={() => setBillingModalVisible(true)}
               className="h-8 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl active:opacity-80"

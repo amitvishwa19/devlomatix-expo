@@ -18,6 +18,7 @@ import AppScreen from '~/components/AppScreen';
 import CrmHeader from '../_components/CrmHeader';
 import { useCrmTheme } from '../utils/colors';
 import { getMailboxThreadDetail, sendMailboxEmail, updateMailboxThread, deleteMailboxThread } from '~/services/mailbox';
+import { askCopilotChat } from '~/services/crm';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
 import IosDeleteConfirmModal from './_components/IosDeleteConfirmModal';
 
@@ -74,6 +75,51 @@ export default function MailboxThreadDetailScreen() {
   const [expandedDetails, setExpandedDetails] = useState({});
   const [htmlModalContent, setHtmlModalContent] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+
+  const handleGenerateAiReply = async () => {
+    if (!thread) return;
+    setIsAiGenerating(true);
+    try {
+      HapticsModule?.impactAsync?.(HapticsModule.ImpactFeedbackStyle?.Light);
+      const lastInbound = thread.messages?.slice().reverse().find((m) => m.direction === 'INBOUND') || thread.messages?.[thread.messages.length - 1];
+      const prompt = `Draft a concise, polite, professional 2-3 sentence business email reply to the following email from ${lastInbound?.fromEmail || 'client'}:\nSubject: ${thread.subject || ''}\nMessage: ${lastInbound?.bodyText || lastInbound?.snippet || ''}\nReply only with the body text of the email.`;
+
+      const res = await askCopilotChat(prompt);
+      let replyContent = '';
+      if (res.success && res.data) {
+        replyContent = typeof res.data === 'string' ? res.data : (res.data?.reply || res.data?.message || res.data?.content || '');
+      }
+      if (replyContent) {
+        replyContent = replyContent.replace(/^```[\w]*\n/, '').replace(/\n```$/, '').trim();
+        setReplyText(replyContent);
+        Toast.show({
+          type: 'success',
+          text1: '✨ AI Draft Generated',
+          text2: 'Review and tap Send or edit as needed.',
+        });
+      } else {
+        setReplyText(`Hi, thank you for your email regarding "${thread.subject || 'your request'}". I have reviewed your message and will follow up with full details shortly.\n\nBest regards.`);
+      }
+    } catch (_) {
+      setReplyText(`Hi, thank you for reaching out. I have received your email and will get back to you shortly.\n\nBest regards.`);
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const handleApplyQuickReply = (type) => {
+    try {
+      HapticsModule?.selectionAsync?.();
+    } catch (_) {}
+    if (type === 'acknowledge') {
+      setReplyText(`Hi, thank you for your email. I have received your message and will review it and get back to you shortly.\n\nBest regards.`);
+    } else if (type === 'meeting') {
+      setReplyText(`Hi, thank you for reaching out. Would you be available for a brief 15-minute call this week to discuss this further? Let me know what time suits you best.\n\nBest regards.`);
+    } else if (type === 'pricing') {
+      setReplyText(`Hi, thank you for your inquiry. I am currently preparing the requested quotation and details, and will share it with you shortly.\n\nBest regards.`);
+    }
+  };
 
   const scrollViewRef = useRef(null);
 
@@ -608,6 +654,67 @@ export default function MailboxThreadDetailScreen() {
             );
           })}
         </ScrollView>
+
+        {/* AI Smart Replies & Quick Draft Chips */}
+        <View
+          className="px-3 pt-2 pb-1 border-t"
+          style={{ backgroundColor: colors.card, borderColor: colors.borderLight }}
+        >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-1.5">
+            {/* Copilot One-Tap Draft */}
+            <Pressable
+              onPress={handleGenerateAiReply}
+              disabled={isAiGenerating}
+              className="flex-row items-center gap-1 px-2.5 py-1 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: isDark ? '#311b92' : '#f5f3ff',
+                borderColor: isDark ? '#7c3aed' : '#c4b5fd',
+              }}
+            >
+              {isAiGenerating ? (
+                <ActivityIndicator size="small" color="#7c3aed" />
+              ) : (
+                <Ionicons name="sparkles" size={12} color="#7c3aed" />
+              )}
+              <Text className="text-[11px] font-bold text-purple-600 dark:text-purple-300">
+                {isAiGenerating ? 'AI Drafting...' : '✨ AI Copilot Draft'}
+              </Text>
+            </Pressable>
+
+            {/* Quick Chip 1: Acknowledge */}
+            <Pressable
+              onPress={() => handleApplyQuickReply('acknowledge')}
+              className="px-2.5 py-1 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Text className="text-[11px] font-medium" style={{ color: colors.text }}>
+                👍 Received & Reviewing
+              </Text>
+            </Pressable>
+
+            {/* Quick Chip 2: Meeting */}
+            <Pressable
+              onPress={() => handleApplyQuickReply('meeting')}
+              className="px-2.5 py-1 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Text className="text-[11px] font-medium" style={{ color: colors.text }}>
+                📅 Schedule Call
+              </Text>
+            </Pressable>
+
+            {/* Quick Chip 3: Pricing */}
+            <Pressable
+              onPress={() => handleApplyQuickReply('pricing')}
+              className="px-2.5 py-1 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Text className="text-[11px] font-medium" style={{ color: colors.text }}>
+                📄 Send Quotation
+              </Text>
+            </Pressable>
+          </ScrollView>
+        </View>
 
         {/* Quick Reply Bar */}
         <View
