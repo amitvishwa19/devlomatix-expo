@@ -345,15 +345,20 @@ export function CrmSocketProvider({ children }) {
         setIsConnected(true);
         console.log(`[CRM_SOCKET] Mobile client successfully connected and authenticated to ${socketUrl} (Socket ID: ${s.id})`);
 
-        s.emit('user:join', {
-          userId: currentUserId,
-          workspaceId: workspaceId || 'default',
-          userName: currentUserName,
-          avatar: currentUserAvatar,
-          platform: Platform.OS,
-          expoPushToken: pushToken,
-          deviceToken: deviceToken,
-        });
+        // Only emit user:join if workspaceId is resolved — avoids joining 'default' room
+        if (workspaceId) {
+          s.emit('user:join', {
+            userId: currentUserId,
+            workspaceId,
+            userName: currentUserName,
+            avatar: currentUserAvatar,
+            platform: Platform.OS,
+            expoPushToken: pushToken,
+            deviceToken: deviceToken,
+          });
+        } else {
+          console.log('[CRM_SOCKET] workspaceId not yet resolved — will emit user:join when available');
+        }
       });
 
       s.on('connect_error', async (err) => {
@@ -385,7 +390,7 @@ export function CrmSocketProvider({ children }) {
       });
 
       s.on('presence:sync', (users) => {
-        setOnlineUsers(users.filter((u) => u.userId !== currentUserId));
+        setOnlineUsers(users.filter((u) => String(u.userId) !== String(currentUserId)));
       });
 
       socketRef.current = s;
@@ -401,6 +406,22 @@ export function CrmSocketProvider({ children }) {
       }
     };
   }, [currentUserId, workspaceId, currentUserName, currentUserAvatar]);
+
+  // 3b. Re-emit user:join if workspaceId resolves while socket is already connected
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s || !s.connected || !workspaceId || !currentUserId) return;
+    console.log(`[CRM_SOCKET] Workspace resolved. Re-emitting user:join for workspace ${workspaceId}`);
+    s.emit('user:join', {
+      userId: currentUserId,
+      workspaceId,
+      userName: currentUserName,
+      avatar: currentUserAvatar,
+      platform: Platform.OS,
+      expoPushToken: pushToken,
+      deviceToken: deviceToken,
+    });
+  }, [workspaceId, currentUserId, currentUserName, currentUserAvatar, pushToken, deviceToken]);
 
   // 4. WebRTC Signaling Listeners
   useEffect(() => {

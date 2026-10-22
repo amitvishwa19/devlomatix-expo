@@ -127,7 +127,7 @@ export default function CrmChatDirectoryScreen() {
     });
 
     const isUserOnline = (id) => {
-        return onlineUsers.some((u) => u.userId === id);
+        return onlineUsers.some((u) => String(u.userId) === String(id));
     };
 
     const openConversation = (item) => {
@@ -192,16 +192,14 @@ export default function CrmChatDirectoryScreen() {
                             )}
                         </View>
 
-                        {/* Online Indicator Dot */}
-                        {online && (
-                            <View
-                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                                style={{
-                                    backgroundColor: colors.success,
-                                    borderColor: colors.card,
-                                }}
-                            />
-                        )}
+                        {/* Online Status Dot — always visible: green = online, grey = offline */}
+                        <View
+                            className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                            style={{
+                                backgroundColor: online ? colors.success : (colors.textMuted + '55'),
+                                borderColor: colors.card,
+                            }}
+                        />
                     </View>
 
                     {/* User Details */}
