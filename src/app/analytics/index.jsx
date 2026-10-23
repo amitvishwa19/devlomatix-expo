@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import Toast from 'react-native-toast-message';
 import {
   Pressable,
   RefreshControl,
@@ -23,6 +26,7 @@ export default function CrmAnalyticsScreen() {
   const [leaderboard, setLeaderboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -61,6 +65,77 @@ export default function CrmAnalyticsScreen() {
   const funnelStages = forecast?.funnelStages || [];
   const reps = leaderboard?.reps || leaderboard?.leaderboard || [];
 
+  const handleExport = async () => {
+    if (exporting) return;
+    try {
+      setExporting(true);
+      const generatedAt = new Date().toLocaleString('en-IN');
+      const funnelRows = funnelStages
+        .map(
+          (stage) =>
+            `<tr><td>${stage.name || ''}</td><td>${stage.count || 0}</td><td>₹ ${(
+              parseFloat(stage.totalValue) || 0
+            ).toLocaleString('en-IN')}</td><td>${stage.probability || 0}%</td></tr>`
+        )
+        .join('');
+      const repRows = reps
+        .map(
+          (rep, idx) =>
+            `<tr><td>#${idx + 1}</td><td>${rep.name || ''}</td><td>₹ ${(
+              parseFloat(rep.wonValue) || 0
+            ).toLocaleString('en-IN')}</td><td>${
+              rep.quota ? Math.round(((rep.wonValue || 0) / rep.quota) * 100) : 0
+            }%</td></tr>`
+        )
+        .join('');
+
+      const html = `<!doctype html><html><head><meta charset="utf-8" />
+        <style>
+          body { font-family: -apple-system, Roboto, sans-serif; padding: 28px; color: #0f172a; }
+          h1 { font-size: 22px; margin-bottom: 2px; }
+          .muted { color: #64748b; font-size: 12px; margin-bottom: 20px; }
+          .grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+          .card { width: 46%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+          .label { color: #64748b; font-size: 11px; }
+          .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+          h2 { font-size: 14px; margin: 20px 0 8px; text-transform: uppercase; color: #475569; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid #e2e8f0; }
+          th { color: #64748b; font-size: 10px; text-transform: uppercase; }
+        </style></head><body>
+          <h1>Revenue Forecast & Leaderboard</h1>
+          <div class="muted">Generated ${generatedAt}</div>
+          <div class="grid">
+            <div class="card"><div class="label">Weighted Expected</div><div class="value">₹ ${weightedVal}</div></div>
+            <div class="card"><div class="label">Committed Floor</div><div class="value">₹ ${committedVal}</div></div>
+            <div class="card"><div class="label">Best-Case Ceiling</div><div class="value">₹ ${bestCaseVal}</div></div>
+            <div class="card"><div class="label">Closed-Won</div><div class="value">₹ ${wonVal}</div></div>
+          </div>
+          <h2>Stage Conversion Funnel</h2>
+          <table><thead><tr><th>Stage</th><th>Deals</th><th>Value</th><th>Probability</th></tr></thead>
+          <tbody>${funnelRows || '<tr><td colspan="4">No funnel data</td></tr>'}</tbody></table>
+          <h2>Sales Rep Leaderboard</h2>
+          <table><thead><tr><th>Rank</th><th>Rep</th><th>Won</th><th>Quota</th></tr></thead>
+          <tbody>${repRows || '<tr><td colspan="4">No leaderboard data</td></tr>'}</tbody></table>
+        </body></html>`;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Share analytics report',
+          UTI: 'com.adobe.pdf',
+        });
+      } else {
+        Toast.show({ type: 'success', text1: 'Report generated', text2: uri });
+      }
+    } catch (e) {
+      Toast.show({ type: 'error', text1: 'Export failed', text2: e.message });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <AppScreen style={{ backgroundColor: colors.background }}>
       <CrmHeader
@@ -68,6 +143,21 @@ export default function CrmAnalyticsScreen() {
         subtitle="Probabilistic Analytics & Rep Quotas"
         showBack={true}
         showAnalytics={false}
+        rightActions={
+          <Pressable
+            onPress={handleExport}
+            disabled={exporting || loading}
+            className="h-9 px-3 flex-row items-center justify-center gap-x-1.5 rounded-xl active:opacity-85"
+            style={{ backgroundColor: colors.primary, opacity: exporting ? 0.6 : 1 }}
+          >
+            {exporting ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Ionicons name="share-outline" size={15} color="#ffffff" />
+            )}
+            <Text className="text-xs font-bold text-white">Export PDF</Text>
+          </Pressable>
+        }
       />
 
       <ScrollView
@@ -206,7 +296,16 @@ export default function CrmAnalyticsScreen() {
             {funnelStages.map((stage) => {
               const valFormatted = (parseFloat(stage.totalValue) || 0).toLocaleString('en-IN');
               return (
-                <View key={stage.id} className="mb-2">
+                <Pressable
+                  key={stage.id}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(tabs)/pipeline',
+                      params: { stageId: stage.id },
+                    })
+                  }
+                  className="mb-2 active:opacity-70"
+                >
                   <View className="flex-row justify-between mb-1">
                     <View className="flex-row items-center gap-x-1.5">
                       <View
@@ -237,7 +336,7 @@ export default function CrmAnalyticsScreen() {
                       }}
                     />
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>

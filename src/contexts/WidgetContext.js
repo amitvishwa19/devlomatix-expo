@@ -11,6 +11,12 @@ const DEFAULT_WIDGETS = {
   crystalaura: true,
   hireflow: true,
   kabadx: true,
+  dashKpis: true,
+  dashFunnel: true,
+  dashStalled: true,
+  dashActions: true,
+  dashShortcuts: true,
+  dashPipeline: true,
 };
 
 const WidgetContext = createContext(null);

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import AppScreen from '~/components/AppScreen';
+import MarkdownMessage from '~/components/MarkdownMessage';
 import { useCrmTheme } from '~/utils/crm/colors';
 import { useCrm } from '~/providers/CrmProvider';
 import CrmHeader from '../_components/CrmHeader';
@@ -38,6 +39,8 @@ export default function DealDossierScreen() {
   const [healthAi, setHealthAi] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingAi, setLoadingAi] = useState(false);
+  const [actionPlan, setActionPlan] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [billingModalVisible, setBillingModalVisible] = useState(false);
   const [revivalModalVisible, setRevivalModalVisible] = useState(false);
@@ -147,6 +150,27 @@ export default function DealDossierScreen() {
       setLoadingAi(false);
     }
   }, [dealId]);
+
+  const generateActionPlan = useCallback(async () => {
+    if (!dealId || loadingPlan) return;
+    try {
+      setLoadingPlan(true);
+      const res = await crmService.generateDealActionPlan(dealId);
+      if (res.success && res.data) {
+        setActionPlan(res.data);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Action plan unavailable',
+          text2: res.error || 'Please try again.',
+        });
+      }
+    } catch (e) {
+      Toast.show({ type: 'error', text1: 'Action plan failed', text2: e.message });
+    } finally {
+      setLoadingPlan(false);
+    }
+  }, [dealId, loadingPlan]);
 
   useEffect(() => {
     fetchDeal();
@@ -415,16 +439,56 @@ export default function DealDossierScreen() {
                 </View>
               )}
 
-              <Pressable
-                onPress={() => setRevivalModalVisible(true)}
-                className="mt-3 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 active:opacity-80"
-                style={{ backgroundColor: colors.copilot }}
-              >
-                <Ionicons name="flame" size={14} color="#ffffff" />
-                <Text className="text-xs font-bold text-white">
-                  Revive Stalled Deal (Ghosting Recovery)
-                </Text>
-              </Pressable>
+              <View className="mt-3 flex-row gap-x-2">
+                <Pressable
+                  onPress={() => setRevivalModalVisible(true)}
+                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 active:opacity-80"
+                  style={{ backgroundColor: colors.copilot }}
+                >
+                  <Ionicons name="flame" size={14} color="#ffffff" />
+                  <Text className="text-[11px] font-bold text-white">Revive Deal</Text>
+                </Pressable>
+                <Pressable
+                  onPress={generateActionPlan}
+                  disabled={loadingPlan}
+                  className="flex-1 flex-row items-center justify-center gap-x-1.5 rounded-xl py-2 border active:opacity-80"
+                  style={{ backgroundColor: colors.card, borderColor: colors.copilotBorder }}
+                >
+                  {loadingPlan ? (
+                    <ActivityIndicator size="small" color={colors.copilot} />
+                  ) : (
+                    <Ionicons name="list-outline" size={14} color={colors.copilot} />
+                  )}
+                  <Text className="text-[11px] font-bold" style={{ color: colors.copilot }}>
+                    Action Plan
+                  </Text>
+                </Pressable>
+              </View>
+
+              {actionPlan && (
+                <View
+                  className="mt-2 rounded-xl border p-2.5"
+                  style={{ backgroundColor: colors.card, borderColor: colors.copilotBorder }}
+                >
+                  {actionPlan.plan || actionPlan.summary || actionPlan.actionPlan ? (
+                    <MarkdownMessage
+                      content={
+                        actionPlan.plan || actionPlan.summary || actionPlan.actionPlan
+                      }
+                    />
+                  ) : null}
+                  {Array.isArray(actionPlan.steps || actionPlan.actions) &&
+                    (actionPlan.steps || actionPlan.actions).map((step, index) => (
+                      <Text
+                        key={index}
+                        className="text-[11px] font-medium mt-1"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        {index + 1}. {typeof step === 'string' ? step : step.title || step.action || JSON.stringify(step)}
+                      </Text>
+                    ))}
+                </View>
+              )}
             </View>
           ) : (
             <View>

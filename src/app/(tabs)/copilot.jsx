@@ -1,4 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,97 +12,76 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import AppScreen from '~/components/AppScreen';
+import MarkdownMessage from '~/components/MarkdownMessage';
+import { useCopilotChat } from '~/hooks/useCopilotChat';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '~/utils/crm/colors';
 import { CRM_COPILOT_SUGGESTED_PROMPTS } from '~/utils/crm/constants';
-import * as crmService from '~/services/crm';
 import CrmHeader from '../_components/CrmHeader';
 
 export default function CrmCopilotTab() {
+  const router = useRouter();
   const { colors } = useCrmTheme();
-  const { deals, forecast } = useCrm();
+  const { deals, forecast, workspaceId, openCreateTask, openCreateDeal } = useCrm();
   const scrollViewRef = useRef(null);
-
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: `👋 Hello! I am **FlowGenix Sales Copilot**.\n\nI have real-time visibility into your **${deals.length} active opportunities** (₹ ${(
-        forecast?.summary?.totalPipelineValue || 0
-      ).toLocaleString('en-IN')} total pipeline).\n\nAsk me for closing strategies, pitch drafts, deal health diagnostics, or objection handling!`,
-    },
-  ]);
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
+
+  const {
+    messages,
+    loading,
+    streamingId,
+    send,
+    stop,
+    clear,
+    regenerate,
+    isStreaming,
+  } = useCopilotChat({ workspaceId, deals, forecast });
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages, loading]);
 
-  const handleSend = async (customPrompt = null) => {
-    const query = (customPrompt || inputText).trim();
+  const handleSend = (customPrompt = null) => {
+    const query = (customPrompt ?? inputText).trim();
     if (!query || loading) return;
-
-    const userMsg = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: query,
-    };
-
-    const nextHistory = [...messages, userMsg];
-    setMessages(nextHistory);
     setInputText('');
-    setLoading(true);
+    send(query);
+  };
 
-    try {
-      const res = await crmService.askCopilotChat(
-        query,
-        nextHistory.map((m) => ({ role: m.role, content: m.content }))
-      );
+  const handleCopy = async (content) => {
+    await Clipboard.setStringAsync(content || '');
+    Toast.show({ type: 'success', text1: 'Copied to clipboard' });
+  };
 
-      if (res.success && res.data?.reply) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: res.data.reply,
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: `⚠️ ${res.error || 'Failed to generate response. Please try again.'}`,
-          },
-        ]);
-      }
-    } catch (e) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `⚠️ Error: ${e.message || 'Network error occurred.'}`,
-        },
-      ]);
-    } finally {
-      setLoading(false);
+  const handleAction = (action) => {
+    if (!action) return;
+    if (action.route) {
+      router.push(action.route);
+      return;
+    }
+    const payload = action.payload || action;
+    if (action.type === 'create_task') {
+      openCreateTask(payload);
+      return;
+    }
+    if (action.type === 'create_deal') {
+      openCreateDeal(payload.stageId || null);
+      return;
+    }
+    const dealId = action.dealId || payload.dealId;
+    if (dealId) {
+      router.push(`/deals/${dealId}`);
+      return;
+    }
+    const contactId = action.contactId || payload.contactId;
+    if (contactId) {
+      router.push(`/contacts/${contactId}`);
     }
   };
 
-  const clearChat = () => {
-    setMessages([
-      {
-        id: 'welcome',
-        role: 'assistant',
-        content: `👋 Chat reset! Ask me anything about your active deals, client communications, or revenue forecasts.`,
-      },
-    ]);
-  };
+  const lastMessage = messages[messages.length - 1];
 
   return (
     <AppScreen>
@@ -108,19 +89,28 @@ export default function CrmCopilotTab() {
         title="FlowGenix Copilot"
         subtitle="AI Sales Strategist & Intelligence"
         rightActions={
-          <Pressable
-            onPress={clearChat}
-            className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border active:opacity-75"
-            style={{
-              backgroundColor: colors.cardAlt,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="trash-outline" size={14} color={colors.textMuted} />
-            <Text className="text-[11px] font-semibold" style={{ color: colors.textMuted }}>
-              Clear
-            </Text>
-          </Pressable>
+          <View className="flex-row items-center gap-x-1.5">
+            {messages.length > 1 && (
+              <Pressable
+                onPress={regenerate}
+                disabled={loading}
+                className="h-9 w-9 items-center justify-center rounded-xl border active:opacity-75"
+                style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+              >
+                <Ionicons name="refresh-outline" size={15} color={colors.textMuted} />
+              </Pressable>
+            )}
+            <Pressable
+              onPress={clear}
+              className="h-9 px-2.5 flex-row items-center justify-center gap-x-1 rounded-xl border active:opacity-75"
+              style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
+            >
+              <Ionicons name="trash-outline" size={14} color={colors.textMuted} />
+              <Text className="text-[11px] font-semibold" style={{ color: colors.textMuted }}>
+                Clear
+              </Text>
+            </Pressable>
+          </View>
         }
       />
 
@@ -129,7 +119,6 @@ export default function CrmCopilotTab() {
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Messages Stream */}
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
@@ -138,6 +127,7 @@ export default function CrmCopilotTab() {
         >
           {messages.map((m) => {
             const isUser = m.role === 'user';
+            const isPending = !isUser && m.pending && !m.content;
             return (
               <View
                 key={m.id}
@@ -154,30 +144,76 @@ export default function CrmCopilotTab() {
                   </View>
                 )}
 
-                <View
-                  className={`max-w-[84%] rounded-2xl p-3 shadow-sm ${
-                    isUser ? 'rounded-tr-xs' : 'rounded-tl-xs border'
-                  }`}
-                  style={{
-                    backgroundColor: isUser ? colors.primary : colors.card,
-                    borderColor: isUser ? colors.primary : colors.border,
-                  }}
-                >
-                  <Text
-                    className="text-xs leading-5"
+                <View className={`max-w-[84%] ${isUser ? 'items-end' : 'items-start'}`}>
+                  <View
+                    className={`rounded-2xl p-3 shadow-sm ${
+                      isUser ? 'rounded-tr-xs' : 'rounded-tl-xs border'
+                    }`}
                     style={{
-                      color: isUser ? '#ffffff' : colors.text,
-                      fontWeight: isUser ? '700' : '500',
+                      backgroundColor: isUser ? colors.primary : colors.card,
+                      borderColor: isUser ? colors.primary : colors.border,
                     }}
                   >
-                    {m.content}
-                  </Text>
+                    {isPending ? (
+                      <View className="flex-row items-center gap-x-2">
+                        <ActivityIndicator size="small" color={colors.copilot} />
+                        <Text
+                          className="text-[11px] font-semibold italic"
+                          style={{ color: colors.copilot }}
+                        >
+                          Synthesizing pipeline intelligence...
+                        </Text>
+                      </View>
+                    ) : isUser ? (
+                      <Text className="text-xs leading-5 font-bold text-white">{m.content}</Text>
+                    ) : (
+                      <MarkdownMessage content={m.content} />
+                    )}
+                  </View>
+
+                  {!isUser && (
+                    <View className="mt-1 flex-row items-center gap-x-3 px-1">
+                      <Pressable onPress={() => handleCopy(m.content)} className="flex-row items-center gap-x-1">
+                        <Ionicons name="copy-outline" size={11} color={colors.textMuted} />
+                        <Text className="text-[10px] font-semibold" style={{ color: colors.textMuted }}>
+                          Copy
+                        </Text>
+                      </Pressable>
+                      {streamingId === m.id && (
+                        <Text className="text-[10px] font-semibold" style={{ color: colors.copilot }}>
+                          Streaming...
+                        </Text>
+                      )}
+                    </View>
+                  )}
+
+                  {Array.isArray(m.actions) && m.actions.length > 0 && (
+                    <View className="mt-1.5 flex-row flex-wrap gap-1.5">
+                      {m.actions.map((action, idx) => (
+                        <Pressable
+                          key={`${m.id}-action-${idx}`}
+                          onPress={() => handleAction(action)}
+                          className="flex-row items-center gap-x-1 rounded-xl border px-2.5 py-1.5 active:opacity-75"
+                          style={{ backgroundColor: colors.copilotSoft, borderColor: colors.copilotBorder }}
+                        >
+                          <Ionicons
+                            name={action.icon || 'flash-outline'}
+                            size={11}
+                            color={colors.copilot}
+                          />
+                          <Text className="text-[10px] font-bold" style={{ color: colors.copilot }}>
+                            {action.label || 'Take action'}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
               </View>
             );
           })}
 
-          {loading && (
+          {loading && lastMessage?.content && streamingId && (
             <View className="flex-row items-start gap-x-2 mb-3">
               <View
                 className="h-7 w-7 items-center justify-center rounded-xl"
@@ -185,22 +221,10 @@ export default function CrmCopilotTab() {
               >
                 <ActivityIndicator size="small" color="#ffffff" />
               </View>
-              <View
-                className="rounded-2xl border p-3 rounded-tl-xs shadow-sm"
-                style={{
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                }}
-              >
-                <Text className="text-xs font-semibold italic" style={{ color: colors.copilot }}>
-                  FlowGenix AI is synthesizing pipeline intelligence...
-                </Text>
-              </View>
             </View>
           )}
         </ScrollView>
 
-        {/* Suggested Prompts Horizon */}
         <View
           className="border-t px-3 pt-2"
           style={{
@@ -220,10 +244,7 @@ export default function CrmCopilotTab() {
                 onPress={() => handleSend(p)}
                 disabled={loading}
                 className="rounded-xl border px-2.5 py-1.5 active:opacity-75 mr-1"
-                style={{
-                  backgroundColor: colors.cardAlt,
-                  borderColor: colors.border,
-                }}
+                style={{ backgroundColor: colors.cardAlt, borderColor: colors.border }}
               >
                 <Text className="text-[11px] font-bold" style={{ color: colors.text }}>
                   {p}
@@ -232,7 +253,6 @@ export default function CrmCopilotTab() {
             ))}
           </ScrollView>
 
-          {/* Input Bar */}
           <View className="flex-row items-center gap-x-2 pb-2.5 pt-1">
             <TextInput
               value={inputText}
@@ -241,7 +261,8 @@ export default function CrmCopilotTab() {
               placeholderTextColor={colors.inputPlaceholder}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
-              className="flex-1 rounded-2xl border px-3.5 py-2.5 min-h-[46px] text-xs"
+              multiline
+              className="flex-1 rounded-2xl border px-3.5 py-2.5 max-h-28 text-xs"
               style={{
                 backgroundColor: colors.inputBg,
                 borderColor: colors.inputBorder,
@@ -249,21 +270,30 @@ export default function CrmCopilotTab() {
               }}
             />
 
-            <Pressable
-              onPress={() => handleSend()}
-              disabled={loading || !inputText.trim()}
-              className="h-11 w-11 items-center justify-center rounded-2xl active:opacity-80"
-              style={{
-                backgroundColor: colors.primary,
-                opacity: loading || !inputText.trim() ? 0.5 : 1,
-              }}
-            >
-              <Ionicons name="arrow-up" size={18} color="#ffffff" />
-            </Pressable>
+            {isStreaming ? (
+              <Pressable
+                onPress={stop}
+                className="h-11 w-11 items-center justify-center rounded-2xl active:opacity-80"
+                style={{ backgroundColor: colors.cardAlt, borderWidth: 1, borderColor: colors.border }}
+              >
+                <Ionicons name="stop" size={18} color={colors.text} />
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => handleSend()}
+                disabled={loading || !inputText.trim()}
+                className="h-11 w-11 items-center justify-center rounded-2xl active:opacity-80"
+                style={{
+                  backgroundColor: colors.primary,
+                  opacity: loading || !inputText.trim() ? 0.5 : 1,
+                }}
+              >
+                <Ionicons name="arrow-up" size={18} color="#ffffff" />
+              </Pressable>
+            )}
           </View>
         </View>
       </KeyboardAvoidingView>
     </AppScreen>
   );
 }
-

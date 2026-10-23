@@ -39,6 +39,9 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
     (response) => response,
     async (error) => {
+        if (error && !error.response && error.request) {
+            error.isOffline = true;
+        }
         const originalRequest = error?.config;
         if (
             error?.response?.status === 401 &&

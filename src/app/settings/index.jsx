@@ -25,8 +25,10 @@ import * as crmService from '~/services/crm';
 import { clearSession, getSession } from '~/utils/authStorage';
 import { fetchAccessData } from '~/services/access-management';
 import { usePermissions } from '~/hooks/usePermissions';
+import { useWidgets } from '~/contexts/WidgetContext';
 import { PermissionGate } from '~/components/PermissionGate';
 import { hasCompletedOnboarding, resetOnboarding, completeOnboarding } from '~/utils/onboardingStorage';
+import { getPreferences, savePreferences, DEFAULT_PREFERENCES } from '~/utils/preferences';
 import Toast from 'react-native-toast-message';
 
 const ECOSYSTEM_MODULES = [
@@ -92,9 +94,19 @@ const ECOSYSTEM_MODULES = [
   },
 ];
 
+const DASHBOARD_WIDGETS = [
+  { key: 'dashKpis', label: 'KPI Grid', desc: 'Pipeline value, forecast, win rate & follow-ups' },
+  { key: 'dashFunnel', label: 'Sales Funnel', desc: 'Stage distribution across the active pipeline' },
+  { key: 'dashStalled', label: 'AI Stalled Deals', desc: 'High-risk deals that need re-engagement' },
+  { key: 'dashActions', label: 'Quick Actions', desc: 'New deal, contact and task shortcuts' },
+  { key: 'dashShortcuts', label: 'Operations Hub', desc: 'Copilot, DCR, quotations, mailbox & analytics' },
+  { key: 'dashPipeline', label: 'High-Value Opportunities', desc: 'Top deals list on the dashboard' },
+];
+
 export default function CrmSettingsScreen({ isTab = false }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { widgets, toggleWidget } = useWidgets();
   const { colors, isDark } = useCrmTheme();
   const { themeMode, setThemeMode } = useAppTheme();
   const crm = useCrm();
@@ -144,17 +156,22 @@ export default function CrmSettingsScreen({ isTab = false }) {
   );
 
   // Preference switches
-  const [preferences, setPreferences] = useState({
-    pushNotifications: true,
-    emailUpdates: false,
-    autoSyncDrafts: true,
-    teamVisibility: true,
-    usageAnalytics: false,
-    experimentalFeatures: false,
-  });
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPreferences().then((stored) => {
+      if (isMounted) setPreferences((prev) => ({ ...prev, ...stored }));
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const togglePreference = (key) => {
-    setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
+    const next = { ...preferences, [key]: !preferences[key] };
+    setPreferences(next);
+    savePreferences(next);
   };
 
   // Onboarding Preference
@@ -896,7 +913,11 @@ export default function CrmSettingsScreen({ isTab = false }) {
           </Text>
 
           {[
-            { key: 'pushNotifications', label: 'Push Notifications', desc: 'Real-time call alerts & deals' },
+            { key: 'pushNotifications', label: 'Push Notifications', desc: 'Master switch for all push alerts' },
+            { key: 'callAlerts', label: 'Call Alerts', desc: 'Incoming voice & video call notifications' },
+            { key: 'messageAlerts', label: 'Message & Email Alerts', desc: 'WhatsApp, chat and mailbox notifications' },
+            { key: 'dealAlerts', label: 'Deal & Task Alerts', desc: 'Pipeline updates, reminders and tasks' },
+            { key: 'emailUpdates', label: 'Email Digest', desc: 'Daily summary of pipeline activity' },
             { key: 'autoSyncDrafts', label: 'Auto Sync Drafts', desc: 'Save offline changes automatically' },
             { key: 'teamVisibility', label: 'Team Pipeline Visibility', desc: 'Share activity feed with team' },
             { key: 'usageAnalytics', label: 'Usage Analytics', desc: 'Help improve Devlomatix CRM' },
@@ -962,6 +983,53 @@ export default function CrmSettingsScreen({ isTab = false }) {
               </Text>
             </Pressable>
           )}
+        </View>
+
+        {/* 8b. Dashboard Widgets */}
+        <View
+          className="rounded-2xl border p-4 shadow-xs mb-4"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <View className="flex-row items-center justify-between mb-2">
+            <Text
+              className="text-xs font-bold uppercase tracking-wider"
+              style={{ color: colors.textMuted }}
+            >
+              Dashboard Widgets
+            </Text>
+            <Pressable
+              onPress={() => router.push('/(tabs)')}
+              className="flex-row items-center gap-x-1"
+            >
+              <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
+                Preview
+              </Text>
+              <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          {DASHBOARD_WIDGETS.map((item, index) => (
+            <View
+              key={item.key}
+              className={`flex-row items-center justify-between py-3 ${index > 0 ? 'border-t' : ''}`}
+              style={{ borderTopColor: colors.borderLight }}
+            >
+              <View className="flex-1 mr-3">
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  {item.label}
+                </Text>
+                <Text className="text-[11px] mt-1 leading-4" style={{ color: colors.textMuted }}>
+                  {item.desc}
+                </Text>
+              </View>
+              <Switch
+                value={widgets[item.key] !== false}
+                onValueChange={() => toggleWidget(item.key)}
+                trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: colors.primary }}
+                thumbColor={isDark ? '#f8fafc' : '#ffffff'}
+              />
+            </View>
+          ))}
         </View>
 
         {/* 9. Access Management & RBAC Permissions */}

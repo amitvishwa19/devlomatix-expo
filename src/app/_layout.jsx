@@ -17,6 +17,8 @@ import Toast from "react-native-toast-message";
 import { toastConfig } from "~/components/CustomToast";
 import { NotificationProvider } from "~/contexts/NotificationContext";
 import { NotificationStoreProvider } from "~/contexts/NotificationStore";
+import { NetworkProvider } from "~/contexts/NetworkContext";
+import OfflineBanner from "~/components/OfflineBanner";
 import { WidgetProvider } from "~/contexts/WidgetContext";
 import { AppThemeProvider, useAppTheme } from "~/theme/AppTheme";
 
@@ -98,13 +100,15 @@ export default function RootLayout() {
 
     return (
         <AppThemeProvider>
-            <IosAlertProvider>
-                <UniversalLoaderProvider>
-                    <RbacProvider>
-                        <RootLayoutNav />
-                    </RbacProvider>
-                </UniversalLoaderProvider>
-            </IosAlertProvider>
+            <NetworkProvider>
+                <IosAlertProvider>
+                    <UniversalLoaderProvider>
+                        <RbacProvider>
+                            <RootLayoutNav />
+                        </RbacProvider>
+                    </UniversalLoaderProvider>
+                </IosAlertProvider>
+            </NetworkProvider>
         </AppThemeProvider>
     );
 }
@@ -114,8 +118,8 @@ function RootLayoutNav() {
 
     return (
         <ThemeProvider value={palette.navigation === "dark" ? DarkTheme : DefaultTheme} >
-            <NotificationProvider>
-                <NotificationStoreProvider>
+            <NotificationStoreProvider>
+                <NotificationProvider>
                 <WidgetProvider>
                     <CrmSocketProvider>
                         <CrmProvider>
@@ -145,6 +149,7 @@ function RootLayoutNav() {
                                     <Stack.Screen name="tasks/index" options={{ animation: 'slide_from_right' }} />
                                     <Stack.Screen name="modal" options={{ presentation: "modal" }} />
                                 </Stack>
+                                <OfflineBanner />
                                 {/* Global In-App Calling Modals */}
                                 <IncomingCallModal />
                                 <ActiveCallModal />
@@ -156,8 +161,8 @@ function RootLayoutNav() {
                         </CrmProvider>
                     </CrmSocketProvider>
                 </WidgetProvider>
-                </NotificationStoreProvider>
-            </NotificationProvider>
+                </NotificationProvider>
+            </NotificationStoreProvider>
         </ThemeProvider>
     );
 }

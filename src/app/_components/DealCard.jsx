@@ -14,7 +14,7 @@ try {
   HapticsModule = require('expo-haptics');
 } catch (_) {}
 
-export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
+function DealCard({ deal, onStageChange, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { canDelete } = usePermissions();
@@ -442,3 +442,5 @@ export default function DealCard({ deal, onStageChange, onDeletePrompt }) {
   );
 }
 
+
+export default React.memo(DealCard);

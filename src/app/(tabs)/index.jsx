@@ -7,6 +7,7 @@ import AppScreen from '~/components/AppScreen';
 import UserStatusBar from '~/components/UserStatusBar';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmSocket } from '~/providers/CrmSocketProvider';
+import { useWidgets } from '~/contexts/WidgetContext';
 import * as crmService from '~/services/crm';
 import { getSession } from '~/utils/authStorage';
 import AiStalledDealRevivalModal from '../_components/AiStalledDealRevivalModal';
@@ -40,6 +41,8 @@ export default function CrmDashboard() {
 
   const crmSocket = useCrmSocket();
   const isSocketConnected = Boolean(crmSocket?.isConnected);
+  const { widgets } = useWidgets();
+  const showWidget = (key) => widgets[key] !== false;
 
   const [currentUser, setCurrentUser] = useState(null);
   const [syncingWa, setSyncingWa] = useState(false);
@@ -278,6 +281,7 @@ export default function CrmDashboard() {
         )}
 
         {/* Executive Bento KPI Grid */}
+        {showWidget('dashKpis') && (
         <View className="flex-row flex-wrap justify-between gap-y-2 mb-3">
           {/* Total Pipeline Card */}
           <View
@@ -455,9 +459,10 @@ export default function CrmDashboard() {
             </View>
           </Pressable>
         </View>
+        )}
 
         {/* Visual Sales Funnel Distribution Bar */}
-        {funnelStages.length > 0 && (
+        {showWidget('dashFunnel') && funnelStages.length > 0 && (
           <View
             className="mb-3 rounded-[16px] border p-3"
             style={{
@@ -513,7 +518,7 @@ export default function CrmDashboard() {
         )}
 
         {/* AI Stalled Deals Revival Alert Widget */}
-        {stalledDeals.length > 0 && (
+        {showWidget('dashStalled') && stalledDeals.length > 0 && (
           <View
             className="mb-3 rounded-[16px] border p-3 flex-row items-center justify-between"
             style={{
@@ -549,6 +554,7 @@ export default function CrmDashboard() {
         )}
 
         {/* Primary Action Bar: Fast Executive Ops */}
+        {showWidget('dashActions') && (
         <View className="flex-row items-center justify-between gap-x-2 mb-3">
           <Pressable
             onPress={() => openCreateDeal()}
@@ -587,8 +593,11 @@ export default function CrmDashboard() {
             </Text>
           </Pressable>
         </View>
+        )}
 
         {/* Operations Hub: Executive Categorized Grid */}
+        {showWidget('dashShortcuts') && (
+        <>
         <Text className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
           Sales Intelligence & Operations
         </Text>
@@ -744,8 +753,12 @@ export default function CrmDashboard() {
             </View>
           </Pressable>
         </View>
+        </>
+        )}
 
         {/* Top Priority Opportunities Header */}
+        {showWidget('dashPipeline') && (
+        <>
         <View className="flex-row items-center justify-between mb-2">
           <Text className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
             High-Value Opportunities ({deals.length})
@@ -789,6 +802,8 @@ export default function CrmDashboard() {
               <Text className="text-xs font-bold text-white">+ Create Deal</Text>
             </Pressable>
           </View>
+        )}
+        </>
         )}
       </ScrollView>
     </AppScreen>

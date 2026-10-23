@@ -28,6 +28,8 @@ try {
 }
 
 import { getSession, clearSession, refreshAuthSession, decodeJwtPayload } from '~/utils/authStorage';
+import { useNotificationStore } from '~/contexts/NotificationStore';
+import { getPreferences } from '~/utils/preferences';
 import { resolveWorkspaceId } from '~/utils/workspace';
 import { WebRtcClient } from '~/lib/webrtc/webrtc-client';
 import { socket_server_url } from '~/utils/constants';
@@ -56,6 +58,7 @@ const getSocketUrl = () => {
 };
 
 export function CrmSocketProvider({ children }) {
+  const { addNotification } = useNotificationStore();
   const [currentUser, setCurrentUser] = useState(null);
   const [workspaceId, setWorkspaceId] = useState(null);
 
@@ -463,6 +466,21 @@ export function CrmSocketProvider({ children }) {
           .catch(() => {});
       }
 
+      getPreferences()
+        .then((prefs) => {
+          if (!prefs.pushNotifications || !prefs.callAlerts) return;
+          addNotification({
+            module: 'crm',
+            title: `Incoming ${data.callType === 'video' ? 'Video' : 'Voice'} Call`,
+            description: `${data.callerName || 'Sales Representative'} is calling you on Devlomatix CRM`,
+            icon: data.callType === 'video' ? 'videocam' : 'call',
+            color: '#6366f1',
+            dedupeKey: `incoming_call:${data.roomId}`,
+            data: { type: 'incoming_call', ...data },
+          });
+        })
+        .catch(() => {});
+
       // Auto-decline after 35 seconds if unanswered
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current);
       callTimeoutRef.current = setTimeout(() => {
@@ -623,7 +641,7 @@ export function CrmSocketProvider({ children }) {
       socket.off('call:ice:candidate');
       socket.off('call:ended');
     };
-  }, [socket, cleanupCall, startRingtone, stopRingtone]);
+  }, [socket, cleanupCall, startRingtone, stopRingtone, addNotification]);
 
   // 5. User Calling Actions
   const startCall = async ({ calleeId, calleeName, calleeAvatar, callType = 'audio', contactOrDealInfo = null }) => {

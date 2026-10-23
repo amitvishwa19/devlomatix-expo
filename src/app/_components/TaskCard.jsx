@@ -14,7 +14,7 @@ const TASK_TYPE_ICONS = {
   REVIEW: 'document-text-outline',
 };
 
-export default function TaskCard({ task, onStatusChange, onDeletePrompt }) {
+function TaskCard({ task, onStatusChange, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
@@ -181,3 +181,5 @@ export default function TaskCard({ task, onStatusChange, onDeletePrompt }) {
   );
 }
 
+
+export default React.memo(TaskCard);

@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
 import { getSession } from '~/utils/authStorage';
@@ -50,6 +51,8 @@ export default function CrmContactsTab() {
     });
   }, []);
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
       if (selectedScope !== 'ALL') {
@@ -68,8 +71,8 @@ export default function CrmContactsTab() {
           if (!c.tags || !c.tags.includes(selectedScope)) return false;
         }
       }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      if (deferredSearchQuery.trim()) {
+        const q = deferredSearchQuery.toLowerCase();
         const matchName = (c.name || '').toLowerCase().includes(q);
         const matchPhone = (c.phone || '').toLowerCase().includes(q);
         const matchEmail = (c.email || '').toLowerCase().includes(q);
@@ -78,7 +81,7 @@ export default function CrmContactsTab() {
       }
       return true;
     });
-  }, [contacts, selectedScope, searchQuery, currentUserId]);
+  }, [contacts, selectedScope, deferredSearchQuery, currentUserId]);
 
   return (
     <AppScreen>
@@ -177,56 +180,56 @@ export default function CrmContactsTab() {
       </View>
 
       {/* Contacts List */}
-      <ScrollView
+      <FlashList
         ref={scrollRef}
+        data={filteredContacts}
+        keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 130 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 12, paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
-        className="px-3 pt-3"
-      >
-        {loading && contacts.length === 0 ? (
-          <View className="py-14 items-center justify-center">
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
-              Loading CRM Rolodex...
-            </Text>
-          </View>
-        ) : filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => (
-            <ContactCard
-              key={contact.id}
-              contact={contact}
-              onShare={(c) => setShareContact(c)}
-              onDeletePrompt={(c) => setDeleteContactTarget(c)}
-            />
-          ))
-        ) : (
-          <View
-            className="rounded-[16px] border border-dashed p-6 items-center justify-center"
-            style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            }}
-          >
-            <Ionicons name="people-outline" size={32} color={colors.textSoft} />
-            <Text className="text-sm font-bold mt-2" style={{ color: colors.text }}>
-              No Contacts Found
-            </Text>
-            <Text className="text-xs text-center mt-1" style={{ color: colors.textMuted }}>
-              {searchQuery
-                ? 'No contacts match your query.'
-                : 'Start adding client contacts to enable 1-click WhatsApp follow-ups.'}
-            </Text>
-            <Pressable
-              onPress={openCreateContact}
-              className="mt-3 rounded-xl px-4 py-2"
-              style={{ backgroundColor: colors.primary }}
-            >
-              <Text className="text-xs font-bold text-white">+ Add First Contact</Text>
-            </Pressable>
-          </View>
+        renderItem={({ item }) => (
+          <ContactCard
+            contact={item}
+            onShare={(c) => setShareContact(c)}
+            onDeletePrompt={(c) => setDeleteContactTarget(c)}
+          />
         )}
-      </ScrollView>
+        ListEmptyComponent={
+          loading && contacts.length === 0 ? (
+            <View className="py-14 items-center justify-center">
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text className="text-xs font-semibold mt-2" style={{ color: colors.textMuted }}>
+                Loading CRM Rolodex...
+              </Text>
+            </View>
+          ) : (
+            <View
+              className="rounded-[16px] border border-dashed p-6 items-center justify-center"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+            >
+              <Ionicons name="people-outline" size={32} color={colors.textSoft} />
+              <Text className="text-sm font-bold mt-2" style={{ color: colors.text }}>
+                No Contacts Found
+              </Text>
+              <Text className="text-xs text-center mt-1" style={{ color: colors.textMuted }}>
+                {searchQuery
+                  ? 'No contacts match your query.'
+                  : 'Start adding client contacts to enable 1-click WhatsApp follow-ups.'}
+              </Text>
+              <Pressable
+                onPress={openCreateContact}
+                className="mt-3 rounded-xl px-4 py-2"
+                style={{ backgroundColor: colors.primary }}
+              >
+                <Text className="text-xs font-bold text-white">+ Add First Contact</Text>
+              </Pressable>
+            </View>
+          )
+        }
+      />
 
       {/* iOS-Style Delete Confirmation Modal */}
       <IosDeleteConfirmModal

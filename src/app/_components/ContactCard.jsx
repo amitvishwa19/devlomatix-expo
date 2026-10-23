@@ -6,7 +6,7 @@ import { useCrm } from '~/providers/CrmProvider';
 import { getSession } from '~/utils/authStorage';
 import { useCrmTheme } from '~/utils/crm/colors';
 
-export default function ContactCard({ contact, onShare, onDeletePrompt }) {
+function ContactCard({ contact, onShare, onDeletePrompt }) {
   const router = useRouter();
   const { colors } = useCrmTheme();
   const { openQuickWhatsApp } = useCrm();
@@ -252,3 +252,5 @@ export default function ContactCard({ contact, onShare, onDeletePrompt }) {
     </Pressable>
   );
 }
+
+export default React.memo(ContactCard);

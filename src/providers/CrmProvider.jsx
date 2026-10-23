@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import Toast from 'react-native-toast-message';
 import { resolveWorkspaceId } from '~/utils/workspace';
 import * as crmService from '~/services/crm';
+import { useNetwork } from '~/contexts/NetworkContext';
+import { readCache, writeCache } from '~/utils/cache';
+import { enqueueMutation, flushSyncQueue } from '~/utils/syncQueue';
+import { isOfflineError } from '~/utils/network';
 
 let HapticsModule = null;
 try {
@@ -11,6 +15,7 @@ try {
 export const CrmContext = createContext(null);
 
 export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
+  const { isOnline } = useNetwork();
   const [workspaceId, setWorkspaceId] = useState(propWorkspaceId || null);
   const [pipelines, setPipelines] = useState([]);
   const [activePipeline, setActivePipeline] = useState(null);
@@ -44,6 +49,13 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
     initWs();
   }, [propWorkspaceId]);
 
+  const saveCache = useCallback(
+    (name, data, wsId = workspaceId) => {
+      if (wsId) writeCache(`crm:${wsId}:${name}`, data);
+    },
+    [workspaceId]
+  );
+
   // Load Pipelines
   const loadPipelines = useCallback(async (wsId = workspaceId) => {
     if (!wsId) return;
@@ -51,6 +63,7 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       const res = await crmService.getPipelines({ workspaceId: wsId });
       const pipeList = res.data || [];
       setPipelines(pipeList);
+      saveCache('pipelines', pipeList, wsId);
       if (pipeList.length > 0) {
         setActivePipeline((prev) => {
           if (!prev) return pipeList[0];
@@ -70,44 +83,52 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       const params = { workspaceId: wsId };
       if (pipeId && pipeId !== 'ALL') params.pipelineId = pipeId;
       const res = await crmService.getDeals(params);
-      setDeals(res.data || []);
+      const list = res.data || [];
+      setDeals(list);
+      saveCache('deals', list, wsId);
     } catch (e) {
       console.warn('Failed to load deals:', e.message);
     }
-  }, [workspaceId, activePipeline?.id]);
+  }, [workspaceId, activePipeline?.id, saveCache]);
 
   // Load Contacts
   const loadContacts = useCallback(async (wsId = workspaceId) => {
     if (!wsId) return;
     try {
       const res = await crmService.getContacts({ workspaceId: wsId });
-      setContacts(res.data || []);
+      const list = res.data || [];
+      setContacts(list);
+      saveCache('contacts', list, wsId);
     } catch (e) {
       console.warn('Failed to load contacts:', e.message);
     }
-  }, [workspaceId]);
+  }, [workspaceId, saveCache]);
 
   // Load Accounts
   const loadAccounts = useCallback(async (wsId = workspaceId) => {
     if (!wsId) return;
     try {
       const res = await crmService.getAccounts({ workspaceId: wsId });
-      setAccounts(res.data || []);
+      const list = res.data || [];
+      setAccounts(list);
+      saveCache('accounts', list, wsId);
     } catch (e) {
       console.warn('Failed to load accounts:', e.message);
     }
-  }, [workspaceId]);
+  }, [workspaceId, saveCache]);
 
   // Load Tasks
   const loadTasks = useCallback(async (wsId = workspaceId) => {
     if (!wsId) return;
     try {
       const res = await crmService.getTasks({ workspaceId: wsId });
-      setTasks(res.data || []);
+      const list = res.data || [];
+      setTasks(list);
+      saveCache('tasks', list, wsId);
     } catch (e) {
       console.warn('Failed to load tasks:', e.message);
     }
-  }, [workspaceId]);
+  }, [workspaceId, saveCache]);
 
   // Load Forecast
   const loadForecast = useCallback(async (wsId = workspaceId) => {
@@ -115,10 +136,11 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
     try {
       const res = await crmService.getForecast({ workspaceId: wsId });
       setForecast(res.data);
+      saveCache('forecast', res.data, wsId);
     } catch (e) {
       console.warn('Failed to load forecast:', e.message);
     }
-  }, [workspaceId]);
+  }, [workspaceId, saveCache]);
 
   // Refresh All
   const refreshAll = useCallback(async () => {
@@ -142,12 +164,113 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
     }
   }, [workspaceId, loadPipelines, loadDeals, loadContacts, loadAccounts, loadTasks, loadForecast]);
 
+  // Hydrate from cache instantly, then revalidate in the background.
   useEffect(() => {
-    if (workspaceId) {
-      setLoading(true);
-      refreshAll();
-    }
+    if (!workspaceId) return;
+    let cancelled = false;
+
+    (async () => {
+      const [p, d, c, a, t, f] = await Promise.all([
+        readCache(`crm:${workspaceId}:pipelines`),
+        readCache(`crm:${workspaceId}:deals`),
+        readCache(`crm:${workspaceId}:contacts`),
+        readCache(`crm:${workspaceId}:accounts`),
+        readCache(`crm:${workspaceId}:tasks`),
+        readCache(`crm:${workspaceId}:forecast`),
+      ]);
+      if (cancelled) return;
+
+      if (Array.isArray(p?.data) && p.data.length) {
+        setPipelines(p.data);
+        setActivePipeline((prev) => {
+          if (!prev) return p.data[0];
+          return p.data.find((item) => item.id === prev.id) || p.data[0];
+        });
+      }
+      if (Array.isArray(d?.data)) setDeals(d.data);
+      if (Array.isArray(c?.data)) setContacts(c.data);
+      if (Array.isArray(a?.data)) setAccounts(a.data);
+      if (Array.isArray(t?.data)) setTasks(t.data);
+      if (f?.data) setForecast(f.data);
+
+      if (p || d || c || a || t || f) setLoading(false);
+    })();
+
+    setLoading(true);
+    refreshAll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [workspaceId]);
+
+  // Replay queued offline mutations when the network comes back.
+  const processSyncQueue = useCallback(async () => {
+    if (!workspaceId) return { processed: 0, remaining: 0, offline: true };
+
+    return flushSyncQueue(async (entry) => {
+      const params = { workspaceId };
+      const payload = entry.payload || {};
+      switch (entry.type) {
+        case 'createDeal':
+          return crmService.createDeal(payload, params);
+        case 'updateDeal':
+          return crmService.updateDeal(entry.entityId, payload, params);
+        case 'moveDealStage':
+          return crmService.updateDealStage(entry.entityId, payload.stageId, params);
+        case 'deleteDeal':
+          return crmService.deleteDeal(entry.entityId, params);
+        case 'createContact':
+          return crmService.createContact(payload, params);
+        case 'updateContact':
+          return crmService.updateContact(entry.entityId, payload, params);
+        case 'deleteContact':
+          return crmService.deleteContact(entry.entityId, params);
+        case 'createTask':
+          return crmService.createTask(payload, params);
+        case 'updateTask':
+          return crmService.updateTask(entry.entityId, payload, params);
+        case 'deleteTask':
+          return crmService.deleteTask(entry.entityId, params);
+        default:
+          return null;
+      }
+    });
+  }, [workspaceId]);
+
+  useEffect(() => {
+    if (!isOnline || !workspaceId) return;
+    let cancelled = false;
+
+    (async () => {
+      const result = await processSyncQueue();
+      if (cancelled) return;
+      if (result?.processed > 0) {
+        Toast.show({
+          type: 'success',
+          text1: 'Back online',
+          text2: `${result.processed} offline change${result.processed === 1 ? '' : 's'} synced`,
+        });
+        refreshAll();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnline, workspaceId, processSyncQueue, refreshAll]);
+
+  const queueOfflineMutation = useCallback(
+    (entry) => {
+      enqueueMutation({ ...entry, workspaceId });
+      Toast.show({
+        type: 'info',
+        text1: 'Saved offline',
+        text2: 'Your change will sync when you reconnect.',
+      });
+    },
+    [workspaceId]
+  );
 
   // Active stages helper
   const stages = activePipeline?.stages || [];
@@ -204,11 +327,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       }
       throw new Error(res?.error || 'Failed to create deal');
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'createDeal', payload: newDealData });
+        return optimisticDeal;
+      }
       setDeals((prev) => prev.filter((d) => d.id !== tempId));
       Toast.show({ type: 'error', text1: 'Failed to create deal', text2: err.message });
       throw err;
     }
-  }, [stages, workspaceId]);
+  }, [stages, workspaceId, queueOfflineMutation]);
 
   const optimisticUpdateDeal = useCallback(async (dealId, patch) => {
     let prevDeals = [];
@@ -226,11 +353,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return res.data;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'updateDeal', entityId: dealId, payload: patch });
+        return { ...patch, id: dealId };
+      }
       setDeals(prevDeals);
       Toast.show({ type: 'error', text1: 'Failed to update deal', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   const optimisticMoveDealStage = useCallback(async (dealId, newStageId) => {
     let prevDeals = [];
@@ -252,11 +383,19 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return res.data;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({
+          type: 'moveDealStage',
+          entityId: dealId,
+          payload: { stageId: newStageId },
+        });
+        return { id: dealId, stageId: newStageId };
+      }
       setDeals(prevDeals);
       Toast.show({ type: 'error', text1: 'Failed to move deal stage', text2: err.message });
       throw err;
     }
-  }, [stages, workspaceId]);
+  }, [stages, workspaceId, queueOfflineMutation]);
 
   const optimisticDeleteDeal = useCallback(async (dealId) => {
     let prevDeals = [];
@@ -276,11 +415,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return true;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'deleteDeal', entityId: dealId });
+        return true;
+      }
       setDeals(prevDeals);
       Toast.show({ type: 'error', text1: 'Failed to delete deal', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   // --- CONTACTS ---
   const optimisticAddContact = useCallback(async (newContactData) => {
@@ -307,11 +450,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       }
       throw new Error(res?.error || 'Failed to create contact');
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'createContact', payload: newContactData });
+        return optimisticContact;
+      }
       setContacts((prev) => prev.filter((c) => c.id !== tempId));
       Toast.show({ type: 'error', text1: 'Failed to create contact', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   const optimisticUpdateContact = useCallback(async (contactId, patch) => {
     let prevContacts = [];
@@ -329,11 +476,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return res.data;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'updateContact', entityId: contactId, payload: patch });
+        return { ...patch, id: contactId };
+      }
       setContacts(prevContacts);
       Toast.show({ type: 'error', text1: 'Failed to update contact', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   const optimisticDeleteContact = useCallback(async (contactId) => {
     let prevContacts = [];
@@ -353,11 +504,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return true;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'deleteContact', entityId: contactId });
+        return true;
+      }
       setContacts(prevContacts);
       Toast.show({ type: 'error', text1: 'Failed to delete contact', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   // --- TASKS ---
   const optimisticAddTask = useCallback(async (newTaskData) => {
@@ -384,11 +539,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       }
       throw new Error(res?.error || 'Failed to create task');
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'createTask', payload: newTaskData });
+        return optimisticTask;
+      }
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
       Toast.show({ type: 'error', text1: 'Failed to create task', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   const optimisticToggleTask = useCallback(async (taskId, newStatus) => {
     let prevTasks = [];
@@ -419,11 +578,19 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return res.data;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({
+          type: 'updateTask',
+          entityId: taskId,
+          payload: { status: newStatus },
+        });
+        return { id: taskId, status: newStatus };
+      }
       setTasks(prevTasks);
       Toast.show({ type: 'error', text1: 'Failed to update task', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   const optimisticDeleteTask = useCallback(async (taskId) => {
     let prevTasks = [];
@@ -443,11 +610,15 @@ export function CrmProvider({ children, workspaceId: propWorkspaceId }) {
       if (!res?.success) throw new Error(res?.error);
       return true;
     } catch (err) {
+      if (isOfflineError(err)) {
+        queueOfflineMutation({ type: 'deleteTask', entityId: taskId });
+        return true;
+      }
       setTasks(prevTasks);
       Toast.show({ type: 'error', text1: 'Failed to delete task', text2: err.message });
       throw err;
     }
-  }, [workspaceId]);
+  }, [workspaceId, queueOfflineMutation]);
 
   return (
     <CrmContext.Provider

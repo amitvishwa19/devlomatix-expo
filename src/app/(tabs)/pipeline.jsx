@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useScrollToTop } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import React, { useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useCrm } from '~/providers/CrmProvider';
@@ -30,7 +30,14 @@ export default function CrmPipelineTab() {
     optimisticDeleteDeal,
   } = useCrm();
 
-  const [selectedStageId, setSelectedStageId] = useState('ALL');
+  const { stageId: stageParam } = useLocalSearchParams();
+  const [selectedStageId, setSelectedStageId] = useState(
+    stageParam && stageParam !== 'ALL' ? String(stageParam) : 'ALL'
+  );
+
+  useEffect(() => {
+    if (stageParam && stageParam !== 'ALL') setSelectedStageId(String(stageParam));
+  }, [stageParam]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('VALUE_DESC'); // 'VALUE_DESC' | 'RECENT' | 'PRIORITY'
   const [deleteTarget, setDeleteTarget] = useState(null);
