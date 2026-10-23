@@ -77,7 +77,8 @@
       ],
       "@react-native-firebase/messaging",
       "@react-native-firebase/app",
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "./plugins/withSingleFcmService"
     ],
     "web": {
       "bundler": "metro",

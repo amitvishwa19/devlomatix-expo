@@ -33,39 +33,44 @@ export const AuthProvider = ({ children }) => {
     });
     getDeviceTocken();
     getUserFromToken();
+
+    let unsubscribeTokenRefresh = null;
+    try {
+      unsubscribeTokenRefresh = messaging().onTokenRefresh((token) => {
+        setDeviceToken(token);
+      });
+    } catch (_) {}
+
+    return () => {
+      if (unsubscribeTokenRefresh) unsubscribeTokenRefresh();
+    };
   }, []);
 
   const getDeviceTocken = async () => {
-    // const token = (await Notifications.getDevicePushTokenAsync()).data;
-    // console.log('@Devicetoken', token)
-    // setDeviceToken(token)
+    try {
+      if (Platform.OS === "android") {
+        try {
+          await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+          );
+        } catch (_) {}
+      }
 
-    if (Platform.OS === "android") {
-      PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
       const authStatus = await messaging().requestPermission();
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      if (enabled) {
-        await messaging().registerDeviceForRemoteMessages();
-        const token = await messaging().getToken();
-        setDeviceToken(token);
-      }
-    } else {
-      async function requestUserPermission() {
-        const authStatus = await messaging().requestPermission();
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      if (!enabled) return;
 
-        if (enabled) {
-          const token = await messaging().getToken();
-          setDeviceToken(token);
-        }
+      if (Platform.OS === "android") {
+        await messaging().registerDeviceForRemoteMessages();
       }
+
+      const token = await messaging().getToken();
+      if (token) setDeviceToken(token);
+    } catch (error) {
+      console.warn("[PUSH_TOKEN] Unable to obtain FCM token:", error?.message);
     }
   };
 
@@ -121,7 +126,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (expoPushToken && (authState.authenticated || user)) {
+    if ((expoPushToken || deviceToken) && (authState.authenticated || user)) {
       axios
         .post(apiUrls.updatePushToken, {
           expoPushToken,

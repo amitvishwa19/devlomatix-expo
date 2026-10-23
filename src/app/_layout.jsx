@@ -12,7 +12,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
-import { setNotificationHandler } from "expo-notifications";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "~/components/CustomToast";
 import { NotificationProvider } from "~/contexts/NotificationContext";
@@ -32,43 +31,6 @@ import PostCallSummaryModal from "~/app/_components/call/PostCallSummaryModal";
 import CallEndedModal from "~/app/_components/call/CallEndedModal";
 import { CrmProvider } from "~/providers/CrmProvider";
 import { CrmDrawerProvider } from "~/app/_components/CrmDrawer";
-
-import * as Notifications from "expo-notifications";
-import { getMessaging } from "@react-native-firebase/messaging";
-
-setNotificationHandler({
-    handleNotification: async (notification) => {
-        const data = notification?.request?.content?.data || {};
-        const isCall = data?.type === 'incoming_call';
-        return {
-            shouldShowBanner: !isCall,
-            shouldShowList: !isCall,
-            shouldPlaySound: !isCall,
-            shouldSetBadge: !isCall,
-        };
-    },
-});
-
-try {
-    getMessaging().setBackgroundMessageHandler(async (remoteMessage) => {
-        console.log("🔥 [FCM Background] Remote message received:", remoteMessage?.data);
-        const data = remoteMessage?.data || {};
-        if (data.type === 'incoming_call' && !remoteMessage?.notification) {
-            const isVideo = data.callType === 'video';
-            await Notifications.scheduleNotificationAsync({
-                content: {
-                    title: `📞 Incoming ${isVideo ? 'Video' : 'Voice'} Call`,
-                    body: `${data.callerName || 'Devlomatix Rep'} is calling you on Devlomatix CRM`,
-                    data,
-                    sound: 'default',
-                },
-                trigger: null,
-            });
-        }
-    });
-} catch (e) {
-    // Non-native or web fallback
-}
 
 export {
     // Catch any errors thrown by the Layout component.

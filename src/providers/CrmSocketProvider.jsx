@@ -28,6 +28,8 @@ try {
 }
 
 import { getSession, clearSession, refreshAuthSession, decodeJwtPayload } from '~/utils/authStorage';
+import axios from '~/utils/axios';
+import { apiUrls } from '~/utils/api';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { getPreferences } from '~/utils/preferences';
 import { resolveWorkspaceId } from '~/utils/workspace';
@@ -95,6 +97,10 @@ export function CrmSocketProvider({ children }) {
   const callTimeoutRef = useRef(null);
   const hapticIntervalRef = useRef(null);
   const incomingNotificationIdRef = useRef(null);
+  const pushTokenRef = useRef(null);
+  const deviceTokenRef = useRef(null);
+  const lastTokenSignatureRef = useRef('');
+  const lastSyncedTokensRef = useRef('');
   const incomingCallDataRef = useRef(null);
   const activeCallSessionRef = useRef(null);
   const callStatusRef = useRef('idle');
@@ -113,10 +119,12 @@ export function CrmSocketProvider({ children }) {
         console.warn('[CRM_SOCKET] Push notification registration notice:', err?.message);
       });
 
-    // Also obtain direct Firebase FCM token
+    // Also obtain direct Firebase FCM token and keep it in sync with rotations
+    let unsubscribeTokenRefresh = null;
     try {
       if (getMessaging) {
-        getMessaging().getToken().then((fcmTok) => {
+        const messaging = getMessaging();
+        messaging.getToken().then((fcmTok) => {
           if (fcmTok) {
             console.log('[CRM_SOCKET] Retrieved native FCM deviceToken:', fcmTok.substring(0, 20) + '...');
             setDeviceToken(fcmTok);
@@ -124,8 +132,19 @@ export function CrmSocketProvider({ children }) {
         }).catch((err) => {
           console.warn('[CRM_SOCKET] FCM token retrieval notice:', err?.message);
         });
+
+        unsubscribeTokenRefresh = messaging.onTokenRefresh((fcmTok) => {
+          if (fcmTok) {
+            console.log('[CRM_SOCKET] FCM deviceToken refreshed');
+            setDeviceToken(fcmTok);
+          }
+        });
       }
     } catch (_) {}
+
+    return () => {
+      if (unsubscribeTokenRefresh) unsubscribeTokenRefresh();
+    };
   }, []);
 
   // Monitor AppState (foreground/background) & notification taps
@@ -200,6 +219,39 @@ export function CrmSocketProvider({ children }) {
   useEffect(() => {
     callDurationRef.current = callDuration;
   }, [callDuration]);
+
+  useEffect(() => {
+    pushTokenRef.current = pushToken;
+  }, [pushToken]);
+
+  useEffect(() => {
+    deviceTokenRef.current = deviceToken;
+  }, [deviceToken]);
+
+  // Persist the latest tokens for the signed-in user. Login only uploads the tokens that
+  // exist at that moment, so existing sessions and rotated FCM tokens must be re-synced.
+  useEffect(() => {
+    if (!pushToken && !deviceToken) return;
+
+    const signature = `${pushToken || ''}|${deviceToken || ''}`;
+    if (lastSyncedTokensRef.current === signature) return;
+    lastSyncedTokensRef.current = signature;
+
+    getSession()
+      .then((session) => {
+        if (!session?.accessToken) return null;
+        return axios.post(apiUrls.updatePushToken, { expoPushToken: pushToken, deviceToken });
+      })
+      .then((response) => {
+        if (response) {
+          console.log('[CRM_SOCKET] Push tokens synced with server');
+        }
+      })
+      .catch((error) => {
+        lastSyncedTokensRef.current = '';
+        console.warn('[CRM_SOCKET] Push token sync failed:', error?.message);
+      });
+  }, [pushToken, deviceToken]);
 
   // 1. Resolve active user session & workspace (checks periodically if user logs in after launch)
   useEffect(() => {
@@ -367,8 +419,8 @@ export function CrmSocketProvider({ children }) {
 
         // Register presence immediately — server uses verified JWT identity, no workspaceId needed
         s.emit('user:join', {
-          expoPushToken: pushToken,
-          deviceToken: deviceToken,
+          expoPushToken: pushTokenRef.current,
+          deviceToken: deviceTokenRef.current,
         });
       });
 
@@ -404,8 +456,8 @@ export function CrmSocketProvider({ children }) {
       s.io?.on('reconnect', () => {
         setIsConnected(true);
         s.emit('user:join', {
-          expoPushToken: pushToken,
-          deviceToken: deviceToken,
+          expoPushToken: pushTokenRef.current,
+          deviceToken: deviceTokenRef.current,
         });
       });
 
@@ -427,6 +479,22 @@ export function CrmSocketProvider({ children }) {
     };
   }, [currentUserId, currentUserName, currentUserAvatar]);
 
+  // Re-register push tokens once they arrive (they are fetched asynchronously after the socket connects)
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s?.connected || !isConnected) return;
+    if (!pushToken && !deviceToken) return;
+
+    const signature = `${pushToken || ''}|${deviceToken || ''}`;
+    if (lastTokenSignatureRef.current === signature) return;
+    lastTokenSignatureRef.current = signature;
+
+    s.emit('user:join', {
+      expoPushToken: pushToken,
+      deviceToken,
+    });
+    console.log('[CRM_SOCKET] Re-registered push tokens with socket server');
+  }, [pushToken, deviceToken, isConnected, socket]);
 
   // 4. WebRTC Signaling Listeners
   useEffect(() => {

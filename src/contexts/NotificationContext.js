@@ -45,6 +45,21 @@ export const NotificationProvider = ({ children }) => {
     [router]
   );
 
+  const addNotificationFromContent = useCallback(
+    (content) => {
+      const data = content?.data || {};
+      if (!content || data.type === 'incoming_call') return;
+      addNotification(
+        notificationEntryFromRemote({
+          data,
+          notification: { title: content.title, body: content.body },
+          messageId: data.messageId || data['google.message_id'] || undefined,
+        })
+      );
+    },
+    [addNotification]
+  );
+
   useEffect(() => {
     let isMounted = true;
     let unsubFcm = null;
@@ -83,7 +98,7 @@ export const NotificationProvider = ({ children }) => {
             content: {
               title: title || data.title || 'Devlomatix',
               body: body || data.body || '',
-              data,
+              data: { ...data, messageId: remoteMessage.messageId },
             },
             trigger: null,
           }).catch(() => {});
@@ -100,22 +115,47 @@ export const NotificationProvider = ({ children }) => {
     });
     notificationListener.current = sub;
 
-    const resSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const content = response?.notification?.request?.content;
+    const handledResponseIds = new Set();
+    const handleResponse = (response) => {
+      const request = response?.notification?.request;
+      if (!request) return;
+      if (request.identifier && handledResponseIds.has(request.identifier)) return;
+      if (request.identifier) handledResponseIds.add(request.identifier);
+
+      const content = request.content;
+      addNotificationFromContent(content);
       routeFromData(content?.data || {});
-    });
+    };
+
+    const resSub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     responseListener.current = resSub;
+
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (!response) return;
+        handleResponse(response);
+        Notifications.clearLastNotificationResponseAsync?.().catch(() => {});
+      })
+      .catch(() => {});
 
     try {
       const messaging = getMessaging();
       unsubFcmOpened = messaging.onNotificationOpenedApp((remoteMessage) => {
-        routeFromData(remoteMessage?.data || {});
+        if (!remoteMessage) return;
+        if (remoteMessage.data?.type !== 'incoming_call') {
+          addNotification(notificationEntryFromRemote(remoteMessage));
+        }
+        routeFromData(remoteMessage.data || {});
       });
 
       messaging
         .getInitialNotification()
         .then((remoteMessage) => {
-          if (remoteMessage) routeFromData(remoteMessage.data || {});
+          if (!remoteMessage) return;
+          if (remoteMessage.data?.type !== 'incoming_call') {
+            addNotification(notificationEntryFromRemote(remoteMessage));
+          }
+          routeFromData(remoteMessage.data || {});
         })
         .catch(() => {});
     } catch (_) {}
@@ -127,7 +167,7 @@ export const NotificationProvider = ({ children }) => {
       sub.remove();
       resSub.remove();
     };
-  }, [addNotification, routeFromData]);
+  }, [addNotification, addNotificationFromContent, routeFromData]);
 
   return (
     <NotificationContext.Provider value={{ expoPushToken, notification, error }}>

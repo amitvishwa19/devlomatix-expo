@@ -7,9 +7,13 @@ import {
   useMemo,
   useState,
 } from 'react';
-
-const STORAGE_KEY = 'devlomatix.notifications';
-const MAX_NOTIFICATIONS = 50;
+import { AppState } from 'react-native';
+import {
+  MAX_STORED_NOTIFICATIONS,
+  NOTIFICATION_STORAGE_KEY,
+  normalizeNotification,
+  readStoredNotifications,
+} from '~/utils/notificationStorage';
 
 const NotificationStoreContext = createContext(null);
 
@@ -18,36 +22,28 @@ export function NotificationStoreProvider({ children }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((stored) => {
-        if (!stored) return;
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) setNotifications(parsed);
-        } catch (_) {}
-      })
+    readStoredNotifications()
+      .then((items) => setNotifications(items))
       .finally(() => setIsReady(true));
   }, []);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      readStoredNotifications()
+        .then((items) => setNotifications(items))
+        .catch(() => {});
+    });
+    return () => subscription.remove();
+  }, []);
+
   const persist = useCallback((items) => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
+    AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(items)).catch(() => {});
   }, []);
 
   const addNotification = useCallback(
     (notification = {}) => {
-      const entry = {
-        id: notification.id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        module: notification.module || 'crm',
-        title: notification.title || 'New notification',
-        description: notification.description || '',
-        icon: notification.icon || 'notifications',
-        color: notification.color || '#6b7280',
-        time: notification.time || new Date().toISOString(),
-        read: false,
-        route: notification.route || null,
-        data: notification.data || null,
-        dedupeKey: notification.dedupeKey || null,
-      };
+      const entry = normalizeNotification(notification);
 
       setNotifications((prev) => {
         if (
@@ -56,7 +52,7 @@ export function NotificationStoreProvider({ children }) {
         ) {
           return prev;
         }
-        const next = [entry, ...prev].slice(0, MAX_NOTIFICATIONS);
+        const next = [entry, ...prev].slice(0, MAX_STORED_NOTIFICATIONS);
         persist(next);
         return next;
       });
