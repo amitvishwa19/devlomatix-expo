@@ -27,7 +27,7 @@ try {
   // Firebase messaging fallback
 }
 
-import { getSession, clearSession, refreshAuthSession } from '~/utils/authStorage';
+import { getSession, clearSession, refreshAuthSession, decodeJwtPayload } from '~/utils/authStorage';
 import { resolveWorkspaceId } from '~/utils/workspace';
 import { WebRtcClient } from '~/lib/webrtc/webrtc-client';
 import { socket_server_url } from '~/utils/constants';
@@ -212,9 +212,26 @@ export function CrmSocketProvider({ children }) {
             return prevId !== newId ? u : prev;
           });
         }
-        const ws = await resolveWorkspaceId();
+
+        // Try resolveWorkspaceId first (cached in SecureStore/AsyncStorage)
+        let ws = await resolveWorkspaceId();
+
+        // Fallback 1: Decode JWT access token for workspaceId/serverId claim
+        if (!ws && session?.accessToken) {
+          const payload = decodeJwtPayload(session.accessToken);
+          ws =
+            payload?.workspaceId ||
+            payload?.serverId ||
+            payload?.currentWorkspace ||
+            (Array.isArray(payload?.servers) && payload.servers[0]?.id) ||
+            null;
+          if (ws) {
+            console.log(`[CRM_SOCKET] workspaceId extracted from JWT payload: ${ws}`);
+          }
+        }
+
         if (isMounted && ws) {
-          setWorkspaceId(ws);
+          setWorkspaceId(String(ws));
         }
       } catch (e) {
         console.warn('[CRM_SOCKET] Could not resolve session or workspaceId:', e?.message);

@@ -44,7 +44,30 @@ export async function resolveWorkspaceId(providedWorkspaceId = null) {
       return sessionWsId;
     }
 
-    // 4. Check legacy devlomatix.session key
+    // 4. Check auth.session key (used by authStorage.js saveSession)
+    const rawAuthSession = await AsyncStorage.getItem('auth.session');
+    if (rawAuthSession) {
+      const authSession = JSON.parse(rawAuthSession);
+      const authUser = authSession?.user;
+      const authWsId =
+        authUser?.workspaceId ||
+        authUser?.currentWorkspace ||
+        authUser?.selectedServer ||
+        (authUser?.members?.length ? authUser.members[0]?.serverId : null) ||
+        (authUser?.workspaces?.length
+          ? (authUser.workspaces.find((w) => w.default) || authUser.workspaces[0])?.id
+          : null) ||
+        (authUser?.servers?.length
+          ? (authUser.servers.find((s) => s.default) || authUser.servers[0])?.id
+          : null);
+      if (authWsId) {
+        await AsyncStorage.setItem('devlomatix.workspaceId', String(authWsId));
+        await SecureStore.setItemAsync('devlomatix.workspaceId', String(authWsId));
+        return String(authWsId);
+      }
+    }
+
+    // 5. Check legacy devlomatix.session key
     const rawDevlomatixSession = await AsyncStorage.getItem('devlomatix.session');
     if (rawDevlomatixSession) {
       const devSession = JSON.parse(rawDevlomatixSession);
