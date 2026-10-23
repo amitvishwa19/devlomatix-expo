@@ -360,22 +360,13 @@ export function CrmSocketProvider({ children }) {
 
       s.on('connect', () => {
         setIsConnected(true);
-        console.log(`[CRM_SOCKET] Mobile client successfully connected and authenticated to ${socketUrl} (Socket ID: ${s.id})`);
+        console.log(`[CRM_SOCKET] Mobile client connected (Socket ID: ${s.id})`);
 
-        // Only emit user:join if workspaceId is resolved — avoids joining 'default' room
-        if (workspaceId) {
-          s.emit('user:join', {
-            userId: currentUserId,
-            workspaceId,
-            userName: currentUserName,
-            avatar: currentUserAvatar,
-            platform: Platform.OS,
-            expoPushToken: pushToken,
-            deviceToken: deviceToken,
-          });
-        } else {
-          console.log('[CRM_SOCKET] workspaceId not yet resolved — will emit user:join when available');
-        }
+        // Register presence immediately — server uses verified JWT identity, no workspaceId needed
+        s.emit('user:join', {
+          expoPushToken: pushToken,
+          deviceToken: deviceToken,
+        });
       });
 
       s.on('connect_error', async (err) => {
@@ -406,6 +397,15 @@ export function CrmSocketProvider({ children }) {
         console.log(`[CRM_SOCKET] Mobile client disconnected (${reason})`);
       });
 
+      // Re-register presence after auto-reconnect
+      s.io?.on('reconnect', () => {
+        setIsConnected(true);
+        s.emit('user:join', {
+          expoPushToken: pushToken,
+          deviceToken: deviceToken,
+        });
+      });
+
       s.on('presence:sync', (users) => {
         setOnlineUsers(users.filter((u) => String(u.userId) !== String(currentUserId)));
       });
@@ -422,23 +422,8 @@ export function CrmSocketProvider({ children }) {
         s.disconnect();
       }
     };
-  }, [currentUserId, workspaceId, currentUserName, currentUserAvatar]);
+  }, [currentUserId, currentUserName, currentUserAvatar]);
 
-  // 3b. Re-emit user:join if workspaceId resolves while socket is already connected
-  useEffect(() => {
-    const s = socketRef.current;
-    if (!s || !s.connected || !workspaceId || !currentUserId) return;
-    console.log(`[CRM_SOCKET] Workspace resolved. Re-emitting user:join for workspace ${workspaceId}`);
-    s.emit('user:join', {
-      userId: currentUserId,
-      workspaceId,
-      userName: currentUserName,
-      avatar: currentUserAvatar,
-      platform: Platform.OS,
-      expoPushToken: pushToken,
-      deviceToken: deviceToken,
-    });
-  }, [workspaceId, currentUserId, currentUserName, currentUserAvatar, pushToken, deviceToken]);
 
   // 4. WebRTC Signaling Listeners
   useEffect(() => {
