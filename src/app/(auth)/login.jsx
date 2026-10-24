@@ -17,6 +17,9 @@ import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
 import { apiUrls } from "../../utils/api";
 import { saveSession } from "../../utils/authStorage";
+import * as Location from 'expo-location';
+import { logLocationPoint } from '~/services/location';
+import { dailySessionId } from '~/utils/geoUtils';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -55,6 +58,31 @@ export default function LoginScreen() {
             text1: "Success",
             text2: successMessage,
         });
+
+        // Immediately capture and log initial GPS location point upon login
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const loc = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
+                });
+                if (loc?.coords) {
+                    await logLocationPoint({
+                        lat: loc.coords.latitude,
+                        lng: loc.coords.longitude,
+                        accuracy: loc.coords.accuracy,
+                        altitude: loc.coords.altitude,
+                        speed: loc.coords.speed || 0,
+                        heading: loc.coords.heading,
+                        sessionId: dailySessionId(),
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+            }
+        } catch (locErr) {
+            console.warn('[LOGIN] Initial location point log skipped:', locErr?.message);
+        }
+
         router.replace('/(tabs)');
     };
 

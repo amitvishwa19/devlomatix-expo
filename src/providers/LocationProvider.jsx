@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { AppState, Platform } from 'react-native';
 import { haversineMeters, dailySessionId } from '~/utils/geoUtils';
 import { logLocationPoint } from '~/services/location';
+import { onAuthStateChanged } from '~/utils/authStorage';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MIN_DISTANCE_METERS = 10;         // Only record if user moved ≥ 10 m
@@ -95,14 +96,14 @@ export function LocationProvider({ children }) {
     }
   }, []);
 
-  // ── Record a point if distance threshold is met ─────────────────────────────
-  const maybeRecord = useCallback(async (coords) => {
+  // ── Record a point if distance threshold is met (or forced on login/refresh) ─
+  const maybeRecord = useCallback(async (coords, force = false) => {
     const point = {
       lat: coords.latitude,
       lng: coords.longitude,
       accuracy: coords.accuracy,
       altitude: coords.altitude,
-      speed: coords.speed,
+      speed: coords.speed || 0,
       heading: coords.heading,
       sessionId: dailySessionId(),
       timestamp: new Date().toISOString(),
@@ -110,12 +111,12 @@ export function LocationProvider({ children }) {
 
     const prev = lastRecordedRef.current;
 
-    if (prev) {
+    if (!force && prev) {
       const dist = haversineMeters(prev, point);
       if (dist < MIN_DISTANCE_METERS) return;  // not far enough — skip
     }
 
-    // Threshold passed (or first point): record
+    // Threshold passed (or forced first point): record
     lastRecordedRef.current = point;
     setCurrentLocation({ lat: point.lat, lng: point.lng });
     setTrail((t) => [...t, { lat: point.lat, lng: point.lng, timestamp: point.timestamp }]);
@@ -123,6 +124,27 @@ export function LocationProvider({ children }) {
     // Fire-and-forget POST
     await logLocationPoint(point);
   }, []);
+
+  // ── Immediate snapshot & log (called on login or screen focus) ───────────────
+  const logCurrentPosition = useCallback(
+    async (force = true) => {
+      try {
+        const { fg } = await requestPermissions();
+        if (!fg) return null;
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (loc?.coords) {
+          await maybeRecord(loc.coords, force);
+          return loc.coords;
+        }
+      } catch (e) {
+        console.warn('[LOCATION] Immediate position log skipped/failed:', e?.message);
+      }
+      return null;
+    },
+    [maybeRecord, requestPermissions]
+  );
 
   // ── Start foreground watcher ─────────────────────────────────────────────────
   const startForegroundWatcher = useCallback(async () => {
@@ -254,6 +276,25 @@ export function LocationProvider({ children }) {
     return () => sub.remove();
   }, [hasPermission, startForegroundWatcher, stopForegroundWatcher]);
 
+  // ── Listen to Auth changes: when user logs in, immediately record first location point ──
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(async (session) => {
+      if (session?.isLoggedIn) {
+        lastRecordedRef.current = null;
+        await logCurrentPosition(true);
+        await startForegroundWatcher();
+      } else {
+        lastRecordedRef.current = null;
+        setTrail([]);
+        setCurrentLocation(null);
+        stopForegroundWatcher();
+        await stopBackgroundTracking();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [logCurrentPosition, startForegroundWatcher, stopBackgroundTracking, stopForegroundWatcher]);
+
   // ── Public API ───────────────────────────────────────────────────────────────
   const clearTrail = useCallback(() => {
     setTrail([]);
@@ -269,6 +310,7 @@ export function LocationProvider({ children }) {
         hasPermission,
         hasBgPermission,
         clearTrail,
+        logCurrentPosition,
       }}
     >
       {children}
@@ -286,6 +328,7 @@ export function useLocation() {
       hasPermission: false,
       hasBgPermission: false,
       clearTrail: () => {},
+      logCurrentPosition: async () => null,
     };
   }
   return ctx;

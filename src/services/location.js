@@ -31,11 +31,15 @@ export async function getLocationTrail(params = {}) {
 }
 
 /**
- * Fetch all organization team members with their latest GPS location and trails.
+ * Fetch organization team members with their latest GPS location and trails.
+ * Defaults to filtering for mobile logged-in users on mobile devices.
+ * @param {Object} params
  */
-export async function getTeamLocations() {
+export async function getTeamLocations(params = {}) {
   try {
-    const res = await api.get(apiUrls.crmLocation, { params: { team: 'true' } });
+    const res = await api.get(apiUrls.crmLocation, {
+      params: { team: 'true', platform: 'mobile', ...params },
+    });
     return res.data?.data || { users: [], totalUsers: 0 };
   } catch (error) {
     console.warn('[LOCATION_TEAM] Failed to fetch team locations:', error?.message);

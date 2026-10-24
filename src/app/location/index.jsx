@@ -20,6 +20,7 @@ import { useLocation } from '~/providers/LocationProvider';
 import { getLocationTrail, clearLocationTrail, getTeamLocations } from '~/services/location';
 import { formatDistance, dailySessionId } from '~/utils/geoUtils';
 import { useCrmTheme } from '~/utils/crm/colors';
+import { getSession } from '~/utils/authStorage';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function todayStr() {
@@ -61,8 +62,10 @@ export default function LocationMapScreen() {
     currentLocation,
     isTracking,
     clearTrail: clearLocalTrail,
+    logCurrentPosition,
   } = useLocation();
 
+  const [currentUser, setCurrentUser] = useState(null);
   const [points, setPoints] = useState([]);
   const [teamUsers, setTeamUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
@@ -73,12 +76,22 @@ export default function LocationMapScreen() {
   const [totalDistance, setTotalDistance] = useState(0);
   const mapRef = useRef(null);
 
-  // ── Fetch team members and their latest locations ──────────────────────────
+  useEffect(() => {
+    getSession().then((s) => {
+      if (s?.user) setCurrentUser(s.user);
+    });
+  }, []);
+
+  // ── Fetch team members and their latest locations (Mobile-only fleet) ───────
   const fetchTeam = useCallback(async () => {
     try {
-      const data = await getTeamLocations();
+      const data = await getTeamLocations({ platform: 'mobile' });
       if (Array.isArray(data.users)) {
-        setTeamUsers(data.users);
+        // Exclusively keep users who are logged in via mobile or are the current mobile user
+        const mobileOnlyUsers = data.users.filter(
+          (u) => (u.platform === 'mobile' && u.activeSession?.platform !== 'web') || u.isCurrent
+        );
+        setTeamUsers(mobileOnlyUsers);
       }
     } catch (e) {
       console.warn('[MAP_TEAM_FETCH_FAILED]', e);
@@ -107,7 +120,12 @@ export default function LocationMapScreen() {
   // Initial load
   useEffect(() => {
     fetchTeam();
-  }, [fetchTeam]);
+    if (typeof logCurrentPosition === 'function') {
+      logCurrentPosition(true).then(() => {
+        fetchTeam();
+      }).catch(() => {});
+    }
+  }, [fetchTeam, logCurrentPosition]);
 
   useEffect(() => {
     if (viewMode === 'today') {
@@ -184,10 +202,10 @@ export default function LocationMapScreen() {
         title="Field Movement Map"
         subtitle={
           teamUsers.length > 0
-            ? `${teamUsers.length} Organization Users • ${drivingCount} Driving, ${walkingCount} Walking`
+            ? `${teamUsers.length} Mobile Users • ${drivingCount} Driving, ${walkingCount} Walking`
             : isTracking
             ? '● Live GPS Tracking Active'
-            : 'Route History & Team Tracking'
+            : 'Route History & Mobile Fleet Tracking'
         }
         showBack={true}
         rightActions={
@@ -261,7 +279,7 @@ export default function LocationMapScreen() {
             </Text>
           </View>
 
-          {/* Org Users Card */}
+          {/* Mobile Fleet Card */}
           <View
             className="flex-1 rounded-[14px] border p-2"
             style={{
@@ -271,12 +289,12 @@ export default function LocationMapScreen() {
           >
             <View className="flex-row items-center justify-between">
               <Text className="text-[9.5px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                Org Users
+                Mobile Fleet
               </Text>
-              <Ionicons name="people-outline" size={12} color="#8b5cf6" />
+              <Ionicons name="phone-portrait-outline" size={12} color="#8b5cf6" />
             </View>
             <Text className="text-[13px] font-bold mt-0.5" style={{ color: colors.text }}>
-              {teamUsers.length || 4} Users
+              {teamUsers.length} Online
             </Text>
           </View>
 
@@ -513,6 +531,7 @@ export default function LocationMapScreen() {
             ref={mapRef}
             points={displayPoints}
             currentLocation={currentLocation}
+            currentUser={currentUser}
             teamUsers={teamUsers}
             selectedUserId={selectedUserId}
             onSelectUser={handleSelectUser}

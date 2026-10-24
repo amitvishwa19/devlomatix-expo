@@ -3,25 +3,21 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 /**
- * WebGoogleMapView: 100% Reliable, Zero-Native-Dependency Google Maps
+ * WebGoogleMapView: High-Performance Interactive Google Maps with Full Team & User HUD
  *
- * Powered by Google Maps Tile Servers (Roadmap, Satellite Hybrid, and Terrain layers)
- * with Leaflet rendering in React Native WebView.
- *
- * Supports:
- * - 60fps hardware accelerated interactive pan/pinch/zoom gestures
- * - All team members with walking/driving icons, email & device badges, and speeds
- * - Interactive marker clicks that select team users
- * - Multi-user polylines with glowing trails
- * - Live Uber/Radar style pulsing beacon on user's current GPS location
- * - Smooth camera movements (fitTrail, fitAllUsers, centerOnUser, centerOnCoords)
- * - Roadmap, Satellite, and Terrain live layer switching
- * - Light and Dark theme styling
+ * Displays:
+ * - Full email pill badge with status dot and device indicator
+ * - Dynamic SVG Walking (🚶) vs Driving (🚗) icons based on real-time speed threshold (2.5 m/s ≈ 9 km/h)
+ * - Real-time speed badge (e.g. 0km/h, 15km/h, 45km/h)
+ * - Radar pulsing beacon on the current active user
+ * - Dual-layer glowing polylines for trails
+ * - Google Roadmap, Satellite Hybrid, and Terrain layer switcher
  */
 const WebGoogleMapView = forwardRef(function WebGoogleMapView(
   {
     points = [],
     currentLocation = null,
+    currentUser = null,
     teamUsers = [],
     selectedUserId = 'all',
     onSelectUser = null,
@@ -46,9 +42,8 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
     (teamUsers[0]?.latestLocation?.lng ? Number(teamUsers[0].latestLocation.lng) : null) ||
     (points.length ? Number(points[0].lng) : 73.2257);
 
-  const initialZoom = points.length > 1 || teamUsers.length > 1 ? 14 : 15;
+  const initialZoom = points.length > 1 || teamUsers.length > 1 ? 14 : 16;
 
-  // Imperative methods exposed to parent
   useImperativeHandle(ref, () => ({
     centerOnUser: () => {
       if (currentLocation && webViewRef.current) {
@@ -87,7 +82,6 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
     },
   }));
 
-  // Update map layer whenever mapType changes
   useEffect(() => {
     if (loaded && webViewRef.current) {
       webViewRef.current.injectJavaScript(
@@ -96,12 +90,12 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
     }
   }, [mapType, loaded]);
 
-  // Sync points, team members, and location updates into WebView smoothly without reload
   useEffect(() => {
     if (loaded && webViewRef.current) {
       const payload = JSON.stringify({
         points,
         currentLocation,
+        currentUser,
         teamUsers,
         selectedUserId,
         isTracking,
@@ -110,9 +104,8 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
         `if (window.updateMapData) { window.updateMapData(${payload}); } true;`
       );
     }
-  }, [points, currentLocation, teamUsers, selectedUserId, isTracking, loaded]);
+  }, [points, currentLocation, currentUser, teamUsers, selectedUserId, isTracking, loaded]);
 
-  // Handle messages from WebView (e.g. user clicked a marker)
   const handleMessage = (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -120,7 +113,7 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
         onSelectUser(data.userId);
       }
     } catch {
-      // Ignored non-json messages like 'READY'
+      // Ignored
     }
   };
 
@@ -168,113 +161,120 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
         : ''
     }
 
-    /* Current User Radar Pulsing Pin */
-    .radar-wrapper {
-      position: relative;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .radar-core {
-      width: 14px;
-      height: 14px;
-      background: #0284c7;
-      border: 3px solid #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(2, 132, 199, 0.9);
-      z-index: 2;
-    }
-    .radar-wave {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      background: rgba(2, 132, 199, 0.4);
-      border-radius: 50%;
-      animation: radarPulse 1.8s infinite ease-out;
-      z-index: 1;
-    }
-    @keyframes radarPulse {
-      0% { transform: scale(0.35); opacity: 1; }
-      100% { transform: scale(1.7); opacity: 0; }
+    /* Custom Leaflet DivIcon reset */
+    .custom-div-icon {
+      background: transparent !important;
+      border: none !important;
     }
 
-    /* Team Member Markers */
+    /* Marker Container */
     .team-marker-container {
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      transform: translate(-50%, -100%);
+      justify-content: flex-end;
       cursor: pointer;
     }
+
+    /* Email Pill Badge */
     .email-pill {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      background: #090d16;
-      padding: 2.5px 7px;
+      background: rgba(9, 13, 22, 0.94);
+      padding: 3px 9px;
       border-radius: 9999px;
       border: 1.5px solid #0284c7;
-      margin-bottom: 2px;
-      max-width: 220px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      margin-bottom: 3px;
+      max-width: 270px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
       white-space: nowrap;
     }
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      margin-right: 5px;
+      margin-right: 6px;
       flex-shrink: 0;
     }
     .email-text {
       color: #ffffff;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      margin-right: 5px;
+      margin-right: 6px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .device-badge {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 8.5px;
+      background: rgba(255, 255, 255, 0.16);
+      padding: 1.5px 6px;
+      border-radius: 5px;
+      font-size: 9px;
       font-weight: 700;
-      color: #94a3b8;
+      color: #38bdf8;
     }
-    .icon-circle {
+
+    /* Icon Circle */
+    .icon-circle-wrapper {
       position: relative;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-      color: #ffffff;
-      font-size: 16px;
     }
+    .icon-circle {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2.5px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      z-index: 2;
+    }
+    .pulse-ring {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(2, 132, 199, 0.4);
+      animation: pulseAnim 1.8s infinite ease-out;
+      z-index: 1;
+    }
+    @keyframes pulseAnim {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* Speed Badge */
     .speed-tag {
       position: absolute;
-      top: -6px;
-      right: -8px;
-      background: #0f172a;
-      border: 1px solid rgba(255,255,255,0.7);
-      padding: 0.5px 3.5px;
+      top: -7px;
+      right: -10px;
+      background: #090d16;
+      border: 1.5px solid #38bdf8;
+      padding: 1px 4.5px;
       border-radius: 9999px;
-      font-size: 8px;
+      font-size: 8.5px;
       font-weight: 800;
-      color: #ffffff;
+      color: #38bdf8;
       white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      z-index: 3;
     }
+
+    /* Anchor Needle Tip */
     .anchor-tip {
       width: 0;
       height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 6px solid #0284c7;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid #0284c7;
       margin-top: -1px;
     }
 
@@ -320,12 +320,16 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
 <body>
   <div id="map"></div>
   <script>
+    var WALKING_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg>';
+
+    var DRIVING_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>';
+
     var map = L.map('map', {
       zoomControl: false,
       attributionControl: false
     }).setView([${initialLat}, ${initialLng}], ${initialZoom});
 
-    // Google Maps Tile Layers (Roadmap, Satellite Hybrid, Terrain)
+    // Google Maps Tile Layers
     var googleRoadmap = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       subdomains: '0123',
       maxZoom: 21,
@@ -357,7 +361,6 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
       currentLayer.addTo(map);
     };
 
-    // Dual-layer polylines for Selected User Trail
     var polylineGlow = L.polyline([], {
       color: '#38bdf8',
       weight: 8,
@@ -376,7 +379,6 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
 
     var startMarker = null;
     var endMarker = null;
-    var currentMarker = null;
     var teamMarkersMap = {};
     var teamPolylinesMap = {};
 
@@ -392,13 +394,6 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
       html: '<div class="pin-badge-container"><div class="end-badge">LATEST</div><div class="badge-dot" style="background:#ef4444;"></div></div>',
       iconSize: [46, 26],
       iconAnchor: [23, 26]
-    });
-
-    var radarIcon = L.divIcon({
-      className: '',
-      html: '<div class="radar-wrapper"><div class="radar-wave"></div><div class="radar-core"></div></div>',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
     });
 
     window.updateMapData = function(data) {
@@ -434,20 +429,48 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
         endMarker = null;
       }
 
-      // Current GPS Live Pulsing Radar Marker
-      if (data.currentLocation && data.currentLocation.lat != null && data.currentLocation.lng != null) {
-        if (!currentMarker) {
-          currentMarker = L.marker([Number(data.currentLocation.lat), Number(data.currentLocation.lng)], {
-            icon: radarIcon,
-            zIndexOffset: 100
-          }).addTo(map);
-        } else {
-          currentMarker.setLatLng([Number(data.currentLocation.lat), Number(data.currentLocation.lng)]);
+      // ── Build Team List (Ensure current user is always included with live coordinates) ──
+      var users = (data.teamUsers && data.teamUsers.length > 0) ? data.teamUsers.slice() : [];
+      var hasCurrentInTeam = users.some(function(u) { return u.isCurrent; });
+
+      // If current user is not in the list, synthesize their marker from session
+      if (!hasCurrentInTeam && data.currentUser) {
+        var cLat = data.currentLocation ? Number(data.currentLocation.lat) : (pts.length ? Number(pts[pts.length - 1].lat) : null);
+        var cLng = data.currentLocation ? Number(data.currentLocation.lng) : (pts.length ? Number(pts[pts.length - 1].lng) : null);
+        if (cLat != null && cLng != null) {
+          var cSpeed = data.currentLocation?.speed || 0;
+          users.unshift({
+            id: data.currentUser.id || 'current-user',
+            name: data.currentUser.displayName || data.currentUser.name || 'You',
+            email: data.currentUser.email || 'You',
+            color: '#0284c7',
+            isCurrent: true,
+            platform: 'mobile',
+            device: 'Mobile App',
+            speed: cSpeed,
+            speedKmH: Math.round(cSpeed * 3.6),
+            isDriving: cSpeed >= 2.5,
+            latestLocation: { lat: cLat, lng: cLng },
+          });
         }
+      } else if (hasCurrentInTeam && data.currentLocation && data.currentLocation.lat != null) {
+        // Update current user coordinates to live GPS position
+        users = users.map(function(u) {
+          if (u.isCurrent) {
+            return Object.assign({}, u, {
+              latestLocation: {
+                lat: Number(data.currentLocation.lat),
+                lng: Number(data.currentLocation.lng),
+              },
+              speed: data.currentLocation.speed !== undefined ? data.currentLocation.speed : u.speed,
+              speedKmH: data.currentLocation.speed !== undefined ? Math.round(data.currentLocation.speed * 3.6) : u.speedKmH,
+              isDriving: data.currentLocation.speed !== undefined ? data.currentLocation.speed >= 2.5 : u.isDriving,
+            });
+          }
+          return u;
+        });
       }
 
-      // ── Team Members Fleet ──
-      var users = data.teamUsers || [];
       var seenUserIds = {};
 
       users.forEach(function(u) {
@@ -460,9 +483,9 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
         var speedKmH = u.speedKmH !== undefined ? u.speedKmH : Math.round((u.speed || 0) * 3.6);
         var deviceText = u.platform === 'mobile' ? '📱 Mobile' : '💻 Web';
         var emailDisplay = u.email || u.name || 'User';
-        var iconSymbol = isDriving ? '🚗' : '🚶';
+        var iconSvg = isDriving ? DRIVING_SVG : WALKING_SVG;
 
-        // Team trail polyline
+        // User trail polyline
         if (u.trail && u.trail.length > 1) {
           var tPoints = u.trail.map(function(p) { return [Number(p.lat), Number(p.lng)]; });
           if (!teamPolylinesMap[u.id]) {
@@ -482,7 +505,7 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
           delete teamPolylinesMap[u.id];
         }
 
-        // Marker HTML
+        // Marker HTML with Email, Walking/Driving SVG, and Speed Tag
         var markerHtml =
           '<div class="team-marker-container" onclick="window.onMarkerClick(\\'' + u.id + '\\')">' +
             '<div class="email-pill" style="border-color:' + userColor + ';">' +
@@ -490,24 +513,27 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
               '<span class="email-text">' + emailDisplay + '</span>' +
               '<span class="device-badge">' + deviceText + '</span>' +
             '</div>' +
-            '<div class="icon-circle" style="background-color:' + userColor + ';">' +
-              '<span>' + iconSymbol + '</span>' +
-              '<div class="speed-tag">' + speedKmH + 'km/h</div>' +
+            '<div class="icon-circle-wrapper">' +
+              (u.isCurrent ? '<div class="pulse-ring" style="background:' + userColor + '40;"></div>' : '') +
+              '<div class="icon-circle" style="background-color:' + userColor + ';">' +
+                iconSvg +
+                '<div class="speed-tag">' + speedKmH + 'km/h</div>' +
+              '</div>' +
             '</div>' +
             '<div class="anchor-tip" style="border-top-color:' + userColor + ';"></div>' +
           '</div>';
 
         var userIcon = L.divIcon({
-          className: '',
+          className: 'custom-div-icon',
           html: markerHtml,
-          iconSize: [120, 65],
-          iconAnchor: [60, 65]
+          iconSize: [280, 80],
+          iconAnchor: [140, 80]
         });
 
         if (!teamMarkersMap[u.id]) {
           var marker = L.marker([uLat, uLng], {
             icon: userIcon,
-            zIndexOffset: u.isCurrent ? 80 : 40
+            zIndexOffset: u.isCurrent ? 120 : 60
           }).addTo(map);
           teamMarkersMap[u.id] = marker;
         } else {
@@ -552,9 +578,6 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
       Object.keys(teamMarkersMap).forEach(function(uid) {
         allLatLngs.push(teamMarkersMap[uid].getLatLng());
       });
-      if (currentMarker) {
-        allLatLngs.push(currentMarker.getLatLng());
-      }
       if (allLatLngs.length > 1) {
         var bounds = L.latLngBounds(allLatLngs);
         map.fitBounds(bounds, { padding: [50, 50], animate: true, maxZoom: 17 });
@@ -567,6 +590,7 @@ const WebGoogleMapView = forwardRef(function WebGoogleMapView(
     var initialData = ${JSON.stringify({
       points,
       currentLocation,
+      currentUser,
       teamUsers,
       selectedUserId,
       isTracking,

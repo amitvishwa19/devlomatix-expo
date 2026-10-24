@@ -1,8 +1,9 @@
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
+  BackHandler,
   Linking,
   ScrollView,
   Text,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import AppScreen from '~/components/AppScreen';
 import { useAppTheme } from '~/theme/AppTheme';
+import { isLoggedIn } from '~/utils/authStorage';
 
 const TERMS_SECTIONS = [
   {
@@ -126,6 +128,28 @@ export default function TermsConditionsScreen() {
   const accentColor = '#2563eb';
   const accentSoft = isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.08)';
 
+  const handleBack = useCallback(async () => {
+    if (router.canGoBack()) {
+      router.back();
+      return true;
+    }
+    const logged = await isLoggedIn().catch(() => false);
+    if (logged) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/(auth)/login');
+    }
+    return true;
+  }, [router]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBack();
+      return true;
+    });
+    return () => sub.remove();
+  }, [handleBack]);
+
   return (
     <AppScreen edges={['top', 'left', 'right']}>
 
@@ -142,7 +166,7 @@ export default function TermsConditionsScreen() {
           backgroundColor: headerBg,
         }}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBack}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={{
             width: 36,

@@ -15,6 +15,7 @@ export const apiUrls = {
   //Auth
   register: baseApi + "/auth/register", //POST
   login: baseApi + "/auth/login", //POST
+  logout: baseApi + "/auth/logout", //POST
   googleLogin: baseApi + "/auth/login/google", //POST
   userfromtoken: baseApi + "/auth/userfromtoken", //POST
   userFromId: baseApi + "/auth/user", //POST

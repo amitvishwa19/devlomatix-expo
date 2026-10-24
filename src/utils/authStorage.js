@@ -284,6 +284,20 @@ export async function isLoggedIn() {
 }
 
 export async function clearSession() {
+  try {
+    const token = await SecureStore.getItemAsync(storageKey.ACCESSTOKEN);
+    if (token) {
+      fetch(apiUrls.logout, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ token }),
+      }).catch(() => {});
+    }
+  } catch (_) {}
+
   await AsyncStorage.removeItem(AUTH_SESSION_KEY);
   await SecureStore.deleteItemAsync(storageKey.ACCESSTOKEN);
   try {

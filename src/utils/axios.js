@@ -26,6 +26,8 @@ instance.interceptors.request.use(
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
+            config.headers['x-client-platform'] = 'mobile';
+            config.headers['x-mobile-app'] = 'true';
         } catch (error) {
             console.error('Error fetching token in axios interceptor:', error);
         }

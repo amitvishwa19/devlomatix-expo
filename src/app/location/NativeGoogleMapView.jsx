@@ -89,6 +89,7 @@ const NativeAirMapViewInternal = forwardRef(function NativeAirMapViewInternal(
   {
     points = [],
     currentLocation = null,
+    currentUser = null,
     teamUsers = [],
     selectedUserId = 'all',
     onSelectUser = null,
@@ -279,8 +280,49 @@ const NativeAirMapViewInternal = forwardRef(function NativeAirMapViewInternal(
           />
         )}
 
-        {teamUsers.map((user) => {
-          if (!user.latestLocation?.lat || !user.latestLocation?.lng) return null;
+        {(() => {
+          let allUsers = [...teamUsers];
+          const hasCurrentInTeam = allUsers.some((u) => u.isCurrent);
+          if (!hasCurrentInTeam && currentUser) {
+            const cLat = currentLocation ? Number(currentLocation.lat) : (points.length ? Number(points[points.length - 1].lat) : null);
+            const cLng = currentLocation ? Number(currentLocation.lng) : (points.length ? Number(points[points.length - 1].lng) : null);
+            if (cLat != null && cLng != null) {
+              const cSpeed = currentLocation?.speed || 0;
+              allUsers.unshift({
+                id: currentUser.id || 'current-user',
+                name: currentUser.displayName || currentUser.name || 'You',
+                email: currentUser.email || 'You',
+                color: '#0284c7',
+                isCurrent: true,
+                platform: 'mobile',
+                device: 'Mobile App',
+                speed: cSpeed,
+                speedKmH: Math.round(cSpeed * 3.6),
+                isDriving: cSpeed >= 2.5,
+                latestLocation: { lat: cLat, lng: cLng },
+              });
+            }
+          } else if (hasCurrentInTeam && currentLocation && currentLocation.lat != null) {
+            allUsers = allUsers.map((u) => {
+              if (u.isCurrent) {
+                const spd = currentLocation.speed !== undefined ? currentLocation.speed : u.speed;
+                return {
+                  ...u,
+                  latestLocation: {
+                    lat: Number(currentLocation.lat),
+                    lng: Number(currentLocation.lng),
+                  },
+                  speed: spd,
+                  speedKmH: spd !== undefined ? Math.round(spd * 3.6) : u.speedKmH,
+                  isDriving: spd !== undefined ? spd >= 2.5 : u.isDriving,
+                };
+              }
+              return u;
+            });
+          }
+
+          return allUsers.map((user) => {
+            if (!user.latestLocation?.lat || !user.latestLocation?.lng) return null;
           const isDriving = Boolean(user.isDriving || (user.speed >= 2.5));
           const userColor = user.color || '#0284c7';
           const speedKmH =
@@ -337,7 +379,8 @@ const NativeAirMapViewInternal = forwardRef(function NativeAirMapViewInternal(
               </Marker>
             </React.Fragment>
           );
-        })}
+        });
+      })()}
       </MapView>
     </View>
   );
