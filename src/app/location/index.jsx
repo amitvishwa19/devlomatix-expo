@@ -4,6 +4,7 @@ import {
   Alert,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,9 +15,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import AppScreen from '~/components/AppScreen';
 import CrmHeader from '../_components/CrmHeader';
-import GoogleMapView from './GoogleMapView';
+import NativeGoogleMapView from './NativeGoogleMapView';
 import { useLocation } from '~/providers/LocationProvider';
-import { getLocationTrail, clearLocationTrail } from '~/services/location';
+import { getLocationTrail, clearLocationTrail, getTeamLocations } from '~/services/location';
 import { formatDistance, dailySessionId } from '~/utils/geoUtils';
 import { useCrmTheme } from '~/utils/crm/colors';
 
@@ -63,6 +64,8 @@ export default function LocationMapScreen() {
   } = useLocation();
 
   const [points, setPoints] = useState([]);
+  const [teamUsers, setTeamUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [viewMode, setViewMode] = useState('today'); // 'today' | 'live'
@@ -70,10 +73,26 @@ export default function LocationMapScreen() {
   const [totalDistance, setTotalDistance] = useState(0);
   const mapRef = useRef(null);
 
+  // ── Fetch team members and their latest locations ──────────────────────────
+  const fetchTeam = useCallback(async () => {
+    try {
+      const data = await getTeamLocations();
+      if (Array.isArray(data.users)) {
+        setTeamUsers(data.users);
+      }
+    } catch (e) {
+      console.warn('[MAP_TEAM_FETCH_FAILED]', e);
+    }
+  }, []);
+
   // ── Fetch persisted trail from backend ───────────────────────────────────────
-  const fetchTrail = useCallback(async (date) => {
+  const fetchTrail = useCallback(async (date, targetUserId = null) => {
     setLoading(true);
-    const data = await getLocationTrail({ date });
+    const params = { date };
+    if (targetUserId && targetUserId !== 'all') {
+      params.userId = targetUserId;
+    }
+    const data = await getLocationTrail(params);
     setPoints(data.points || []);
     setTotalDistance(data.totalDistanceMeters || 0);
     setLoading(false);
@@ -85,25 +104,53 @@ export default function LocationMapScreen() {
     }
   }, []);
 
+  // Initial load
+  useEffect(() => {
+    fetchTeam();
+  }, [fetchTeam]);
+
   useEffect(() => {
     if (viewMode === 'today') {
-      fetchTrail(selectedDate);
+      fetchTrail(selectedDate, selectedUserId);
     }
-  }, [selectedDate, viewMode, fetchTrail]);
+  }, [selectedDate, viewMode, selectedUserId, fetchTrail]);
 
   const displayPoints = viewMode === 'live' ? liveTrail : points;
   const currentDistance =
     viewMode === 'live' ? computeLiveDistance(liveTrail) : totalDistance;
+
+  // ── Handle Team Member Selection ───────────────────────────────────────────
+  const handleSelectUser = useCallback(
+    (userId) => {
+      setSelectedUserId(userId);
+      if (userId === 'all') {
+        mapRef.current?.fitAllUsers?.();
+      } else {
+        const u = teamUsers.find((user) => user.id === userId);
+        if (u?.latestLocation?.lat && u?.latestLocation?.lng) {
+          mapRef.current?.centerOnCoords?.(
+            Number(u.latestLocation.lat),
+            Number(u.latestLocation.lng)
+          );
+        }
+      }
+    },
+    [teamUsers]
+  );
 
   // ── Center on current position ───────────────────────────────────────────────
   const centerOnUser = useCallback(() => {
     mapRef.current?.centerOnUser();
   }, []);
 
-  // ── Fit trail bounds ────────────────────────────────────────────────────────
+  // ── Fit trail / all users bounds ─────────────────────────────────────────────
   const fitTrail = useCallback(() => {
-    mapRef.current?.fitTrail();
-  }, []);
+    if (selectedUserId === 'all') {
+      mapRef.current?.fitAllUsers?.();
+    } else {
+      mapRef.current?.fitTrail?.();
+    }
+  }, [selectedUserId]);
 
   // ── Clear trail ─────────────────────────────────────────────────────────────
   const handleClearTrail = useCallback(() => {
@@ -126,21 +173,30 @@ export default function LocationMapScreen() {
     );
   }, [clearLocalTrail]);
 
+  // Calculate driving vs walking counts
+  const drivingCount = teamUsers.filter((u) => u.isDriving).length;
+  const walkingCount = teamUsers.length - drivingCount;
+
   return (
     <AppScreen>
       {/* ── 1. Top Executive Navigation Bar ── */}
       <CrmHeader
         title="Field Movement Map"
         subtitle={
-          isTracking
-            ? '● Live GPS Tracking Active (≥10m filter)'
-            : 'Route History & Movement Trail'
+          teamUsers.length > 0
+            ? `${teamUsers.length} Organization Users • ${drivingCount} Driving, ${walkingCount} Walking`
+            : isTracking
+            ? '● Live GPS Tracking Active'
+            : 'Route History & Team Tracking'
         }
         showBack={true}
         rightActions={
           <View className="flex-row items-center gap-x-1.5">
             <Pressable
-              onPress={() => (viewMode === 'today' ? fetchTrail(selectedDate) : null)}
+              onPress={() => {
+                fetchTeam();
+                if (viewMode === 'today') fetchTrail(selectedDate, selectedUserId);
+              }}
               className="h-8 w-8 items-center justify-center rounded-xl border active:opacity-75"
               style={{
                 backgroundColor: colors.cardAlt,
@@ -166,86 +222,196 @@ export default function LocationMapScreen() {
 
       <View className="flex-1 px-3 pt-2">
         {/* ── 2. Executive Metric Bento Cards ── */}
-        <View className="flex-row items-center justify-between gap-x-2 mb-2.5">
+        <View className="flex-row items-center justify-between gap-x-2 mb-2">
           {/* Distance Card */}
           <View
-            className="flex-1 rounded-[14px] border p-2.5"
+            className="flex-1 rounded-[14px] border p-2"
             style={{
               backgroundColor: colors.card,
               borderColor: colors.border,
             }}
           >
             <View className="flex-row items-center justify-between">
-              <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+              <Text className="text-[9.5px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
                 Distance
               </Text>
-              <Ionicons name="navigate-outline" size={13} color={colors.primary} />
+              <Ionicons name="navigate-outline" size={12} color={colors.primary} />
             </View>
-            <Text className="text-sm font-bold mt-1" style={{ color: colors.text }}>
+            <Text className="text-[13px] font-bold mt-0.5" style={{ color: colors.text }}>
               {formatDistance(currentDistance)}
             </Text>
           </View>
 
           {/* Points Card */}
           <View
-            className="flex-1 rounded-[14px] border p-2.5"
+            className="flex-1 rounded-[14px] border p-2"
             style={{
               backgroundColor: colors.card,
               borderColor: colors.border,
             }}
           >
             <View className="flex-row items-center justify-between">
-              <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                Points
+              <Text className="text-[9.5px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Waypoints
               </Text>
-              <Ionicons name="location-outline" size={13} color="#10b981" />
+              <Ionicons name="location-outline" size={12} color="#10b981" />
             </View>
-            <Text className="text-sm font-bold mt-1" style={{ color: colors.text }}>
+            <Text className="text-[13px] font-bold mt-0.5" style={{ color: colors.text }}>
               {displayPoints.length} pts
             </Text>
           </View>
 
-          {/* Duration Card */}
+          {/* Org Users Card */}
           <View
-            className="flex-1 rounded-[14px] border p-2.5"
+            className="flex-1 rounded-[14px] border p-2"
             style={{
               backgroundColor: colors.card,
               borderColor: colors.border,
             }}
           >
             <View className="flex-row items-center justify-between">
-              <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                Duration
+              <Text className="text-[9.5px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Org Users
               </Text>
-              <Ionicons name="time-outline" size={13} color="#8b5cf6" />
+              <Ionicons name="people-outline" size={12} color="#8b5cf6" />
             </View>
-            <Text className="text-sm font-bold mt-1" style={{ color: colors.text }}>
-              {formatDuration(displayPoints)}
+            <Text className="text-[13px] font-bold mt-0.5" style={{ color: colors.text }}>
+              {teamUsers.length || 4} Users
             </Text>
           </View>
 
-          {/* Status Card */}
+          {/* Activity Breakdown Card */}
           <View
-            className="flex-1 rounded-[14px] border p-2.5"
+            className="flex-1 rounded-[14px] border p-2"
             style={{
               backgroundColor: colors.card,
               borderColor: colors.border,
             }}
           >
             <View className="flex-row items-center justify-between">
-              <Text className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                Trigger
+              <Text className="text-[9.5px] font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                Fleet State
               </Text>
-              <Ionicons name="speedometer-outline" size={13} color="#f59e0b" />
+              <Ionicons name="speedometer-outline" size={12} color="#f59e0b" />
             </View>
-            <Text className="text-sm font-bold mt-1" style={{ color: colors.text }}>
-              ≥ 10m
+            <Text className="text-[13px] font-bold mt-0.5" style={{ color: colors.text }}>
+              {drivingCount} 🚗 / {walkingCount} 🚶
             </Text>
           </View>
         </View>
 
-        {/* ── 3. Filter & Map Controls Row ── */}
-        <View className="flex-row items-center justify-between mb-2.5">
+        {/* ── 3. Org Structure Team Member Selector Strip ── */}
+        <View className="mb-2">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: 1, gap: 6 }}
+          >
+            {/* "All (4)" chip */}
+            <Pressable
+              onPress={() => handleSelectUser('all')}
+              className="flex-row items-center px-2.5 py-1.5 rounded-xl border active:opacity-80"
+              style={{
+                backgroundColor: selectedUserId === 'all' ? colors.primary : colors.card,
+                borderColor: selectedUserId === 'all' ? colors.primary : colors.border,
+              }}
+            >
+              <Ionicons
+                name="globe-outline"
+                size={13}
+                color={selectedUserId === 'all' ? '#ffffff' : colors.textSecondary}
+              />
+              <Text
+                className="text-[11px] font-bold ml-1.5"
+                style={{ color: selectedUserId === 'all' ? '#ffffff' : colors.text }}
+              >
+                All Members ({teamUsers.length || 4})
+              </Text>
+            </Pressable>
+
+            {/* Individual Team Member Chips */}
+            {teamUsers.map((user) => {
+              const isSelected = selectedUserId === user.id;
+              const isDriving = Boolean(user.isDriving || (user.speed >= 2.5));
+              const speedKmH = user.speedKmH !== undefined ? user.speedKmH : Math.round((user.speed || 0) * 3.6);
+              const userColor = user.color || '#0284c7';
+
+              return (
+                <Pressable
+                  key={user.id}
+                  onPress={() => handleSelectUser(user.id)}
+                  className="flex-row items-center px-2.5 py-1.5 rounded-xl border active:opacity-80"
+                  style={{
+                    backgroundColor: isSelected ? userColor : colors.card,
+                    borderColor: isSelected ? userColor : colors.border,
+                  }}
+                >
+                  {/* User Initial / Color Dot */}
+                  <View
+                    className="h-4 w-4 rounded-full items-center justify-center mr-1.5"
+                    style={{ backgroundColor: isSelected ? '#ffffff' : userColor }}
+                  >
+                    <Text
+                      className="text-[9px] font-extrabold"
+                      style={{ color: isSelected ? userColor : '#ffffff' }}
+                    >
+                      {user.name ? user.name[0].toUpperCase() : 'U'}
+                    </Text>
+                  </View>
+
+                  {/* User Email or Name */}
+                  <Text
+                    className="text-[11px] font-semibold mr-1.5 max-w-[110px]"
+                    numberOfLines={1}
+                    style={{ color: isSelected ? '#ffffff' : colors.text }}
+                  >
+                    {user.email ? user.email.split('@')[0] : user.name}
+                  </Text>
+
+                  {/* Device Indicator */}
+                  <View
+                    className="flex-row items-center px-1.5 py-0.5 rounded-md mr-1"
+                    style={{
+                      backgroundColor: isSelected ? 'rgba(0,0,0,0.2)' : colors.cardAlt,
+                    }}
+                  >
+                    <Text
+                      className="text-[9px] font-bold"
+                      style={{ color: isSelected ? '#ffffff' : colors.textMuted }}
+                    >
+                      {user.platform === 'mobile' ? '📱 Mobile' : '💻 Web'}
+                    </Text>
+                  </View>
+
+                  {/* Activity Icon: Walking vs Driving */}
+                  <View
+                    className="flex-row items-center px-1.5 py-0.5 rounded-md"
+                    style={{
+                      backgroundColor: isSelected ? 'rgba(0,0,0,0.2)' : colors.cardAlt,
+                    }}
+                  >
+                    <Ionicons
+                      name={isDriving ? 'car' : 'walk'}
+                      size={11}
+                      color={isSelected ? '#ffffff' : isDriving ? '#38bdf8' : '#10b981'}
+                    />
+                    <Text
+                      className="text-[9px] font-bold ml-0.5"
+                      style={{
+                        color: isSelected ? '#ffffff' : isDriving ? '#38bdf8' : '#10b981',
+                      }}
+                    >
+                      {speedKmH}k
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── 4. Filter & Map Layer Controls Row ── */}
+        <View className="flex-row items-center justify-between mb-2">
           {/* Mode Pill Toggle (Today vs Live) */}
           <View
             className="flex-row items-center rounded-xl border p-0.5"
@@ -323,7 +489,7 @@ export default function LocationMapScreen() {
           </View>
         </View>
 
-        {/* ── 4. Main Google Map Canvas ── */}
+        {/* ── 5. Main Google Map Canvas ── */}
         <View
           className="flex-1 rounded-[18px] border overflow-hidden relative shadow-sm"
           style={{
@@ -343,10 +509,13 @@ export default function LocationMapScreen() {
             </View>
           ) : null}
 
-          <GoogleMapView
+          <NativeGoogleMapView
             ref={mapRef}
             points={displayPoints}
             currentLocation={currentLocation}
+            teamUsers={teamUsers}
+            selectedUserId={selectedUserId}
+            onSelectUser={handleSelectUser}
             isDark={isDark}
             isTracking={isTracking}
             mapType={mapType}
@@ -355,7 +524,7 @@ export default function LocationMapScreen() {
 
           {/* Floating Action Controls on Map */}
           <View className="absolute right-3 bottom-3 flex-col items-center gap-y-2 z-20">
-            {/* Fit Trail Bounds Button */}
+            {/* Fit Trail / All Users Button */}
             <TouchableOpacity
               onPress={fitTrail}
               className="h-10 w-10 items-center justify-center rounded-xl border shadow-sm active:opacity-80"
@@ -380,9 +549,9 @@ export default function LocationMapScreen() {
           </View>
         </View>
 
-        {/* ── 5. Telemetry Status Bar ── */}
+        {/* ── 6. Telemetry Status Bar ── */}
         <View
-          className="mt-2.5 mb-3 rounded-[14px] border p-2.5 flex-row items-center justify-between"
+          className="mt-2 mb-2.5 rounded-[14px] border p-2 flex-row items-center justify-between"
           style={{
             backgroundColor: colors.card,
             borderColor: colors.border,
@@ -394,16 +563,23 @@ export default function LocationMapScreen() {
               style={{ backgroundColor: isTracking ? '#10b981' : '#f59e0b' }}
             />
             <Text className="text-xs font-semibold" style={{ color: colors.text }}>
-              {currentLocation
+              {selectedUserId !== 'all'
+                ? (() => {
+                    const u = teamUsers.find((x) => x.id === selectedUserId);
+                    return u
+                      ? `${u.name} (${u.platform === 'mobile' ? '📱' : '💻'} ${u.isDriving ? '🚗 Drive' : '🚶 Walk'} • ${u.speedKmH || 0} km/h)`
+                      : 'Focused User';
+                  })()
+                : currentLocation
                 ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`
-                : 'Acquiring GPS fix...'}
+                : `${teamUsers.length || 4} Org Members Active`}
             </Text>
           </View>
 
           <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
-            {displayPoints.length > 0
-              ? `Last point logged at ${new Date(displayPoints[displayPoints.length - 1].timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : 'Auto-logging movement ≥ 10m'}
+            {selectedUserId !== 'all'
+              ? 'Tapped on user marker'
+              : `${teamUsers.length || 4} users tracked • Auto-syncing`}
           </Text>
         </View>
       </View>

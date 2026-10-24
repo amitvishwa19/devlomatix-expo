@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { Platform, Alert, Vibration, AppState } from 'react-native';
+import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { registerForPushNotificationsAsync } from '~/utils/notification';
@@ -384,6 +385,44 @@ export function CrmSocketProvider({ children }) {
     setIsCameraOff(false);
   }, [stopRingtone]);
 
+  // Handle Single-Device Session Kickout when user signs into Web
+  const handleSessionSuperseded = useCallback(async (data) => {
+    console.warn('[CRM_SOCKET] Mobile session superseded by login on:', data?.platform, data?.device);
+
+    if (socketRef.current) {
+      try {
+        socketRef.current.disconnect();
+      } catch (_) {}
+    }
+
+    try {
+      await clearSession();
+    } catch (err) {
+      console.warn('[CRM_SOCKET] Error clearing session on superseded event:', err?.message);
+    }
+
+    setCurrentUser(null);
+    setWorkspaceId(null);
+    setOnlineUsers([]);
+
+    try {
+      router.replace('/(auth)/login');
+    } catch (_) {}
+
+    const deviceName = data?.device || 'Web Browser';
+    Alert.alert(
+      'Session Terminated',
+      `You signed into Devlomatix on ${deviceName}. Devlomatix enforces single-device session protection, so this mobile session has been closed.`,
+      [
+        {
+          text: 'Sign In Again',
+          style: 'default',
+        },
+      ],
+      { cancelable: false, icon: 'shield-outline', iconColor: '#f59e0b' }
+    );
+  }, []);
+
   // 3. Connect Socket.IO Client
   useEffect(() => {
     if (!currentUserId) {
@@ -463,6 +502,13 @@ export function CrmSocketProvider({ children }) {
 
       s.on('presence:sync', (users) => {
         setOnlineUsers(users.filter((u) => String(u.userId) !== String(currentUserId)));
+      });
+
+      // Single-device protection: Real-time kickout when user signs into Web
+      s.on('auth:session_superseded', (data) => {
+        if (data?.platform === 'web') {
+          handleSessionSuperseded(data);
+        }
       });
 
       socketRef.current = s;

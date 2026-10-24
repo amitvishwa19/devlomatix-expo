@@ -31,6 +31,19 @@ export async function getLocationTrail(params = {}) {
 }
 
 /**
+ * Fetch all organization team members with their latest GPS location and trails.
+ */
+export async function getTeamLocations() {
+  try {
+    const res = await api.get(apiUrls.crmLocation, { params: { team: 'true' } });
+    return res.data?.data || { users: [], totalUsers: 0 };
+  } catch (error) {
+    console.warn('[LOCATION_TEAM] Failed to fetch team locations:', error?.message);
+    return { users: [], totalUsers: 0 };
+  }
+}
+
+/**
  * Clear location trail (today's points or a specific session).
  * @param {{ sessionId? }} params
  */

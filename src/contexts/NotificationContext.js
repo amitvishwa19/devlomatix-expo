@@ -1,6 +1,8 @@
 import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
+import { clearSession } from '~/utils/authStorage';
 import React, {
   createContext,
   useCallback,
@@ -40,6 +42,11 @@ export const NotificationProvider = ({ children }) => {
   const routeFromData = useCallback(
     (data) => {
       if (!data || data.type === 'incoming_call') return;
+      if (data.type === 'SESSION_SUPERSEDED') {
+        clearSession().catch(() => {});
+        router.replace('/(auth)/login');
+        return;
+      }
       handleNotificationData(data, router);
     },
     [router]
@@ -84,6 +91,21 @@ export const NotificationProvider = ({ children }) => {
         const messaging = getMessaging();
         unsubFcm = onMessage(messaging, async (remoteMessage) => {
           const data = remoteMessage.data || {};
+
+          // Single-device security kickout via FCM push
+          if (data.type === 'SESSION_SUPERSEDED') {
+            await clearSession();
+            try {
+              router.replace('/(auth)/login');
+            } catch (_) {}
+            Alert.alert(
+              'Session Terminated',
+              `You signed in from ${data.device || 'Web Browser'}. Devlomatix enforces single-device session protection, so this mobile session has been closed.`,
+              [{ text: 'Sign In Again', style: 'default' }],
+              { cancelable: false, icon: 'shield-outline', iconColor: '#f59e0b' }
+            );
+            return;
+          }
 
           // Incoming calls are handled by the in-app call modal.
           if (data.type === 'incoming_call') return;

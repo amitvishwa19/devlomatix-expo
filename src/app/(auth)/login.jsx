@@ -7,7 +7,7 @@ import {
 import axios from "axios";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
 import { useAuthLoading } from "~/contexts/AuthLoadingContext";
@@ -72,11 +72,14 @@ export default function LoginScreen() {
         setScreenLoading?.(true);
         try {
             const { expoPushToken, fcmToken } = await getTokens();
+            const deviceModel = `${Platform.OS === 'android' ? 'Android' : 'iOS'} (${Platform.constants?.Model || Platform.constants?.Brand || 'Mobile App'})`;
             const res = await axios.post(apiUrls.login, {
                 email,
                 password,
                 deviceToken: fcmToken,
                 expoPushToken,
+                deviceModel,
+                device: deviceModel,
             });
 
             if (res.data?.status === 200 && res.data?.user) {
@@ -127,6 +130,7 @@ export default function LoginScreen() {
             }
 
             const { expoPushToken, fcmToken } = await getTokens();
+            const deviceModel = `${Platform.OS === 'android' ? 'Android' : 'iOS'} (${Platform.constants?.Model || Platform.constants?.Brand || 'Mobile App'})`;
             const res = await axios.post(apiUrls.googleLogin, {
                 uid: user.id,
                 email: user.email,
@@ -135,6 +139,8 @@ export default function LoginScreen() {
                 provider: "google",
                 deviceToken: fcmToken,
                 expoPushToken,
+                deviceModel,
+                device: deviceModel,
             });
 
             console.log("res user data", res.data?.user);

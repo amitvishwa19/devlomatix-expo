@@ -94,10 +94,13 @@ export const AuthProvider = ({ children }) => {
     //console.log('first time google login called from auth context', data)
 
     try {
+      const deviceModel = `${Platform.OS === 'android' ? 'Android' : 'iOS'} (${Platform.constants?.Model || Platform.constants?.Brand || 'Mobile App'})`;
       const res = await axios.post(apiUrls.googleLogin, {
         ...data,
         deviceToken,
         expoPushToken,
+        deviceModel,
+        device: deviceModel,
       });
 
       //console.log('@google login ', res.data.status)
@@ -143,12 +146,15 @@ export const AuthProvider = ({ children }) => {
 
   const emailLogin = async (email, password, location) => {
     try {
+      const deviceModel = `${Platform.OS === 'android' ? 'Android' : 'iOS'} (${Platform.constants?.Model || Platform.constants?.Brand || 'Mobile App'})`;
       const res = await axios.post(apiUrls.login, {
         email,
         password,
         location,
         deviceToken,
         expoPushToken,
+        deviceModel,
+        device: deviceModel,
       });
       if (res.data.status === 200) {
         setAuthState({
