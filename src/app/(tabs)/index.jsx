@@ -18,11 +18,13 @@ import DealCard from '../_components/DealCard';
 import QuickWhatsAppModal from '../_components/QuickWhatsAppModal';
 import { useCrmTheme } from '~/utils/crm/colors';
 import { useCrmDrawer } from '../_components/CrmDrawer';
+import { useLocation } from '~/providers/LocationProvider';
 
 export default function CrmDashboard() {
   const router = useRouter();
   const { colors, isDark } = useCrmTheme();
   const { openDrawer } = useCrmDrawer();
+  const { trail, isTracking } = useLocation();
   const scrollRef = useRef(null);
   useScrollToTop(scrollRef);
 
@@ -225,8 +227,22 @@ export default function CrmDashboard() {
             </View>
           </View>
 
-          {/* Quick Header Action Buttons: Mailbox & WhatsApp Sync */}
+          {/* Quick Header Action Buttons: Mailbox, Map & WhatsApp Sync */}
           <View className="flex-row items-center gap-x-1.5">
+            <Pressable
+              onPress={() => router.push('/location')}
+              className="h-8 px-2 flex-row items-center gap-x-1 rounded-xl border active:opacity-75"
+              style={{
+                backgroundColor: colors.cardAlt,
+                borderColor: colors.border,
+              }}
+            >
+              <Ionicons name="map-outline" size={13} color="#0284c7" />
+              <Text className="text-[10px] font-semibold" style={{ color: colors.textSecondary }}>
+                Map
+              </Text>
+            </Pressable>
+
             <Pressable
               onPress={() => router.push('/mailbox')}
               className="h-8 px-2.5 flex-row items-center gap-x-1.5 rounded-xl border active:opacity-75"
@@ -278,6 +294,80 @@ export default function CrmDashboard() {
               {syncBanner.text}
             </Text>
           </View>
+        )}
+
+        {/* Live GPS Movement Tracker Card */}
+        {showWidget('dashLocation') && (
+          <Pressable
+            onPress={() => router.push('/location')}
+            className="mb-3 rounded-[16px] border p-3 flex-row items-center justify-between active:opacity-85"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: isTracking ? (colors.primaryBorder || '#bae6fd') : colors.border,
+              shadowColor: colors.shadowColor,
+              shadowOpacity: colors.shadowOpacity,
+              shadowOffset: { width: 0, height: 2 },
+              shadowRadius: 6,
+              elevation: 2,
+            }}
+          >
+            <View className="flex-row items-center gap-x-2.5 flex-1 pr-2">
+              <View
+                className="h-9 w-9 items-center justify-center rounded-xl"
+                style={{ backgroundColor: isTracking ? (colors.primarySoft || 'rgba(2, 132, 199, 0.12)') : colors.cardAlt }}
+              >
+                <Ionicons
+                  name={isTracking ? "navigate" : "map-outline"}
+                  size={18}
+                  color={isTracking ? (colors.primary || '#0284c7') : colors.textMuted}
+                />
+              </View>
+              <View className="flex-1">
+                <View className="flex-row items-center gap-x-1.5">
+                  <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                    Field Movement Tracker
+                  </Text>
+                  <View
+                    className="flex-row items-center gap-x-1 rounded-full px-1.5 py-0.5 border"
+                    style={{
+                      backgroundColor: isTracking ? colors.successSoft : colors.amberSoft,
+                      borderColor: isTracking ? colors.successBorder : colors.warningBorder,
+                    }}
+                  >
+                    <View
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: isTracking ? colors.success : colors.warning }}
+                    />
+                    <Text
+                      className="text-[9px] font-bold"
+                      style={{ color: isTracking ? colors.success : colors.warning }}
+                    >
+                      {isTracking ? "Active" : "Ready"}
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-[11px] font-medium mt-0.5" style={{ color: colors.textMuted }} numberOfLines={1}>
+                  {trail?.length > 0
+                    ? `${trail.length} GPS points logged today • Tap to view live trail`
+                    : "Logging movement every 10m • Tap to view route map"}
+                </Text>
+              </View>
+            </View>
+
+            <View
+              className="flex-row items-center gap-x-1 px-2.5 py-1.5 rounded-xl border"
+              style={{
+                backgroundColor: colors.primarySoft,
+                borderColor: colors.primaryBorder,
+              }}
+            >
+              <Ionicons name="map" size={12} color={colors.primary} />
+              <Text className="text-[11px] font-bold" style={{ color: colors.primary }}>
+                View Map
+              </Text>
+              <Ionicons name="chevron-forward" size={11} color={colors.primary} />
+            </View>
+          </Pressable>
         )}
 
         {/* Executive Bento KPI Grid */}
@@ -641,11 +731,11 @@ export default function CrmDashboard() {
               className="h-8 w-8 items-center justify-center rounded-xl"
               style={{ backgroundColor: colors.infoSoft }}
             >
-              <Ionicons name="mic" size={16} color={colors.info} />
+              <Ionicons name="documents-outline" size={16} color={colors.info} />
             </View>
             <View className="flex-1">
               <Text className="text-xs font-bold" style={{ color: colors.text }}>
-                Voice DCR
+                DCR
               </Text>
               <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
                 Audio Note Dictation
@@ -749,6 +839,56 @@ export default function CrmDashboard() {
               </Text>
               <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
                 WhatsApp & VoIP
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Field Movement Map */}
+          <Pressable
+            onPress={() => router.push('/location')}
+            className="w-[48%] rounded-[14px] border p-2.5 flex-row items-center gap-x-2.5 active:opacity-80"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: 'rgba(2, 132, 199, 0.12)' }}
+            >
+              <Ionicons name="map-outline" size={16} color="#0284c7" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                Movement Map
+              </Text>
+              <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+                Live GPS Trail
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Tasks & Follow-ups */}
+          <Pressable
+            onPress={() => router.push('/tasks')}
+            className="w-[48%] rounded-[14px] border p-2.5 flex-row items-center gap-x-2.5 active:opacity-80"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              className="h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: 'rgba(139, 92, 246, 0.12)' }}
+            >
+              <Ionicons name="checkbox-outline" size={16} color="#8b5cf6" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                Tasks
+              </Text>
+              <Text className="text-[10px] font-medium" style={{ color: colors.textMuted }}>
+                Follow-ups & Agenda
               </Text>
             </View>
           </Pressable>

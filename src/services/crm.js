@@ -224,6 +224,46 @@ export async function createActivity(body, params = {}) {
 }
 
 // ==========================================
+// ⚡ FLOWFORGE AUTOMATIONS
+// ==========================================
+
+export async function getAutomations(params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.get(apiUrls.crmAutomations, { params: resolvedParams });
+  return { success: true, data: extractArray(res.data) };
+}
+
+export async function createAutomation(body = {}, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(apiUrls.crmAutomations, body, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function toggleAutomation(ruleId, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.patch(`${apiUrls.crmAutomations}/${ruleId}`, {}, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function deleteAutomation(ruleId, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.delete(`${apiUrls.crmAutomations}/${ruleId}`, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function testAutomation(ruleId, params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.post(`${apiUrls.crmAutomations}/${ruleId}/test`, {}, { params: resolvedParams });
+  return { success: true, data: extractPayload(res.data) };
+}
+
+export async function getAutomationLogs(params = {}) {
+  const resolvedParams = await prepareParams(params);
+  const res = await api.get(apiUrls.crmAutomationLogs, { params: resolvedParams });
+  return { success: true, data: extractArray(res.data) };
+}
+
+// ==========================================
 // 📊 FORECASTING & LEADERBOARD
 // ==========================================
 

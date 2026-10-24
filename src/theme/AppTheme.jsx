@@ -60,7 +60,11 @@ export function useAppThemeMode() {
   const context = useContext(AppThemeContext);
 
   if (!context) {
-    throw new Error('useAppThemeMode must be used within AppThemeProvider');
+    return {
+      themeMode: 'light',
+      setThemeMode: () => {},
+      isThemeReady: true,
+    };
   }
 
   return context;

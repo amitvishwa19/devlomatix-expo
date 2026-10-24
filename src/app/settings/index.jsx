@@ -100,6 +100,7 @@ const DASHBOARD_WIDGETS = [
   { key: 'dashStalled', label: 'AI Stalled Deals', desc: 'High-risk deals that need re-engagement' },
   { key: 'dashActions', label: 'Quick Actions', desc: 'New deal, contact and task shortcuts' },
   { key: 'dashShortcuts', label: 'Operations Hub', desc: 'Copilot, DCR, quotations, mailbox & analytics' },
+  { key: 'dashLocation', label: 'Field Movement Tracker', desc: 'Live GPS trail and movement map shortcut' },
   { key: 'dashPipeline', label: 'High-Value Opportunities', desc: 'Top deals list on the dashboard' },
 ];
 
@@ -489,7 +490,30 @@ export default function CrmSettingsScreen({ isTab = false }) {
           ))}
         </View>
 
-        {/* 4. Active Deal Pipeline & Stage Config */}
+        {/* 4. Location Tracking */}
+        <Pressable
+          onPress={() => router.push('/location')}
+          className="rounded-2xl border p-4 shadow-xs mb-4 flex-row items-center gap-x-3"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <View
+            className="h-10 w-10 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: 'rgba(2, 132, 199, 0.12)' }}
+          >
+            <Ionicons name="map" size={20} color="#0284c7" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-bold" style={{ color: colors.text }}>
+              Location Trail
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+              View your movement path on a live map
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        </Pressable>
+
+        {/* 5. Active Deal Pipeline & Stage Config */}
         <View
           className="rounded-2xl border p-4 shadow-xs mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}

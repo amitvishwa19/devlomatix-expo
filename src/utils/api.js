@@ -124,6 +124,8 @@ export const apiUrls = {
   crmPipelines: baseApi + "/crm/pipelines",
   crmTasks: baseApi + "/crm/tasks",
   crmActivities: baseApi + "/crm/activities",
+  crmAutomations: baseApi + "/crm/automations",
+  crmAutomationLogs: baseApi + "/crm/automations/logs",
   crmForecast: baseApi + "/crm/analytics/forecast",
   crmLeaderboard: baseApi + "/crm/analytics/leaderboard",
   crmBulkImport: baseApi + "/crm/import/bulk",
@@ -140,5 +142,8 @@ export const apiUrls = {
   crmQuotationTrack: baseApi + "/crm/quotations/track",
   crmMailbox: baseApi + "/crm/mailbox",
   crmMailboxSend: baseApi + "/crm/mailbox/send",
+
+  // 📍 Location Tracking
+  crmLocation: baseApi + "/crm/location",
 };
 

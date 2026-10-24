@@ -17,6 +17,7 @@ const DEFAULT_WIDGETS = {
   dashActions: true,
   dashShortcuts: true,
   dashPipeline: true,
+  dashLocation: true,
 };
 
 const WidgetContext = createContext(null);

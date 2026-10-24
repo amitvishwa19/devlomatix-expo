@@ -1,6 +1,8 @@
 import { Slot, useSegments } from 'expo-router';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Text,
@@ -9,6 +11,7 @@ import {
 
 import AppScreen from '~/components/AppScreen';
 import BrandLogo from '~/components/BrandLogo';
+import AuthLoadingContext from '~/contexts/AuthLoadingContext';
 import { useAppTheme } from '~/theme/AppTheme';
 
 const authRouteCopy = {
@@ -35,6 +38,7 @@ const authRouteCopy = {
 };
 
 export default function AuthLayout() {
+  const [screenLoading, setScreenLoading] = useState(false);
   const segments = useSegments();
   const routeKey = segments[segments.length - 1];
   const copy = authRouteCopy[routeKey] ?? authRouteCopy.login;
@@ -53,7 +57,8 @@ export default function AuthLayout() {
   const orb3 = isDark ? 'rgba(139,92,246,0.14)' : 'rgba(139,92,246,0.07)';
 
   return (
-    <AppScreen imageOpacity={isDark ? 0.35 : 0.55}>
+    <AuthLoadingContext.Provider value={{ setScreenLoading }}>
+      <AppScreen imageOpacity={isDark ? 0.35 : 0.55}>
       {/* ── Ambient gradient glow orbs (rendered over AppScreen canvas) ── */}
       <View style={{ position: 'absolute', top: -110, right: -70, width: 320, height: 320, borderRadius: 160, backgroundColor: orb1 }} pointerEvents="none" />
       <View style={{ position: 'absolute', top: 60, left: -110, width: 280, height: 280, borderRadius: 140, backgroundColor: orb2 }} pointerEvents="none" />
@@ -118,6 +123,16 @@ export default function AuthLayout() {
 
         </ScrollView>
       </KeyboardAvoidingView>
-    </AppScreen>
+      </AppScreen>
+
+      <Modal
+        transparent
+        visible={screenLoading}
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => {}}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }} />
+      </Modal>
+    </AuthLoadingContext.Provider>
   );
 }

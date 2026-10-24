@@ -31,6 +31,7 @@ import PostCallSummaryModal from "~/app/_components/call/PostCallSummaryModal";
 import CallEndedModal from "~/app/_components/call/CallEndedModal";
 import { CrmProvider } from "~/providers/CrmProvider";
 import { CrmDrawerProvider } from "~/app/_components/CrmDrawer";
+import { LocationProvider } from "~/providers/LocationProvider";
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -85,6 +86,7 @@ function RootLayoutNav() {
                 <WidgetProvider>
                     <CrmSocketProvider>
                         <CrmProvider>
+                            <LocationProvider>
                             <CrmDrawerProvider>
                                 <Stack screenOptions={{ headerShown: false }}>
                                     <Stack.Screen name="index" />
@@ -109,6 +111,7 @@ function RootLayoutNav() {
                                     <Stack.Screen name="mailbox/[threadId]" options={{ animation: 'slide_from_right' }} />
                                     <Stack.Screen name="mailbox/compose" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                                     <Stack.Screen name="tasks/index" options={{ animation: 'slide_from_right' }} />
+                                    <Stack.Screen name="location/index" options={{ animation: 'slide_from_right' }} />
                                     <Stack.Screen name="modal" options={{ presentation: "modal" }} />
                                 </Stack>
                                 <OfflineBanner />
@@ -120,6 +123,7 @@ function RootLayoutNav() {
                                 {/* <GlobalChatbot bottom={-10} right={20} /> */}
                                 <Toast config={toastConfig} topOffset={34} />
                             </CrmDrawerProvider>
+                            </LocationProvider>
                         </CrmProvider>
                     </CrmSocketProvider>
                 </WidgetProvider>

@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { useAuthLoading } from "~/contexts/AuthLoadingContext";
 import { useAppTheme } from "~/theme/AppTheme";
 import { registerForPushNotificationsAsync } from "~/utils/notification";
 import CustomButton from "../../components/CustomButton";
@@ -20,6 +21,7 @@ import { saveSession } from "../../utils/authStorage";
 export default function LoginScreen() {
     const router = useRouter();
     const { isDark } = useAppTheme();
+    const { setScreenLoading } = useAuthLoading() || {};
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -67,6 +69,7 @@ export default function LoginScreen() {
         }
 
         setLoading(true);
+        setScreenLoading?.(true);
         try {
             const { expoPushToken, fcmToken } = await getTokens();
             const res = await axios.post(apiUrls.login, {
@@ -97,11 +100,13 @@ export default function LoginScreen() {
             });
         } finally {
             setLoading(false);
+            setScreenLoading?.(false);
         }
     };
 
     const handleGoogleLogin = async () => {
         setGoogleLoading(true);
+        setScreenLoading?.(true);
         try {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
@@ -158,6 +163,7 @@ export default function LoginScreen() {
             });
         } finally {
             setGoogleLoading(false);
+            setScreenLoading?.(false);
         }
     };
 
@@ -259,6 +265,6 @@ export default function LoginScreen() {
                 .
             </Text>
         </>
+
     );
 }
-

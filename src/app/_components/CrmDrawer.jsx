@@ -119,6 +119,13 @@ const crmNavigationCategories = [
         activeIcon: 'people',
       },
       {
+        route: '/accounts',
+        label: 'Companies',
+        badge: 'B2B',
+        icon: 'business-outline',
+        activeIcon: 'business',
+      },
+      {
         route: '/quotations',
         label: 'Quotations & Invoices',
         icon: 'receipt-outline',
@@ -129,6 +136,12 @@ const crmNavigationCategories = [
         label: 'Tasks & Follow-ups',
         icon: 'checkbox-outline',
         activeIcon: 'checkbox',
+      },
+      {
+        route: '/kanban',
+        label: 'Kanban Board',
+        icon: 'albums-outline',
+        activeIcon: 'albums',
       },
     ],
   },
@@ -162,6 +175,13 @@ const crmNavigationCategories = [
         icon: 'sparkles-outline',
         activeIcon: 'sparkles',
       },
+      {
+        route: '/location',
+        label: 'Field Movement Map',
+        badge: 'Live',
+        icon: 'map-outline',
+        activeIcon: 'map',
+      },
     ],
   },
   {
@@ -172,6 +192,19 @@ const crmNavigationCategories = [
         label: 'Candidates (HireFlow)',
         icon: 'briefcase-outline',
         activeIcon: 'briefcase',
+      },
+      {
+        route: '/activities',
+        label: 'Activities',
+        icon: 'pulse-outline',
+        activeIcon: 'pulse',
+      },
+      {
+        route: '/automations',
+        label: 'Automations',
+        badge: 'Auto',
+        icon: 'flash-outline',
+        activeIcon: 'flash',
       },
       {
         route: '/analytics',

@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCrm } from '~/providers/CrmProvider';
 import { useCrmTheme } from '~/utils/crm/colors';
 
+const CLIENT_ACCOUNT_VALUE = '__client__';
+
 export default function CreateContactModal() {
   const insets = useSafeAreaInsets();
   const { colors } = useCrmTheme();
@@ -22,6 +24,8 @@ export default function CreateContactModal() {
   if (!createContactVisible) return null;
 
   const handleSubmit = async () => {
+    if (submitting) return;
+
     if (!name.trim() || !phone.trim()) {
       setError('Contact Name and Phone are required for WhatsApp connectivity.');
       return;
@@ -31,24 +35,41 @@ export default function CreateContactModal() {
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-    const selAccount = accounts.find((a) => a.id === accountId);
+    const isClient = accountId === CLIENT_ACCOUNT_VALUE;
+    const selAccount = isClient ? undefined : accounts.find((a) => a.id === accountId);
 
     const contactPayload = {
       name: name.trim(),
       phone: phone.trim(),
       email: email.trim() || undefined,
       jobTitle: jobTitle.trim() || undefined,
-      accountId: accountId || undefined,
+      type: isClient ? 'CLIENT' : 'LEAD',
+      accountId: isClient ? undefined : accountId || undefined,
       account: selAccount,
       tags: tagList.length > 0 ? tagList : ['LEAD'],
     };
 
-    setName('');
-    setPhone('');
-    setEmail('');
-    setJobTitle('');
+    setError(null);
+    setSubmitting(true);
+    try {
+      await optimisticAddContact(contactPayload);
+      setName('');
+      setPhone('');
+      setEmail('');
+      setJobTitle('');
+      setAccountId('');
+      setTags('LEAD');
+      setCreateContactVisible(false);
+    } catch (err) {
+      setError(err?.message || 'Failed to create contact');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const closeModal = () => {
+    if (submitting) return;
     setCreateContactVisible(false);
-    optimisticAddContact(contactPayload).catch(() => { });
   };
 
   return (
@@ -56,10 +77,10 @@ export default function CreateContactModal() {
       visible={true}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setCreateContactVisible(false)}
+      onRequestClose={closeModal}
     >
       <View className="flex-1 justify-end" style={{ backgroundColor: colors.overlay }}>
-        <Pressable className="flex-1" onPress={() => setCreateContactVisible(false)} />
+        <Pressable className="flex-1" onPress={closeModal} />
 
         <View
           className="max-h-[85%] rounded-t-3xl p-4 shadow-2xl border-t"
@@ -89,7 +110,8 @@ export default function CreateContactModal() {
             </View>
 
             <Pressable
-              onPress={() => setCreateContactVisible(false)}
+              onPress={closeModal}
+              disabled={submitting}
               className="h-8 w-8 items-center justify-center rounded-full border"
               style={{
                 backgroundColor: colors.cardAlt,
@@ -189,6 +211,18 @@ export default function CreateContactModal() {
                   >
                     <Text className="text-xs font-semibold" style={{ color: !accountId ? '#ffffff' : colors.textMuted }}>
                       Independent
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setAccountId(CLIENT_ACCOUNT_VALUE)}
+                    className="rounded-xl border px-3 py-1.5 mr-2"
+                    style={{
+                      backgroundColor: accountId === CLIENT_ACCOUNT_VALUE ? colors.primary : colors.cardAlt,
+                      borderColor: accountId === CLIENT_ACCOUNT_VALUE ? colors.primary : colors.border,
+                    }}
+                  >
+                    <Text className="text-xs font-semibold" style={{ color: accountId === CLIENT_ACCOUNT_VALUE ? '#ffffff' : colors.text }}>
+                      Client
                     </Text>
                   </Pressable>
                   {accounts.map((a) => {
