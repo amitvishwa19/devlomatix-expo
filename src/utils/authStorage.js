@@ -52,7 +52,7 @@ export async function triggerSessionSuperseded(details = {}) {
   } catch (_) {}
 
   try {
-    if (typeof router.dismissAll === 'function') {
+    if (typeof router.canDismiss === 'function' && router.canDismiss()) {
       router.dismissAll();
     }
   } catch (_) {}
