@@ -1,7 +1,52 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { StyleSheet, View, Text, Platform } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { StyleSheet, View, Text, Platform, UIManager } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import WebGoogleMapView from './WebGoogleMapView';
+
+// Safe check to verify if native AIRMap is compiled into the current app runtime
+function isNativeAirMapAvailable() {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return false;
+  try {
+    if (typeof UIManager?.hasViewManagerConfig === 'function') {
+      return Boolean(UIManager.hasViewManagerConfig('AIRMap'));
+    }
+    if (typeof UIManager?.getViewManagerConfig === 'function') {
+      return Boolean(UIManager.getViewManagerConfig('AIRMap'));
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+// React Error Boundary to catch any native Fabric/Paper view registry failures safely
+class MapErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    console.warn(
+      '[MapErrorBoundary] Native map view manager failed to mount. Falling back to WebView Google Maps:',
+      error?.message
+    );
+    if (this.props.onError) {
+      this.props.onError();
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 // Dark Mode Map Style JSON for Google Maps Native SDK
 const GOOGLE_MAPS_DARK_STYLE = [
@@ -24,13 +69,23 @@ const GOOGLE_MAPS_DARK_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4e6d70' }] },
 ];
 
+// Lazy-require react-native-maps only when rendering the native component
+let NativeMaps = null;
+function getNativeMaps() {
+  if (!NativeMaps) {
+    try {
+      NativeMaps = require('react-native-maps');
+    } catch (e) {
+      console.warn('[NativeGoogleMapView] react-native-maps package unavailable:', e?.message);
+    }
+  }
+  return NativeMaps;
+}
+
 /**
- * NativeGoogleMapView: 100% Native Google Maps (react-native-maps + PROVIDER_GOOGLE)
- *
- * Renders hardware-accelerated 60fps native Google Maps with native gestures,
- * all team members with walking/driving icons & email badges, and multi-user route polylines.
+ * NativeAirMapViewInternal: Hardware-accelerated native Google Maps view
  */
-const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
+const NativeAirMapViewInternal = forwardRef(function NativeAirMapViewInternal(
   {
     points = [],
     currentLocation = null,
@@ -39,11 +94,21 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
     onSelectUser = null,
     isDark = false,
     isTracking = false,
-    mapType = 'roadmap', // 'roadmap' | 'satellite' | 'terrain'
+    mapType = 'roadmap',
     colors = {},
   },
   ref
 ) {
+  const maps = getNativeMaps();
+  if (!maps || !maps.default) {
+    throw new Error('react-native-maps Native Module not available');
+  }
+
+  const MapView = maps.default;
+  const Marker = maps.Marker;
+  const Polyline = maps.Polyline;
+  const PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
+
   const mapRef = useRef(null);
   const isUserInteractingRef = useRef(false);
   const hasAutoFittedRef = useRef(false);
@@ -53,7 +118,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
     longitude: Number(p.lng),
   }));
 
-  // Initial region centered on user or team members
   const initialLat =
     currentLocation?.lat ||
     (teamUsers[0]?.latestLocation?.lat ? Number(teamUsers[0].latestLocation.lat) : null) ||
@@ -71,7 +135,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
     longitudeDelta: 0.012,
   };
 
-  // Expose imperative methods to parent
   useImperativeHandle(ref, () => ({
     centerOnUser: () => {
       if (mapRef.current && currentLocation) {
@@ -127,9 +190,9 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
         }
       }
     },
+    setMapType: () => {},
   }));
 
-  // Auto-fit bounds on initial load of team members or points
   useEffect(() => {
     if (!hasAutoFittedRef.current && !isUserInteractingRef.current) {
       const userCoords = teamUsers
@@ -165,13 +228,8 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
     }
   }, [teamUsers.length, coords.length]);
 
-  // Convert mapType to react-native-maps format
   const nativeMapType =
-    mapType === 'satellite'
-      ? 'hybrid'
-      : mapType === 'terrain'
-      ? 'terrain'
-      : 'standard';
+    mapType === 'satellite' ? 'hybrid' : mapType === 'terrain' ? 'terrain' : 'standard';
 
   return (
     <View style={styles.container}>
@@ -199,7 +257,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
           isUserInteractingRef.current = true;
         }}
       >
-        {/* Glow Outline for Selected User Trail */}
         {coords.length > 1 && (
           <Polyline
             coordinates={coords}
@@ -211,7 +268,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
           />
         )}
 
-        {/* Core Movement Trail for Selected User */}
         {coords.length > 1 && (
           <Polyline
             coordinates={coords}
@@ -223,16 +279,15 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
           />
         )}
 
-        {/* ── Organization Team Members (Walking/Driving Icons + Email Badges) ── */}
         {teamUsers.map((user) => {
           if (!user.latestLocation?.lat || !user.latestLocation?.lng) return null;
           const isDriving = Boolean(user.isDriving || (user.speed >= 2.5));
           const userColor = user.color || '#0284c7';
-          const speedKmH = user.speedKmH !== undefined ? user.speedKmH : Math.round((user.speed || 0) * 3.6);
+          const speedKmH =
+            user.speedKmH !== undefined ? user.speedKmH : Math.round((user.speed || 0) * 3.6);
 
           return (
             <React.Fragment key={user.id}>
-              {/* User Trail Polyline if available */}
               {user.trail && user.trail.length > 1 && (
                 <Polyline
                   coordinates={user.trail.map((p) => ({
@@ -247,7 +302,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
                 />
               )}
 
-              {/* User Marker with Email & Human/Vehicle Icon */}
               <Marker
                 coordinate={{
                   latitude: Number(user.latestLocation.lat),
@@ -259,7 +313,6 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
                 onPress={() => onSelectUser && onSelectUser(user.id)}
               >
                 <View style={styles.markerContainer}>
-                  {/* Email & Device Pill Badge */}
                   <View style={[styles.emailPill, { borderColor: userColor }]}>
                     <View style={[styles.statusDot, { backgroundColor: userColor }]} />
                     <Text style={styles.emailText} numberOfLines={1}>
@@ -272,20 +325,13 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
                     </View>
                   </View>
 
-                  {/* Icon Circle (Human Walking vs Vehicle Driving) */}
                   <View style={[styles.iconCircle, { backgroundColor: userColor }]}>
-                    <Ionicons
-                      name={isDriving ? 'car' : 'walk'}
-                      size={17}
-                      color="#ffffff"
-                    />
-                    {/* Speed Badge */}
+                    <Ionicons name={isDriving ? 'car' : 'walk'} size={17} color="#ffffff" />
                     <View style={styles.speedBadge}>
                       <Text style={styles.speedText}>{speedKmH}km/h</Text>
                     </View>
                   </View>
 
-                  {/* Anchor Tip */}
                   <View style={[styles.anchorTip, { borderTopColor: userColor }]} />
                 </View>
               </Marker>
@@ -294,6 +340,30 @@ const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(
         })}
       </MapView>
     </View>
+  );
+});
+
+/**
+ * Universal NativeGoogleMapView
+ *
+ * Checks if native AIRMap is available in the current binary.
+ * If available, renders native MapView with an ErrorBoundary.
+ * If unavailable or if native linking fails, gracefully renders WebGoogleMapView.
+ */
+const NativeGoogleMapView = forwardRef(function NativeGoogleMapView(props, ref) {
+  const [nativeFailed, setNativeFailed] = useState(() => !isNativeAirMapAvailable());
+
+  if (nativeFailed) {
+    return <WebGoogleMapView ref={ref} {...props} />;
+  }
+
+  return (
+    <MapErrorBoundary
+      fallback={<WebGoogleMapView ref={ref} {...props} />}
+      onError={() => setNativeFailed(true)}
+    >
+      <NativeAirMapViewInternal ref={ref} {...props} />
+    </MapErrorBoundary>
   );
 });
 
