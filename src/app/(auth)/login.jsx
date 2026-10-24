@@ -112,6 +112,9 @@ export default function LoginScreen() {
         setScreenLoading?.(true);
         try {
             await GoogleSignin.hasPlayServices();
+            try {
+                await GoogleSignin.signOut();
+            } catch (_) {}
             const userInfo = await GoogleSignin.signIn();
 
             const user = userInfo?.data?.user;

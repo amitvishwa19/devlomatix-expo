@@ -286,6 +286,12 @@ export async function isLoggedIn() {
 export async function clearSession() {
   await AsyncStorage.removeItem(AUTH_SESSION_KEY);
   await SecureStore.deleteItemAsync(storageKey.ACCESSTOKEN);
+  try {
+    const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+    if (GoogleSignin) {
+      await GoogleSignin.signOut();
+    }
+  } catch (_) {}
   notifyAuthState(null);
 }
 
