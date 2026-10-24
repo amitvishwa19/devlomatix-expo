@@ -387,6 +387,12 @@ export function CrmSocketProvider({ children }) {
 
   // Handle Single-Device Session Kickout when user signs into Web
   const handleSessionSuperseded = useCallback(async (data) => {
+    const platform = (data?.platform || '').toLowerCase();
+    if (platform === 'mobile' || platform === 'android' || platform === 'ios') {
+      console.log('[CRM_SOCKET] Ignoring auth:session_superseded originating from mobile login');
+      return;
+    }
+
     console.warn('[CRM_SOCKET] Mobile session superseded by login on:', data?.platform, data?.device);
 
     if (socketRef.current) {
@@ -488,7 +494,10 @@ export function CrmSocketProvider({ children }) {
 
       // Single-device protection: Real-time kickout when user signs into Web
       s.on('auth:session_superseded', (data) => {
-        handleSessionSuperseded(data);
+        const platform = (data?.platform || '').toLowerCase();
+        if (platform === 'web' || platform.includes('web') || (platform && platform !== 'mobile')) {
+          handleSessionSuperseded(data);
+        }
       });
 
       socketRef.current = s;

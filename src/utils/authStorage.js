@@ -42,6 +42,13 @@ let isTerminatingSession = false;
  * 4. Displays iOS-style Alert dialog
  */
 export async function triggerSessionSuperseded(details = {}) {
+  // If the event was caused by a mobile login, mobile should NOT terminate itself!
+  const platform = (details?.platform || '').toLowerCase();
+  if (platform === 'mobile' || platform === 'android' || platform === 'ios') {
+    console.log('[AUTH] Ignoring session superseded event originating from mobile login');
+    return;
+  }
+
   if (isTerminatingSession) return;
   isTerminatingSession = true;
 
