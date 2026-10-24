@@ -28,7 +28,7 @@ try {
   // Firebase messaging fallback
 }
 
-import { getSession, clearSession, refreshAuthSession, decodeJwtPayload } from '~/utils/authStorage';
+import { getSession, clearSession, refreshAuthSession, decodeJwtPayload, triggerSessionSuperseded } from '~/utils/authStorage';
 import axios from '~/utils/axios';
 import { apiUrls } from '~/utils/api';
 import { useNotificationStore } from '~/contexts/NotificationStore';
@@ -395,32 +395,14 @@ export function CrmSocketProvider({ children }) {
       } catch (_) {}
     }
 
-    try {
-      await clearSession();
-    } catch (err) {
-      console.warn('[CRM_SOCKET] Error clearing session on superseded event:', err?.message);
-    }
-
     setCurrentUser(null);
     setWorkspaceId(null);
     setOnlineUsers([]);
 
-    try {
-      router.replace('/(auth)/login');
-    } catch (_) {}
-
-    const deviceName = data?.device || 'Web Browser';
-    Alert.alert(
-      'Session Terminated',
-      `You signed into Devlomatix on ${deviceName}. Devlomatix enforces single-device session protection, so this mobile session has been closed.`,
-      [
-        {
-          text: 'Sign In Again',
-          style: 'default',
-        },
-      ],
-      { cancelable: false, icon: 'shield-outline', iconColor: '#f59e0b' }
-    );
+    await triggerSessionSuperseded({
+      device: data?.device || 'Web Browser',
+      platform: data?.platform || 'web'
+    });
   }, []);
 
   // 3. Connect Socket.IO Client
@@ -506,9 +488,7 @@ export function CrmSocketProvider({ children }) {
 
       // Single-device protection: Real-time kickout when user signs into Web
       s.on('auth:session_superseded', (data) => {
-        if (data?.platform === 'web') {
-          handleSessionSuperseded(data);
-        }
+        handleSessionSuperseded(data);
       });
 
       socketRef.current = s;

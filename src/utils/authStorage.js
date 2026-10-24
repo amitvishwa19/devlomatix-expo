@@ -3,10 +3,91 @@ import * as SecureStore from 'expo-secure-store';
 import { storageKey } from '~/utils/constants';
 import { apiUrls } from '~/utils/api';
 
+import { Alert } from 'react-native';
+import { router } from 'expo-router';
+
 const AUTH_SESSION_KEY = 'auth.session';
 
 let isRefreshing = false;
 let refreshPromise = null;
+
+// Reactive state listeners for instant auth reactivity across app layouts
+const authListeners = new Set();
+
+export function onAuthStateChanged(listener) {
+  if (typeof listener === 'function') {
+    authListeners.add(listener);
+    return () => authListeners.delete(listener);
+  }
+  return () => {};
+}
+
+function notifyAuthState(session) {
+  authListeners.forEach((listener) => {
+    try {
+      listener(session);
+    } catch (e) {
+      console.warn('[AUTH_LISTENER_ERR]', e?.message);
+    }
+  });
+}
+
+let isTerminatingSession = false;
+
+/**
+ * Centrally triggers a single-device kick-out:
+ * 1. Clears stored session tokens
+ * 2. Notifies all auth state listeners (e.g. Tab layouts immediately unmount)
+ * 3. Navigates out to /(auth)/login
+ * 4. Displays iOS-style Alert dialog
+ */
+export async function triggerSessionSuperseded(details = {}) {
+  if (isTerminatingSession) return;
+  isTerminatingSession = true;
+
+  console.warn('[AUTH] Mobile session superseded by external login:', details);
+
+  try {
+    await clearSession();
+  } catch (_) {}
+
+  try {
+    if (typeof router.dismissAll === 'function') {
+      router.dismissAll();
+    }
+  } catch (_) {}
+
+  try {
+    router.replace('/(auth)/login');
+  } catch (_) {}
+
+  const device = details.device || details.deviceModel || 'Web Browser';
+  Alert.alert(
+    'Session Terminated',
+    `You signed into Devlomatix on ${device}. Devlomatix enforces single-device session protection, so this mobile session has been closed.`,
+    [
+      {
+        text: 'Sign In Again',
+        style: 'default',
+        onPress: () => {
+          isTerminatingSession = false;
+          try {
+            router.replace('/(auth)/login');
+          } catch (_) {}
+        },
+      },
+    ],
+    {
+      cancelable: false,
+      icon: 'shield-outline',
+      iconColor: '#f59e0b',
+    }
+  );
+
+  setTimeout(() => {
+    isTerminatingSession = false;
+  }, 3000);
+}
 
 export async function saveSession(user) {
   if (!user) {
@@ -23,6 +104,8 @@ export async function saveSession(user) {
 
   await AsyncStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
   await SecureStore.setItemAsync(storageKey.ACCESSTOKEN, session.accessToken ?? '');
+
+  notifyAuthState(session);
 
   return session;
 }
@@ -107,6 +190,13 @@ export async function refreshAuthSession() {
       if (!response.ok) {
         console.warn('[AUTH] Session refresh returned status:', response.status);
         if (response.status === 401 || response.status === 403) {
+          try {
+            const errData = await response.json();
+            if (errData?.message && String(errData.message).includes('SESSION_SUPERSEDED')) {
+              await triggerSessionSuperseded({ device: 'Web Browser' });
+              return null;
+            }
+          } catch (_) {}
           await clearSession();
           return null;
         }
@@ -189,5 +279,6 @@ export async function isLoggedIn() {
 export async function clearSession() {
   await AsyncStorage.removeItem(AUTH_SESSION_KEY);
   await SecureStore.deleteItemAsync(storageKey.ACCESSTOKEN);
+  notifyAuthState(null);
 }
 

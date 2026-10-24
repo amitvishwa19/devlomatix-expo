@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs, router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { AppState, Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotificationStore } from '~/contexts/NotificationStore';
 import { useCrmTheme } from '~/utils/crm/colors';
+import { getSession, onAuthStateChanged } from '~/utils/authStorage';
 
 let HapticsModule = null;
 try {
@@ -26,6 +27,63 @@ const tabConfig = {
 };
 
 export default function CrmTabLayout() {
+  const [authState, setAuthState] = useState('checking');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAuth() {
+      try {
+        const session = await getSession();
+        if (!isMounted) return;
+        if (session?.isLoggedIn && session?.user) {
+          setAuthState('authenticated');
+        } else {
+          setAuthState('unauthenticated');
+        }
+      } catch {
+        if (!isMounted) return;
+        setAuthState('unauthenticated');
+      }
+    }
+
+    verifyAuth();
+
+    // Re-verify on AppState resume (e.g. returning to foreground)
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        verifyAuth();
+      }
+    });
+
+    // React immediately to any session changes (e.g. single-device kick-out)
+    const unsubscribe = onAuthStateChanged((session) => {
+      if (!isMounted) return;
+      if (session?.isLoggedIn && session?.user) {
+        setAuthState('authenticated');
+      } else {
+        setAuthState('unauthenticated');
+        try {
+          router.replace('/(auth)/login');
+        } catch (_) {}
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      appStateSub.remove();
+      unsubscribe();
+    };
+  }, []);
+
+  if (authState === 'checking') {
+    return null;
+  }
+
+  if (authState === 'unauthenticated') {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{ headerShown: false }}

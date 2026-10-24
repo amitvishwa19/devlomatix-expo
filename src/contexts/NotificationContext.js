@@ -1,8 +1,7 @@
 import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
-import { clearSession } from '~/utils/authStorage';
+import { clearSession, triggerSessionSuperseded } from '~/utils/authStorage';
 import React, {
   createContext,
   useCallback,
@@ -43,8 +42,10 @@ export const NotificationProvider = ({ children }) => {
     (data) => {
       if (!data || data.type === 'incoming_call') return;
       if (data.type === 'SESSION_SUPERSEDED') {
-        clearSession().catch(() => {});
-        router.replace('/(auth)/login');
+        triggerSessionSuperseded({
+          device: data.device || 'Web Browser',
+          platform: data.platform || 'web',
+        });
         return;
       }
       handleNotificationData(data, router);
@@ -94,16 +95,10 @@ export const NotificationProvider = ({ children }) => {
 
           // Single-device security kickout via FCM push
           if (data.type === 'SESSION_SUPERSEDED') {
-            await clearSession();
-            try {
-              router.replace('/(auth)/login');
-            } catch (_) {}
-            Alert.alert(
-              'Session Terminated',
-              `You signed in from ${data.device || 'Web Browser'}. Devlomatix enforces single-device session protection, so this mobile session has been closed.`,
-              [{ text: 'Sign In Again', style: 'default' }],
-              { cancelable: false, icon: 'shield-outline', iconColor: '#f59e0b' }
-            );
+            await triggerSessionSuperseded({
+              device: data.device || 'Web Browser',
+              platform: data.platform || 'web',
+            });
             return;
           }
 
@@ -132,8 +127,16 @@ export const NotificationProvider = ({ children }) => {
 
     setup();
 
-    const sub = Notifications.addNotificationReceivedListener((n) => {
+    const sub = Notifications.addNotificationReceivedListener(async (n) => {
       setNotification(n);
+      const data = n?.request?.content?.data || {};
+      if (data.type === 'SESSION_SUPERSEDED') {
+        console.warn('[NOTIF_CONTEXT] Received SESSION_SUPERSEDED in notification listener');
+        await triggerSessionSuperseded({
+          device: data.device || 'Web Browser',
+          platform: data.platform || 'web',
+        });
+      }
     });
     notificationListener.current = sub;
 
